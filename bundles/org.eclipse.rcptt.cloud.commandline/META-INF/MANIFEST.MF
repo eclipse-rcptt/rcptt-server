@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Command line support for headless applications
+Bundle-SymbolicName: org.eclipse.rcptt.cloud.commandline
+Bundle-Version: 2.5.5.qualifier
+Bundle-Vendor: Eclipse RCP Testing Tool Project
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: org.eclipse.rcptt.cloud.commandline
+Require-Bundle: org.eclipse.core.runtime
+Automatic-Module-Name: org.eclipse.rcptt.cloud.commandline

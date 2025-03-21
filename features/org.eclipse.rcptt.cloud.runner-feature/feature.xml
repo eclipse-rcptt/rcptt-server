@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.rcptt.cloud.runner"
+      label="RCPTT Agent dependencies"
+      version="2.5.5.qualifier"
+      provider-name="Eclipse RCP Testing Tool Project">
+
+   <description url="epl-2.0.html">
+      Copyright (c) 2011 Xored Software Inc.
+This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+
+SPDX-License-Identifier: EPL-2.0
+
+Contributors: 
+    Xored Software Inc. - initial API and implementation
+   </description>
+
+   <copyright>
+      Copyright (c) 2011 Xored Software Inc.
+
+This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ 
+SPDX-License-Identifier: EPL-2.0
+
+Contributors: 
+    Xored Software Inc. - initial API and implementation
+   </copyright>
+
+   <license url="%licenseURL">
+      %license
+   </license>
+
+   <includes
+         id="org.eclipse.rcptt.core"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.rcptt.launching"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.reporting.html"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.google.gson"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.watson.core"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.ecl.debug.core"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jface"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.emf.validation"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.emf.transaction"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.emf.workspace"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.watson.jobs"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.google.guava"
+         version="0.0.0"/>
+
+</feature>

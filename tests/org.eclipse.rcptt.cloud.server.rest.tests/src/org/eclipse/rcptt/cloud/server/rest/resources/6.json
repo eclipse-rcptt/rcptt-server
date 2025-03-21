@@ -1,0 +1,429 @@
+{
+  "org.eclipse.emf.ecore.EClass": "stats.Execution",
+  "totalCount": 52,
+  "failedCount": 0,
+  "startTime": 1354699600784,
+  "endTime": 1354700066886,
+  "firstReportTime": 1354699768964,
+  "reportFile": "q7.report",
+  "agentStats": [
+    {
+      "agentID": "tcp://192.168.4.115:4000",
+      "tests": [
+        {
+          "testID": "_0NLpQC4vEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Usaved Editor Tab Should Have Asterisk",
+          "startTime": 1354699739765,
+          "endTime": 1354699764765
+        },
+        {
+          "testID": "_6RB2kC11EeKPSvD7PhDlFA",
+          "status": "Pass",
+          "testName": "Open Perspective With Open Perspective Button",
+          "startTime": 1354699764828,
+          "endTime": 1354699773000
+        },
+        {
+          "testID": "_7AghwC4wEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Copy Paste Text From One File To Another",
+          "startTime": 1354699773093,
+          "endTime": 1354699782562
+        },
+        {
+          "testID": "_7I7a0C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create Path Variable",
+          "startTime": 1354699782671,
+          "endTime": 1354699791078
+        },
+        {
+          "testID": "_7IDREC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Compare With Each Other",
+          "startTime": 1354699791125,
+          "endTime": 1354699801468
+        },
+        {
+          "testID": "_7ILM4C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Convert Uppercase to Lowercase",
+          "startTime": 1354699801562,
+          "endTime": 1354699810859
+        },
+        {
+          "testID": "_7ITIsC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Copy Line Up Or Down",
+          "startTime": 1354699810906,
+          "endTime": 1354699819593
+        },
+        {
+          "testID": "_7IjnYC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Folder",
+          "startTime": 1354699819671,
+          "endTime": 1354699828828
+        },
+        {
+          "testID": "_7J5rMC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Faster Workspace Navigation",
+          "startTime": 1354699828890,
+          "endTime": 1354699838703
+        },
+        {
+          "testID": "_7JKEUC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Ctrl+E to Switch Editors",
+          "startTime": 1354699838812,
+          "endTime": 1354699851406
+        },
+        {
+          "testID": "_7JSnMC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Customize Perspective",
+          "startTime": 1354699851453,
+          "endTime": 1354699860062
+        },
+        {
+          "testID": "_7JajAC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Delete Project",
+          "startTime": 1354699860218,
+          "endTime": 1354699868781
+        },
+        {
+          "testID": "_7JqaoC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Emacs Key Binding Actions - Delete from coursor position to the end of line",
+          "startTime": 1354699868875,
+          "endTime": 1354699880468
+        },
+        {
+          "testID": "_7K0RMC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Open Untitled File",
+          "startTime": 1354699880531,
+          "endTime": 1354699893921
+        },
+        {
+          "testID": "_7KCOEC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Move Line Up Or Down",
+          "startTime": 1354699893968,
+          "endTime": 1354699903234
+        },
+        {
+          "testID": "_7KT64C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Navigate Backward",
+          "startTime": 1354699903265,
+          "endTime": 1354699913125
+        },
+        {
+          "testID": "_7KsVYC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Open Second Editor Instance",
+          "startTime": 1354699913171,
+          "endTime": 1354699922656
+        },
+        {
+          "testID": "_7LMEoC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Reset Prespective",
+          "startTime": 1354699922718,
+          "endTime": 1354699930734
+        },
+        {
+          "testID": "_7LgNsC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Try to cCreate Same-Named Folder",
+          "startTime": 1354699930781,
+          "endTime": 1354699938812
+        },
+        {
+          "testID": "_9ST0AS4qEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Revert Perspective to Original Layout",
+          "startTime": 1354699938859,
+          "endTime": 1354699963156
+        },
+        {
+          "testID": "_A8IdkC4vEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Folder Name Should Appear By Default As Parent Folder",
+          "startTime": 1354699963218,
+          "endTime": 1354699976734
+        },
+        {
+          "testID": "_CYAksC46EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Add Associated Task",
+          "startTime": 1354699976875,
+          "endTime": 1354699987375
+        },
+        {
+          "testID": "_V2NicC49EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Open File Through Bookmark",
+          "startTime": 1354699987421,
+          "endTime": 1354699998015
+        },
+        {
+          "testID": "_Zf-6oDIQEeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "Bug 268350 - [Compatibility] Cannot Open Files by Dragging",
+          "startTime": 1354699998062,
+          "endTime": 1354700008921
+        },
+        {
+          "testID": "__jMMUC48EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Add Bookmark To File",
+          "startTime": 1354700008968,
+          "endTime": 1354700019062
+        },
+        {
+          "testID": "_mXtl8C15EeKPSvD7PhDlFA",
+          "status": "Pass",
+          "testName": "Open Perspective in New Window",
+          "startTime": 1354700019156,
+          "endTime": 1354700032781
+        },
+        {
+          "testID": "_rmXuAC47EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Open File From Associated Task",
+          "startTime": 1354700032859,
+          "endTime": 1354700044171
+        },
+        {
+          "testID": "_vgrgIC16EeKPSvD7PhDlFA",
+          "status": "Pass",
+          "testName": "Save Perspective",
+          "startTime": 1354700044296,
+          "endTime": 1354700062484
+        }
+      ]
+    },
+    {
+      "agentID": "tcp://192.168.4.129:4000",
+      "tests": [
+        {
+          "testID": "_7HkI4C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Close And Open Project",
+          "startTime": 1354699785468,
+          "endTime": 1354699811875
+        },
+        {
+          "testID": "_7HrdoC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Close Editor By X Button",
+          "startTime": 1354699811953,
+          "endTime": 1354699820781
+        },
+        {
+          "testID": "_7HzZcC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Close Opened Editors Automatically",
+          "startTime": 1354699820828,
+          "endTime": 1354699855312
+        },
+        {
+          "testID": "_7IbrkC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Copy Resource By Ctrl+Drag",
+          "startTime": 1354699855421,
+          "endTime": 1354699866968
+        },
+        {
+          "testID": "_7IrjMC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Project",
+          "startTime": 1354699867093,
+          "endTime": 1354699874984
+        },
+        {
+          "testID": "_7Jie0C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Drag One Folder Into Another",
+          "startTime": 1354699875093,
+          "endTime": 1354699885812
+        },
+        {
+          "testID": "_7Jy9gC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Export Resource To File System",
+          "startTime": 1354699885906,
+          "endTime": 1354699899765
+        },
+        {
+          "testID": "_7K8NAC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Quick Access Search Bar",
+          "startTime": 1354699899843,
+          "endTime": 1354699912031
+        },
+        {
+          "testID": "_7KKw8C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Navigate - Show In",
+          "startTime": 1354699912109,
+          "endTime": 1354699921046
+        },
+        {
+          "testID": "_7Kb2sC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Open Editor Using Drag And Drop",
+          "startTime": 1354699921234,
+          "endTime": 1354699931234
+        },
+        {
+          "testID": "_7LEI0C1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Rename Folder",
+          "startTime": 1354699931359,
+          "endTime": 1354699938953
+        },
+        {
+          "testID": "_7LUAcC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Search Replace From Search View",
+          "startTime": 1354699939046,
+          "endTime": 1354699950984
+        },
+        {
+          "testID": "_7LowkC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "View All Keyboard Shortcuts",
+          "startTime": 1354699951078,
+          "endTime": 1354699962218
+        },
+        {
+          "testID": "_9pVu0C14EeKPSvD7PhDlFA",
+          "status": "Pass",
+          "testName": "Open Perspective by Typing into Quick Access bar",
+          "startTime": 1354699962281,
+          "endTime": 1354699970250
+        },
+        {
+          "testID": "_CYwT8C4sEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Turn off Menu Item",
+          "startTime": 1354699970375,
+          "endTime": 1354699980484
+        },
+        {
+          "testID": "_HQZ6MC4-EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Remove Bookmark From File Editor",
+          "startTime": 1354699980562,
+          "endTime": 1354699991515
+        },
+        {
+          "testID": "_Tp29cC4uEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Create New Project Using the New Button ",
+          "startTime": 1354699991609,
+          "endTime": 1354699999875
+        },
+        {
+          "testID": "_ZV4_IC_OEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Hide toolbar",
+          "startTime": 1354699999968,
+          "endTime": 1354700006890
+        },
+        {
+          "testID": "_Zz_HAC12EeKPSvD7PhDlFA",
+          "status": "Pass",
+          "testName": "Open Perspective from Window-Open Perspective menu",
+          "startTime": 1354700006968,
+          "endTime": 1354700014062
+        },
+        {
+          "testID": "_jAw-MDLdEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "Navigate -Open With",
+          "startTime": 1354700014125,
+          "endTime": 1354700023984
+        },
+        {
+          "testID": "_k0_EUC48EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Add New Bookmark",
+          "startTime": 1354700024093,
+          "endTime": 1354700034531
+        },
+        {
+          "testID": "_ouLhQC4tEeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Create Project Reference",
+          "startTime": 1354700034593,
+          "endTime": 1354700045218
+        },
+        {
+          "testID": "_s15swDLcEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "Use Ctrl+PgUp to Switch Between Editors",
+          "startTime": 1354700045281,
+          "endTime": 1354700054187
+        },
+        {
+          "testID": "_yOcjUC49EeKvZeCqdce96Q",
+          "status": "Pass",
+          "testName": "Delete Bookmark From Bookmarks View",
+          "startTime": 1354700054234,
+          "endTime": 1354700065187
+        }
+      ]
+    }
+  ],
+  "autArtifacts": [
+    "tests",
+    "artifacts0.zip",
+    "artifacts0.zip.md5",
+    "eclipse_platform_I20121031_2000_win32.zip",
+    "eclipse_platform_I20121031_2000_win32.zip.md5"
+  ],
+  "metadataArtifacts": [
+    "test.options.properties",
+    "metadata.properties",
+    "aut0.properties",
+    "q7.report",
+    "tcp___192.168.4.115_4000_0.console.log",
+    "tcp___192.168.4.115_4000_0.error.log",
+    "tcp___192.168.4.115_4000_0.workspace.log",
+    "tcp___192.168.4.129_4000_0.console.log",
+    "tcp___192.168.4.129_4000_0.error.log",
+    "tcp___192.168.4.129_4000_0.workspace.log",
+    "errors_0.log",
+    "tcp___192.168.4.129_4000.log_0.log",
+    "tcp___192.168.4.115_4000.log_0.log",
+    "execution_0.log"
+  ],
+  "id": "0000002",
+  "canceledCount": 0,
+  "passedCount": 52,
+  "executedCount": 52,
+  "globalID": 27,
+  "state": "FINISHED",
+  "suiteId": "com.xored-e4.platform.tests",
+  "metadata": [
+    {
+      "key": "buildID",
+      "value": "0000002"
+    },
+    {
+      "key": "suiteName",
+      "value": "com.xored-e4.platform.tests-0000002"
+    },
+    {
+      "key": "executionTime",
+      "value": "1354699600775"
+    }
+  ]
+}

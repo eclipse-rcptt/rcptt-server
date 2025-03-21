@@ -1,0 +1,32 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Q7 Cloud Agent App
+Bundle-SymbolicName: org.eclipse.rcptt.cloud.agent.app;singleton:=true
+Bundle-Version: 2.5.5.qualifier
+Bundle-Activator: org.eclipse.rcptt.cloud.agent.app.internal.AgentAppPlugin
+Bundle-Vendor: Eclipse RCP Testing Tool Project
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.rcptt.cloud.common,
+ org.eclipse.rcptt.cloud.commandline,
+ org.eclipse.rcptt.cloud.util,
+ org.eclipse.rcptt.cloud.server.ecl.model,
+ org.eclipse.rcptt.cloud.model,
+ org.eclipse.rcptt.cloud.agent,
+ org.eclipse.rcptt.cloud.common.ecl.model,
+ org.eclipse.debug.core,
+ com.google.guava,
+ org.eclipse.rcptt.cloud.agent.ecl.impl,
+ org.eclipse.rcptt.cloud.agent.ecl.model,
+ org.eclipse.rcptt.util;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.logging;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.ecl.server.tcp;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.ecl.client.tcp;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.launching.injection;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.reporting;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.launching;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.watson.core;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.reporting.util;bundle-version="[2.3.0, 3.0.0)"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy
+Export-Package: org.eclipse.rcptt.cloud.agent.app.internal
+Automatic-Module-Name: org.eclipse.rcptt.cloud.agent.app

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.rcptt.cloud.server-feature"
+      label="RCPTT server"
+      version="2.5.5.qualifier"
+      provider-name="Eclipse RCP Testing Tool Project">
+
+   <description>
+      A daemon that distributes RCPTT client requests across a multitude
+of RCPTT agents.
+   </description>
+
+   <copyright url="epl-2.0.html">
+      Copyright (c) 2011 Xored Software Inc.
+This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0 which is availableat http://www.eclipse.org/legal/epl-2.0.
+
+SPDX-License-Identifier: EPL-2.0
+
+Contributors: 
+    Xored Software Inc. - initial API and implementation
+   </copyright>
+
+   <license url="%licenseURL">
+      %license
+   </license>
+
+   <includes
+         id="org.eclipse.rcptt.cloud.runner"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.server.app"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.common"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.commandline"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.agent.ecl.model"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.common.ecl.impl"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.common.ecl.model"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.server.ecl.impl"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.server.ecl.model"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.model"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.util"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.server"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.server.rest"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.emf.transaction"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.emf.validation"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.equinox.concurrent"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.equinox.weaving.hook"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.http"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.io"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.security"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.server"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.util"
+         version="0.0.0"/>
+
+   <plugin
+         id="javax.activation"
+         version="0.0.0"/>
+
+   <plugin
+         id="javax.annotation"
+         version="0.0.0"/>
+
+   <plugin
+         id="javax.servlet"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.rcptt.cloud.server.ism"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.win32.win32.x86_64"
+         os="win32"
+         ws="win32"
+         arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.gtk.linux.x86_64"
+         os="linux"
+         ws="gtk"
+         arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.cocoa.macosx.x86_64"
+         os="macosx"
+         ws="cocoa"
+         arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.apache.httpcomponents.httpclient"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.apache.httpcomponents.httpcore"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jface"
+         version="0.0.0"/>
+
+   <plugin
+         id="javax.servlet.jsp"
+         version="0.0.0"/>
+
+   <plugin
+         id="javax.el"
+         version="0.0.0"/>
+
+</feature>

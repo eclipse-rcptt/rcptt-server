@@ -1,0 +1,33 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Q7 Execution Server
+Bundle-SymbolicName: org.eclipse.rcptt.cloud.server;singleton:=true
+Bundle-Version: 2.5.5.qualifier
+Bundle-Activator: org.eclipse.rcptt.cloud.server.ServerPlugin
+Bundle-Vendor: Eclipse RCP Testing Tool Project
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.rcptt.cloud.agent.ecl.model,
+ org.eclipse.rcptt.cloud.common.ecl.model,
+ org.eclipse.rcptt.cloud.server.ecl.model,
+ org.eclipse.rcptt.cloud.common,
+ org.eclipse.rcptt.cloud.commandline,
+ org.eclipse.rcptt.cloud.util,
+ org.eclipse.rcptt.cloud.server.ism,
+ com.google.guava,
+ org.eclipse.equinox.p2.artifact.repository,
+ org.eclipse.equinox.p2.engine,
+ org.eclipse.equinox.p2.metadata,
+ org.eclipse.equinox.p2.metadata.repository,
+ org.eclipse.equinox.p2.repository,
+ org.eclipse.equinox.p2.repository.tools,
+ org.eclipse.equinox.p2.core,
+ org.eclipse.rcptt.logging;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.launching.injection;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.util;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.launching.p2utils;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.ecl.platform;bundle-version="[2.3.0, 3.0.0)",
+ org.eclipse.rcptt.ecl.debug.core;bundle-version="[2.3.0, 3.0.0)"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy
+Export-Package: org.eclipse.rcptt.cloud.server
+Automatic-Module-Name: org.eclipse.rcptt.cloud.server

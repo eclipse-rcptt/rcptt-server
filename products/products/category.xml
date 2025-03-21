@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="org.eclipse.rcptt.cloud.agent-feature">
+      <category name="org.eclipse.rcptt.cloud.agent.features"/>
+   </feature>
+   <feature id="org.eclipse.rcptt.ecl.server">
+      <category name="org.eclipse.rcptt.cloud.common.features"/>
+   </feature>
+   <feature id="org.eclipse.rcptt.ecl.core">
+      <category name="org.eclipse.rcptt.cloud.common.features"/>
+   </feature>
+   <feature id="org.eclipse.rcptt.tesla">
+      <category name="org.eclipse.rcptt.cloud.common.features"/>
+   </feature>
+   <feature id="org.eclipse.rcptt.updates"/>
+   <feature id="org.eclipse.rcptt.tesla.ecl">
+      <category name="org.eclipse.rcptt.cloud.agent.features"/>
+      <category name="org.eclipse.rcptt.cloud.common.features"/>
+   </feature>
+   <feature id="org.eclipse.rcptt.cloud.server-feature">
+      <category name="org.eclipse.rcptt.cloud.server.features"/>
+   </feature>
+   <category-def name="org.eclipse.rcptt.cloud.agent.features" label="Agent features"/>
+   <category-def name="org.eclipse.rcptt.cloud.server.features" label="Server features"/>
+   <category-def name="org.eclipse.rcptt.cloud.common.features" label="Common features"/>
+</site>

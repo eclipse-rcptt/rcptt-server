@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tests for Q7 Server REST API
+Bundle-SymbolicName: org.eclipse.rcptt.cloud.server.rest.tests
+Bundle-Version: 2.2.0.qualifier
+Bundle-Vendor: Eclipse RCP Testing Tool Project
+Fragment-Host: org.eclipse.rcptt.cloud.server.rest
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit
+Automatic-Module-Name: org.eclipse.rcptt.cloud.server.rest.tests

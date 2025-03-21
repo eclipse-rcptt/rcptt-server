@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="&lt;!-- begin-user-doc -->&#xA;Copyright (c) 2011 Xored Software Inc.&#xA;This program and the accompanying materials are made available&#xA;under the terms of the Eclipse Public License 2.0 which is available&#xA;at http://www.eclipse.org/legal/epl-2.0.&#xA;SPDX-License-Identifier: EPL-2.0&#xA;Contributors: &#xA;Xored Software Inc. - initial API and implementation&#xA;&lt;!-- end-user-doc -->"
+    modelDirectory="/org.eclipse.rcptt.cloud.server.ism/gen-src" modelPluginID="org.eclipse.rcptt.cloud.server.ism"
+    modelName="Statmodel" importerID="org.eclipse.emf.importer.java" complianceLevel="5.0"
+    copyrightFields="false" runtimeVersion="2.5">
+  <foreignModel>@model</foreignModel>
+  <genPackages prefix="Stats" basePackage="org.eclipse.rcptt.cloud.server.ism" disposableProviderFactory="true"
+      ecorePackage="stats.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="stats.ecore#//ExecutionAgentTestStatus">
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionAgentTestStatus/Pass"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionAgentTestStatus/Fail"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionAgentTestStatus/Timeout"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionAgentTestStatus/NoHandles"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionAgentTestStatus/Skipped"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="stats.ecore#//AgentEventKind">
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//AgentEventKind/REGISTER"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//AgentEventKind/UNREGISTER"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//AgentEventKind/ERROR"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//AgentEventKind/NO_MORE_HANDLES"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//AgentEventKind/NO_SPACE_ERROR"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="stats.ecore#//ExecutionState">
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionState/FINISHED"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionState/CANCELED"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionState/RUNNING"/>
+      <genEnumLiterals ecoreEnumLiteral="stats.ecore#//ExecutionState/PENDING"/>
+    </genEnums>
+    <genClasses ecoreClass="stats.ecore#//SuiteStats">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//SuiteStats/suiteName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//SuiteStats/lastSuiteID"/>
+    </genClasses>
+    <genClasses ecoreClass="stats.ecore#//Execution">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/totalCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/failedCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/startTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/endTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/firstReportTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/reportFile"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference stats.ecore#//Execution/agentStats"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/executionChildName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/autArtifacts"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/metadataArtifacts"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/canceledCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/passedCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/executedCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/globalID"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/state"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/suiteId"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference stats.ecore#//Execution/metadata"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//Execution/autNames"/>
+    </genClasses>
+    <genClasses ecoreClass="stats.ecore#//ExecutionAgentStats">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//ExecutionAgentStats/agentID"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference stats.ecore#//ExecutionAgentStats/tests"/>
+    </genClasses>
+    <genClasses ecoreClass="stats.ecore#//ExecutionAgentTest">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//ExecutionAgentTest/testID"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//ExecutionAgentTest/status"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//ExecutionAgentTest/testName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//ExecutionAgentTest/startTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//ExecutionAgentTest/endTime"/>
+    </genClasses>
+    <genClasses ecoreClass="stats.ecore#//AgentStats">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/uri"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/totalCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/failedCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/revertCount"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference stats.ecore#//AgentStats/events"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/takenTasks"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/classifier"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/launchID"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentStats/skipTags"/>
+    </genClasses>
+    <genClasses ecoreClass="stats.ecore#//AgentEvent">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentEvent/date"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentEvent/msg"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//AgentEvent/kind"/>
+    </genClasses>
+    <genClasses ecoreClass="stats.ecore#//MetadataEntry">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//MetadataEntry/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stats.ecore#//MetadataEntry/value"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

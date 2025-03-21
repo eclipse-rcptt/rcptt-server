@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="commonCommands"
+    nsURI="http:///q7/cloud/ecl/common/commands.ecore" nsPrefix="commonCommands">
+  <eClassifiers xsi:type="ecore:EClass" name="AddTestSuite" eSuperTypes="../../org.eclipse.rcptt.ecl.core/model/ecl.ecore#//Command">
+    <eAnnotations source="http://www.eclipse.org/ecl/internal"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="suite" eType="ecore:EClass ../../org.eclipse.rcptt.cloud.model/model/model.ecore#//TestSuite"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="suiteId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AddTestResource" eSuperTypes="../../org.eclipse.rcptt.ecl.core/model/ecl.ecore#//Command">
+    <eAnnotations source="http://www.eclipse.org/ecl/internal"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="resource" eType="ecore:EClass ../../org.eclipse.rcptt.cloud.model/model/model.ecore#//Q7Artifact"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="artifactsPath" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="suiteId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RequestShutdown" eSuperTypes="../../org.eclipse.rcptt.ecl.core/model/ecl.ecore#//Command">
+    <eAnnotations source="http://www.eclipse.org/ecl/internal"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CancelSuite" eSuperTypes="../../org.eclipse.rcptt.ecl.core/model/ecl.ecore#//Command">
+    <eAnnotations source="http://www.eclipse.org/ecl/internal"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="suiteId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BeginTestSuite" eSuperTypes="../../org.eclipse.rcptt.ecl.core/model/ecl.ecore#//Command">
+    <eAnnotations source="http://www.eclipse.org/ecl/internal"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="suiteId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="clientId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="clientSecret" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="licenseUrl" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="organization" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AddAut" eSuperTypes="../../org.eclipse.rcptt.ecl.core/model/ecl.ecore#//Command">
+    <eAnnotations source="http://www.eclipse.org/ecl/internal"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="suiteId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="aut" eType="ecore:EClass ../../org.eclipse.rcptt.cloud.model/model/model.ecore#//AutInfo"/>
+  </eClassifiers>
+</ecore:EPackage>

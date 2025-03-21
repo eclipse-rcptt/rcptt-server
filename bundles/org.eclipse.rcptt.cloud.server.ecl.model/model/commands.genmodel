@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="&lt;!-- begin-user-doc -->&#xA;Copyright (c) 2011 Xored Software Inc.&#xA;This program and the accompanying materials are made available&#xA;under the terms of the Eclipse Public License 2.0 which is available&#xA;at http://www.eclipse.org/legal/epl-2.0.&#xA;SPDX-License-Identifier: EPL-2.0&#xA;Contributors: &#xA;Xored Software Inc. - initial API and implementation&#xA;&lt;!-- end-user-doc -->"
+    modelDirectory="/org.eclipse.rcptt.cloud.server.ecl.model/gen-src" modelPluginID="org.eclipse.rcptt.cloud.server.ecl.model"
+    modelName="ServerCommands" modelPluginClass="" importerID="org.eclipse.emf.importer.ecore"
+    complianceLevel="17.0" copyrightFields="false" usedGenPackages="../../org.eclipse.rcptt.ecl.core/model/ecl.genmodel#//core platform:/plugin/org.eclipse.emf.ecore/model/Ecore.genmodel#//ecore ../../org.eclipse.rcptt.cloud.model/model/model.genmodel#//model ../../org.eclipse.rcptt.launching.injection/models/q7Injection.genmodel#//injection ../../org.eclipse.rcptt.watson.core/model/report.genmodel#//report">
+  <foreignModel>commands.ecore</foreignModel>
+  <genPackages prefix="ServerCommands" basePackage="org.eclipse.rcptt.cloud.server"
+      disposableProviderFactory="true" ecorePackage="commands.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="commands.ecore#//TaskStatus">
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/Unknown"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/NoSpaceLeftOnDevice"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/NoMoreHandles"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/Ok"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/Timeout"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/FailedToStartAUT"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//TaskStatus/LicensingNotAvailable"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="commands.ecore#//AutStartupStatus">
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AutStartupStatus/Started"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AutStartupStatus/FailedToStart"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AutStartupStatus/ShutdownOnTimeout"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AutStartupStatus/ShutdownOnOption"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AutStartupStatus/FailedToPing"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="commands.ecore#//AgentLogEntryType">
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AgentLogEntryType/CLIENT"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AgentLogEntryType/BOTH"/>
+      <genEnumLiterals ecoreEnumLiteral="commands.ecore#//AgentLogEntryType/LOGONLY"/>
+    </genEnums>
+    <genClasses ecoreClass="commands.ecore#//SuiteInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//SuiteInfo/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//SuiteInfo/pendingTasks"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="commands.ecore#//AgentCommand">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//AgentCommand/agent"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//AgentInfoDetails">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/takenTasks"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/freeMemory"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/totalMemory"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/totalDiskSpace"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/freeDiskSpace"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/cpuUsage"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/screenFeatures"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/cpuCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/uptime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoDetails/time"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//RegisterAgent"/>
+    <genClasses ecoreClass="commands.ecore#//UnregisterAgent"/>
+    <genClasses ecoreClass="commands.ecore#//AgentPing">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//AgentPing/details"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//ListAgents"/>
+    <genClasses ecoreClass="commands.ecore#//ExecTestSuite">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//ExecTestSuite/auts"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//ExecTestSuite/options"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//ExecTestSuite/metadata"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecTestSuite/suiteId"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//ExecutionProgress">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionProgress/suiteId"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//UpdateSystem">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//UpdateSystem/repo"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//ExecutionState">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionState/totalTestCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionState/executedTestCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionState/failedTestCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionState/skippedTestCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionState/executionTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ExecutionState/estimationTimeLeft"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//GetTask">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//GetTask/suiteId"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//CompleteTask">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//CompleteTask/report"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//CompleteTask/returnCause"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//CompleteTask/suiteId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//CompleteTask/id"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//Task">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//Task/suite"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//Task/aut"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//Task/testOptions"
+          get="if (testOptions == null)  {&#xA;  testOptions  = org.eclipse.rcptt.cloud.model.ModelFactory.eINSTANCE.createTestOptions();&#xA;}&#xA;return testOptions;"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//Task/artifacts"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//Task/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//Task/suiteId"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//ListExecutedSuites"/>
+    <genClasses ecoreClass="commands.ecore#//ReportProblem">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//ReportProblem/cause"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//GetHTTPServerInfo"/>
+    <genClasses ecoreClass="commands.ecore#//HTTPServerInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//HTTPServerInfo/port"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//AgentInfoObject">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AgentInfoObject/id"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//RegisterAgentResult">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//RegisterAgentResult/httpPort"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//RegisterAgentResult/httpServer"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//ReportAUTStartup">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ReportAUTStartup/suiteId"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//ReportAUTStartup/files"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ReportAUTStartup/state"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//ReportAgentLog">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ReportAgentLog/suiteId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//ReportAgentLog/type"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference commands.ecore#//ReportAgentLog/status"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//AutFile">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AutFile/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//AutFile/value"/>
+    </genClasses>
+    <genClasses ecoreClass="commands.ecore#//MarkTaskRecieved">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute commands.ecore#//MarkTaskRecieved/state"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

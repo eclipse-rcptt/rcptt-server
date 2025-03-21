@@ -1,0 +1,28 @@
+[
+   {
+      "id": 38,
+      "testSuiteName": "com.xored-e4.jdt.tests",
+      "aut":"eclipse_SDK_I20121031_2000_win32.zip",
+      "tests": {
+         "failed": 3,
+         "succeeded": 234,
+         "canceled": 0,
+         "total": 237,
+         "executed": 237
+      },
+      "status": "FINISHED",
+      "metadata": {
+         "executionTime": "1354707047944",
+         "buildID": "0000004",
+         "suiteName": "com.xored-e4.jdt.tests-0000004"
+      },
+      "time": {
+         "started":1354707047961,
+         "elapsedCpu": 5135945,
+         "elapsedCloud": 513090,
+         "estimatedCpu": 5135945,
+         "estimatedCloud": 513090,
+         "agents": 25
+      }
+   }
+]

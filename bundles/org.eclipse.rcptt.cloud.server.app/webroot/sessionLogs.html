@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Q7 Server</title>
+<link rel="stylesheet" media="screen" type="text/css"
+	href="css/styles.css" />
+<link rel="stylesheet" media="screen" type="text/css"
+	href="css/datepicker.css" />
+<link rel="stylesheet" media="screen" type="text/css"
+	href="css/tablesorter.css" />
+
+<script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="js/canvas.js"></script>
+<script type="text/javascript" src="js/highcharts.js"></script>
+<script type="text/javascript" src="js/theme.js"></script>
+<script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+<script type="text/javascript" src="js/datepicker.js"></script>
+<script type="text/javascript" src="js/common.js"></script>
+</head>
+
+<body>
+
+	<div id="header">
+		<a href="/" id="q7"></a>
+		<!-- <div id="tabs">
+			<a href="javascript:void(0);" class="tab"><span><div></div>Q7
+					Server</span></a>
+		</div> -->
+	</div>
+
+	<div id="middle">
+		<div id="container">
+
+			<a id="resizer" href="javascript:void(0);"></a>
+			<div id="contentContainer">
+				<div id="contentCanvas">
+					<div id="content">
+						<h2>Session Logs</h2>
+						<hr />
+						<div id="content">
+							<iframe src="/session/logs" style="border: 0" width="100%" height="500"> </iframe>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="contentFooter">
+				<div id="contentContainerLeft"></div>
+				<div id="contentContainerRight"></div>
+			</div>
+		</div>
+
+		<div id="sidebar">
+			<ul>
+				<li><a href="/">General</a></li>
+				<li><a href="/stats.html">Execution Statistics</a></li>
+				<li><a href="/agents.html">Agents</a></li>
+				<li class="active"><a href="/sessionLogs.html">Session logs</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<div id="footer">
+		<div>
+			Copyright © 2012, xored software, inc. <a href="#">Terms of Use</a> •
+			<a href="#">License Agreement</a>
+		</div>
+	</div>
+
+</body>
+</html>
+

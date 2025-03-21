@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+Copyright (c) 2011 Xored Software Inc and others
+
+This program and the accompanying materials are made available under the
+terms of the Eclipse Public License 2.0 which is available at
+http://www.eclipse.org/legal/epl-2.0.
+
+SPDX-License-Identifier: EPL-2.0
+
+Contributors:
+    Xored Software Inc - initial API and implementation
+-->
+<plugin>
+   <extension
+         point="org.eclipse.rcptt.ecl.core.scriptlet">
+      <scriptlet
+            class="org.eclipse.rcptt.cloud.common.ecl.impl.internal.AddTestSuiteService"
+            name="AddTestSuite"
+            namespace="http:///q7/cloud/ecl/common/commands.ecore">
+      </scriptlet>
+      <scriptlet
+            class="org.eclipse.rcptt.cloud.common.ecl.impl.internal.AddTestResourceService"
+            name="AddTestResource"
+            namespace="http:///q7/cloud/ecl/common/commands.ecore">
+      </scriptlet>
+      <scriptlet
+            class="org.eclipse.rcptt.cloud.common.ecl.impl.internal.RequestShutdownService"
+            name="RequestShutdown"
+            namespace="http:///q7/cloud/ecl/common/commands.ecore">
+      </scriptlet>
+      <scriptlet
+            class="org.eclipse.rcptt.cloud.common.ecl.impl.internal.BeginTestSuiteService"
+            name="BeginTestSuite"
+            namespace="http:///q7/cloud/ecl/common/commands.ecore">
+      </scriptlet>
+      <scriptlet
+            class="org.eclipse.rcptt.cloud.common.ecl.impl.internal.AddAutService"
+            name="AddAut"
+            namespace="http:///q7/cloud/ecl/common/commands.ecore">
+      </scriptlet>      
+   </extension>
+
+</plugin>

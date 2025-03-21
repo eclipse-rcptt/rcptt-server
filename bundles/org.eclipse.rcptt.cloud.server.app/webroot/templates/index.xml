@@ -1,0 +1,38 @@
+
+<div id="middle">
+	<div id="container">
+		<a id="resizer" href="javascript:void(0);"></a>
+		<div id="contentContainer">
+			<div id="contentCanvas">
+				<div id="content">
+					<h2>Server Information</h2>
+					<hr />
+					<div id="responseContent">
+						${responseContent}
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="contentFooter">
+			<div id="contentContainerLeft"></div>
+			<div id="contentContainerRight"></div>
+		</div>
+	</div>
+
+	<div id="sidebar">
+		<ul>
+			<li class="active">
+				<a href="${generalURI}">General</a>
+			</li>
+			<li>
+				<a href="${testSuitesURI}">Test Suites</a>
+			</li>
+			<li>
+				<a href="${agentsURI}">Agents</a>
+			</li>
+			<li>
+				<a href="${sessionLogsURI}">Session logs</a>
+			</li>
+		</ul>
+	</div>
+</div>

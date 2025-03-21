@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="&lt;!-- begin-user-doc -->&#xA;Copyright (c) 2011 Xored Software Inc.&#xA;This program and the accompanying materials are made available&#xA;under the terms of the Eclipse Public License 2.0 which is available&#xA;at http://www.eclipse.org/legal/epl-2.0.&#xA;SPDX-License-Identifier: EPL-2.0&#xA;Contributors: &#xA;Xored Software Inc. - initial API and implementation&#xA;&lt;!-- end-user-doc -->"
+    modelDirectory="/org.eclipse.rcptt.cloud.model/gen-src" modelPluginID="org.eclipse.rcptt.cloud.model"
+    modelName="Model" importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0"
+    copyrightFields="false" runtimeVersion="2.5" usedGenPackages="../../org.eclipse.rcptt.launching.injection/models/q7Injection.genmodel#//injection">
+  <foreignModel>model.ecore</foreignModel>
+  <genPackages prefix="Model" basePackage="org.eclipse.rcptt.cloud" disposableProviderFactory="true"
+      ecorePackage="model.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="model.ecore#//RefKind">
+      <genEnumLiterals ecoreEnumLiteral="model.ecore#//RefKind/Context"/>
+      <genEnumLiterals ecoreEnumLiteral="model.ecore#//RefKind/Scenario"/>
+      <genEnumLiterals ecoreEnumLiteral="model.ecore#//RefKind/TestSuite"/>
+      <genEnumLiterals ecoreEnumLiteral="model.ecore#//RefKind/Verification"/>
+    </genEnums>
+    <genClasses ecoreClass="model.ecore#//Q7Artifact">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Q7Artifact/id"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference model.ecore#//Q7Artifact/refs"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference model.ecore#//Q7Artifact/content"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//Q7ArtifactRef">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Q7ArtifactRef/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Q7ArtifactRef/hash"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Q7ArtifactRef/kind"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Q7ArtifactRef/refs"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//TestSuite"/>
+    <genClasses ecoreClass="model.ecore#//AutInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/hash"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/classifier"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference model.ecore#//AutInfo/injection"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/ignoreOtherInjections"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/args"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/vmArgs"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/uri"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/licenseUrl"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//AgentInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AgentInfo/uri"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AgentInfo/classifier"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AgentInfo/launchId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AgentInfo/skipTags"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//Envelope">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Envelope/from"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Envelope/to"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//Envelope/arch"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EAttribute model.ecore#//Envelope/message"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference model.ecore#//Envelope/q7Info"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//TestOption">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//TestOption/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//TestOption/value"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//SuiteMetadata">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//SuiteMetadata/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//SuiteMetadata/value"/>
+    </genClasses>
+    <genClasses ecoreClass="model.ecore#//TestOptions">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference model.ecore#//TestOptions/values"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

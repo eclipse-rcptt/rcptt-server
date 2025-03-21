@@ -1,0 +1,1719 @@
+{
+  "org.eclipse.emf.ecore.EClass": "stats.Execution",
+  "totalCount": 234,
+  "failedCount": 10,
+  "startTime": 1354698892166,
+  "endTime": 1354700573535,
+  "firstReportTime": 1354699138904,
+  "reportFile": "q7.report",
+  "agentStats": [
+    {
+      "agentID": "tcp://192.168.4.112:4000",
+      "tests": [
+        {
+          "testID": "_-1qu4DLlEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "HelloWorldCommand_Change Handler Name",
+          "startTime": 1354699094577,
+          "endTime": 1354699137358
+        },
+        {
+          "testID": "_-ev04DOvEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithEditor_Change File Extension",
+          "startTime": 1354699137562,
+          "endTime": 1354699158968
+        },
+        {
+          "testID": "_00T-ID6rEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Add Description To Category",
+          "startTime": 1354699159171,
+          "endTime": 1354699180171
+        },
+        {
+          "testID": "_2oUYQDO8EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Generate Getting Started",
+          "startTime": 1354699180296,
+          "endTime": 1354699206218
+        },
+        {
+          "testID": "_3R7lcDksEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Link Additional Source to Project",
+          "startTime": 1354699206296,
+          "endTime": 1354699222452
+        },
+        {
+          "testID": "_3WcjMDO0EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Project Nature ID",
+          "startTime": 1354699222530,
+          "endTime": 1354699239124
+        },
+        {
+          "testID": "_3eODUDOtEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithView_Change Category Name",
+          "startTime": 1354699239280,
+          "endTime": 1354699257187
+        },
+        {
+          "testID": "_3knbMD6uEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Edit Category Name",
+          "startTime": 1354699257327,
+          "endTime": 1354699279249
+        },
+        {
+          "testID": "_3r6EkDOuEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithEditor_Change Java Package Name",
+          "startTime": 1354699279296,
+          "endTime": 1354699298062
+        },
+        {
+          "testID": "_4Ns7ADn5EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove Native Library Workspace Location",
+          "startTime": 1354699298187,
+          "endTime": 1354699319030
+        },
+        {
+          "testID": "_4cgQkDLpEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "HelloWorldCommand_Change Java Package Name",
+          "startTime": 1354699319187,
+          "endTime": 1354699335983
+        },
+        {
+          "testID": "_5CJTsD6vEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Add Feature",
+          "startTime": 1354699336312,
+          "endTime": 1354699356202
+        },
+        {
+          "testID": "_5Nej4DVBEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_HelloRCP_Change Package Name",
+          "startTime": 1354699356327,
+          "endTime": 1354699375233
+        },
+        {
+          "testID": "_6CD-UDLXEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "HelloWorld_change Java Package Name",
+          "startTime": 1354699375343,
+          "endTime": 1354699390858
+        },
+        {
+          "testID": "_6w8vYDk_EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove Excusion Pattern",
+          "startTime": 1354699390983,
+          "endTime": 1354699408937
+        },
+        {
+          "testID": "_7D0ZcDLbEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "HelloWorld_Change MessageBox Text",
+          "startTime": 1354699409015,
+          "endTime": 1354699430608
+        },
+        {
+          "testID": "_7HbmAC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Assign Working Sets",
+          "startTime": 1354699430858,
+          "endTime": 1354699451062
+        },
+        {
+          "testID": "_7PVVYDq8EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add External JAR",
+          "startTime": 1354699451108,
+          "endTime": 1354699463546
+        },
+        {
+          "testID": "_8zriED6jEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Delete Category",
+          "startTime": 1354699463812,
+          "endTime": 1354699483171
+        },
+        {
+          "testID": "_9q_sgDLaEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "HelloWorld_Change Action Class Name",
+          "startTime": 1354699483233,
+          "endTime": 1354699502140
+        },
+        {
+          "testID": "_AMiU0TVPEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Create New Plug-in Project_Create Java Project",
+          "startTime": 1354699503608,
+          "endTime": 1354699522468
+        },
+        {
+          "testID": "_BHON4DL-EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPopUpMenu_Change Java Package Name",
+          "startTime": 1354699523265,
+          "endTime": 1354699546905
+        },
+        {
+          "testID": "_CQBL0D3cEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add New Source Folder",
+          "startTime": 1354699546952,
+          "endTime": 1354699561905
+        },
+        {
+          "testID": "_CjEsYDL0EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Page Class Name",
+          "startTime": 1354699562233,
+          "endTime": 1354699585327
+        },
+        {
+          "testID": "_EfNswDn2EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Forbidden Rule",
+          "startTime": 1354699585374,
+          "endTime": 1354699601155
+        },
+        {
+          "testID": "_Eo3T4Dk5EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Inclusion Pattern",
+          "startTime": 1354699602155,
+          "endTime": 1354699635280
+        },
+        {
+          "testID": "_FpDD0DefEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Down Button Should be disabled For Lowest Item_Component Definition Properties ",
+          "startTime": 1354699635421,
+          "endTime": 1354699653343
+        },
+        {
+          "testID": "_G7UXQDePEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Delete Feature Project",
+          "startTime": 1354699653405,
+          "endTime": 1354699668671
+        },
+        {
+          "testID": "_IAuMEDkvEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Clear All Changes",
+          "startTime": 1354699668827,
+          "endTime": 1354699682702
+        },
+        {
+          "testID": "_J5BCMDVEEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_RCPWithView",
+          "startTime": 1354699682796,
+          "endTime": 1354699706765
+        },
+        {
+          "testID": "_K5xkUDekEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Create Target Definition",
+          "startTime": 1354699706812,
+          "endTime": 1354699724640
+        },
+        {
+          "testID": "_L6WsIDO1EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Project Nature Name",
+          "startTime": 1354699724718,
+          "endTime": 1354699741093
+        },
+        {
+          "testID": "_NsfwgDL3EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Name",
+          "startTime": 1354699741233,
+          "endTime": 1354699763671
+        },
+        {
+          "testID": "_OGdEcDL-EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPopUpMenu_Change Action Class",
+          "startTime": 1354699763718,
+          "endTime": 1354699787202
+        },
+        {
+          "testID": "_PGsUEDLrEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Java Package Name",
+          "startTime": 1354699787249,
+          "endTime": 1354699809374
+        },
+        {
+          "testID": "_R8AfsDeeEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Change Properties Order In Component Definition",
+          "startTime": 1354699809483,
+          "endTime": 1354699827937
+        },
+        {
+          "testID": "_SHbEgDepEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add Byte Property to Component Definition",
+          "startTime": 1354699827999,
+          "endTime": 1354699846515
+        },
+        {
+          "testID": "_SuZg8DLzEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Category Name",
+          "startTime": 1354699846577,
+          "endTime": 1354699864296
+        },
+        {
+          "testID": "_UDCkIDOtEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithView_Change View Name",
+          "startTime": 1354699864483,
+          "endTime": 1354699887640
+        },
+        {
+          "testID": "_V1bpUDeTEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Add Feature To Feature Project ",
+          "startTime": 1354699887765,
+          "endTime": 1354699911390
+        },
+        {
+          "testID": "_VapM0DkqEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Back button should be disabled on First Page",
+          "startTime": 1354699911437,
+          "endTime": 1354699923155
+        },
+        {
+          "testID": "_VwKdQDL9EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPopUpMenu_Change Action Label",
+          "startTime": 1354699923296,
+          "endTime": 1354699954421
+        },
+        {
+          "testID": "_W_EYEC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Assign Statement to New Local Variable",
+          "startTime": 1354699954671,
+          "endTime": 1354699972468
+        },
+        {
+          "testID": "_W_gc8C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Content Assist",
+          "startTime": 1354699972577,
+          "endTime": 1354699993265
+        },
+        {
+          "testID": "_Wnd3AD3lEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Source Folder_Configure Output Folder_Specific",
+          "startTime": 1354699993358,
+          "endTime": 1354700011640
+        },
+        {
+          "testID": "_XACocC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Abstract Class",
+          "startTime": 1354700011702,
+          "endTime": 1354700028765
+        },
+        {
+          "testID": "_XAkz8C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Java Working Set",
+          "startTime": 1354700028858,
+          "endTime": 1354700039718
+        },
+        {
+          "testID": "_XBYFMC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Delete Java Project",
+          "startTime": 1354700039780,
+          "endTime": 1354700053562
+        },
+        {
+          "testID": "_XC3S8C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Open Type",
+          "startTime": 1354700053655,
+          "endTime": 1354700072640
+        },
+        {
+          "testID": "_XCUgYC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "It Shouldn\u0027t Be Allowed To Create Class With Empty Name",
+          "startTime": 1354700072780,
+          "endTime": 1354700086108
+        },
+        {
+          "testID": "_XD8RAC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Use Content Assist to Create Main Method",
+          "startTime": 1354700086202,
+          "endTime": 1354700104280
+        },
+        {
+          "testID": "_XDaFgC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Rename in File",
+          "startTime": 1354700104343,
+          "endTime": 1354700120874
+        },
+        {
+          "testID": "_XDzuIC1lEeKgx4EWM9YkNw",
+          "status": "Fail",
+          "testName": "Undo Redo Method Deletion",
+          "startTime": 1354700121030,
+          "endTime": 1354700136718
+        },
+        {
+          "testID": "_XakUADIVEeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "Bug 304847 - [Compatibility] NPE thrown when hiding \u0027Variables\u0027 view",
+          "startTime": 1354700137155,
+          "endTime": 1354700150452
+        },
+        {
+          "testID": "_YANtoDk6EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Allow output folders for source folders",
+          "startTime": 1354700150593,
+          "endTime": 1354700165640
+        },
+        {
+          "testID": "__JT3sDn4EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Combine rules",
+          "startTime": 1354700165733,
+          "endTime": 1354700188312
+        },
+        {
+          "testID": "_bqGooDk-EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Remove Source Folder From Build Path",
+          "startTime": 1354700188468,
+          "endTime": 1354700202983
+        },
+        {
+          "testID": "_dvEt0DeNEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Create New Feature Project",
+          "startTime": 1354700203030,
+          "endTime": 1354700224093
+        },
+        {
+          "testID": "_gEzBUDn5EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Native Library Workspace Location",
+          "startTime": 1354700224171,
+          "endTime": 1354700243671
+        },
+        {
+          "testID": "_h21_UDO6EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Generate References",
+          "startTime": 1354700243718,
+          "endTime": 1354700272483
+        },
+        {
+          "testID": "_i2djYD6pEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "Category Definition_Copy Paste Category",
+          "startTime": 1354700272593,
+          "endTime": 1354700293812
+        },
+        {
+          "testID": "_jPJQkD3iEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add External Archive",
+          "startTime": 1354700294015,
+          "endTime": 1354700306140
+        },
+        {
+          "testID": "_lVsHsDk_EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove Inclusion Pattern",
+          "startTime": 1354700306218,
+          "endTime": 1354700320280
+        },
+        {
+          "testID": "_nFxLADOpEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPropertyPage_Change Java Package Name",
+          "startTime": 1354700320358,
+          "endTime": 1354700335983
+        },
+        {
+          "testID": "_naWBADLyEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Category ID",
+          "startTime": 1354700336093,
+          "endTime": 1354700360171
+        },
+        {
+          "testID": "_oFMjYDepEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add Character Property To Component Definition",
+          "startTime": 1354700361530,
+          "endTime": 1354700380890
+        },
+        {
+          "testID": "_ojOucD3kEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Source Folder_Configure Inc/Excl Filters",
+          "startTime": 1354700381015,
+          "endTime": 1354700393546
+        },
+        {
+          "testID": "_sDY4QDeeEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Up Button Should be disabled For Upper Item_Component Definition Properties ",
+          "startTime": 1354700393655,
+          "endTime": 1354700412733
+        },
+        {
+          "testID": "_tRSjwDkoEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Create Same Named Project",
+          "startTime": 1354700412796,
+          "endTime": 1354700424062
+        },
+        {
+          "testID": "_vGgJMDk5EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Exclusion Pattern",
+          "startTime": 1354700424202,
+          "endTime": 1354700449468
+        },
+        {
+          "testID": "_w-F5gD62EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Copy Paste To Another Project",
+          "startTime": 1354700449562,
+          "endTime": 1354700466640
+        },
+        {
+          "testID": "_xHoiIDn3EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Accessible Rule",
+          "startTime": 1354700466702,
+          "endTime": 1354700483702
+        },
+        {
+          "testID": "_y-KKUD3mEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Source Folder_Configure Build Path",
+          "startTime": 1354700483765,
+          "endTime": 1354700498593
+        },
+        {
+          "testID": "_z-1u4DnuEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Project To Build Path",
+          "startTime": 1354700498796,
+          "endTime": 1354700519280
+        },
+        {
+          "testID": "_z_xtkDnvEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove Project From Build Path",
+          "startTime": 1354700519343,
+          "endTime": 1354700533577
+        }
+      ]
+    },
+    {
+      "agentID": "tcp://192.168.4.124:4000",
+      "tests": [
+        {
+          "testID": "_0KrBEDehEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Multiple Move Properties_Component Definition",
+          "startTime": 1354699217625,
+          "endTime": 1354699255109
+        },
+        {
+          "testID": "_18IK4DeREeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Create New Feature Project_Verify Feature ID ",
+          "startTime": 1354699255171,
+          "endTime": 1354699276343
+        },
+        {
+          "testID": "_1yQOID3cEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add New Source Folder_Folder Name Should Not Be Empty",
+          "startTime": 1354699276484,
+          "endTime": 1354699291375
+        },
+        {
+          "testID": "_3yveoDOpEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPropertyPage_Change Property Page Class",
+          "startTime": 1354699291625,
+          "endTime": 1354699318750
+        },
+        {
+          "testID": "_4XJUcDeUEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Add Component Definition to Plugin Project",
+          "startTime": 1354699319046,
+          "endTime": 1354699340453
+        },
+        {
+          "testID": "_53LO8DIREeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "Bug 286448 - PDE Wizard for minimal RCP",
+          "startTime": 1354699340640,
+          "endTime": 1354699367625
+        },
+        {
+          "testID": "_5GekwTq3EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Remove JAR from build path",
+          "startTime": 1354699367671,
+          "endTime": 1354699384250
+        },
+        {
+          "testID": "_6ZNH8D3YEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Link Source",
+          "startTime": 1354699384359,
+          "endTime": 1354699400328
+        },
+        {
+          "testID": "_78AGwDq_EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Edit JAR",
+          "startTime": 1354699400406,
+          "endTime": 1354699415687
+        },
+        {
+          "testID": "_7HTqMC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Add New Category to Update Site",
+          "startTime": 1354699415765,
+          "endTime": 1354699431062
+        },
+        {
+          "testID": "_7JCvkC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create Your Own Template",
+          "startTime": 1354699431156,
+          "endTime": 1354699442578
+        },
+        {
+          "testID": "_7rQmADeTEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Include Plugin Project in Feature Project",
+          "startTime": 1354699442750,
+          "endTime": 1354699462593
+        },
+        {
+          "testID": "_8EcTAD3eEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Use As Source Folder",
+          "startTime": 1354699462656,
+          "endTime": 1354699474593
+        },
+        {
+          "testID": "_98Be0DnwEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Cancel to Add Project To a Build Path",
+          "startTime": 1354699474656,
+          "endTime": 1354699488296
+        },
+        {
+          "testID": "_9qefMDeoEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add Boolean Property to Component Definition",
+          "startTime": 1354699488484,
+          "endTime": 1354699510828
+        },
+        {
+          "testID": "_AfoGgDO7EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Generate Samples",
+          "startTime": 1354699510875,
+          "endTime": 1354699538218
+        },
+        {
+          "testID": "_BPfUID6mEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Undo Delete Category",
+          "startTime": 1354699538281,
+          "endTime": 1354699550968
+        },
+        {
+          "testID": "_CZp9gDOrEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPropertyPage_Change Property Page Name",
+          "startTime": 1354699551015,
+          "endTime": 1354699567578
+        },
+        {
+          "testID": "_EAmtwD3eEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add New Source Folder_Add Exclusion Pattern",
+          "startTime": 1354699567718,
+          "endTime": 1354699591546
+        },
+        {
+          "testID": "_EZaaEDkiEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Info Message",
+          "startTime": 1354699591687,
+          "endTime": 1354699605062
+        },
+        {
+          "testID": "_F8X7YDeSEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Create New Feature Project_Verify Feature Name",
+          "startTime": 1354699605203,
+          "endTime": 1354699624656
+        },
+        {
+          "testID": "_G4yhUDn4EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Move Rule Up/Down",
+          "startTime": 1354699624796,
+          "endTime": 1354699645640
+        },
+        {
+          "testID": "_GDw40DVNEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_Mail_Change Product Name",
+          "startTime": 1354699645734,
+          "endTime": 1354699665468
+        },
+        {
+          "testID": "_HbyQoD3dEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Cancel Add New Source Folder",
+          "startTime": 1354699665593,
+          "endTime": 1354699681468
+        },
+        {
+          "testID": "_IoWP4Dn3EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Discouraged Rule",
+          "startTime": 1354699681546,
+          "endTime": 1354699701562
+        },
+        {
+          "testID": "_JmSxIDLsEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Editor Name",
+          "startTime": 1354699701656,
+          "endTime": 1354699736828
+        },
+        {
+          "testID": "_KwNtkDnyEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Button Should Be Disabled If There Is No Available Project To Add",
+          "startTime": 1354699736937,
+          "endTime": 1354699762796
+        },
+        {
+          "testID": "_MkTAsDn6EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove All Rules",
+          "startTime": 1354699762875,
+          "endTime": 1354699782875
+        },
+        {
+          "testID": "_Oz42cC_CEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Syntax coloring _ constants should be in blue color",
+          "startTime": 1354699783140,
+          "endTime": 1354699800156
+        },
+        {
+          "testID": "_QyVGUDrJEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "New Java Class Wizard_Configure Variable_New_File",
+          "startTime": 1354699800250,
+          "endTime": 1354699816984
+        },
+        {
+          "testID": "_RLbtYDrKEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Class Wizard_Configure Variable_Remove",
+          "startTime": 1354699817234,
+          "endTime": 1354699837500
+        },
+        {
+          "testID": "_SdioMDL4EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Initial File Name",
+          "startTime": 1354699837593,
+          "endTime": 1354699860296
+        },
+        {
+          "testID": "_TGmQ4D6sEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Copy Paste Description",
+          "startTime": 1354699860546,
+          "endTime": 1354699880875
+        },
+        {
+          "testID": "_UKzq8DOrEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPropertyPage_Change Target Class",
+          "startTime": 1354699880921,
+          "endTime": 1354699900546
+        },
+        {
+          "testID": "_V_kmAD3kEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Source Folder_Remove From Build Path",
+          "startTime": 1354699900687,
+          "endTime": 1354699920093
+        },
+        {
+          "testID": "_VopHgDVDEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_RCPWithView_Change Package Name",
+          "startTime": 1354699920343,
+          "endTime": 1354699939484
+        },
+        {
+          "testID": "_WNZ4ADOvEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithEditor_Change Editor Class Name",
+          "startTime": 1354699939625,
+          "endTime": 1354699967281
+        },
+        {
+          "testID": "_W_MT4C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Compress Package Names",
+          "startTime": 1354699967390,
+          "endTime": 1354699987468
+        },
+        {
+          "testID": "_W_o_0C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Copy Paste Method",
+          "startTime": 1354699987562,
+          "endTime": 1354700006796
+        },
+        {
+          "testID": "_XA15sC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create Separate Folders For Sources And Class Files",
+          "startTime": 1354700007000,
+          "endTime": 1354700025968
+        },
+        {
+          "testID": "_XATuMC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Java Package",
+          "startTime": 1354700026046,
+          "endTime": 1354700043718
+        },
+        {
+          "testID": "_XBG_cC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Debug From Context Menu",
+          "startTime": 1354700043796,
+          "endTime": 1354700087328
+        },
+        {
+          "testID": "_XByU4C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Extended Interface",
+          "startTime": 1354700087375,
+          "endTime": 1354700114421
+        },
+        {
+          "testID": "_XC_10C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Package Name Abbreviations",
+          "startTime": 1354700114531,
+          "endTime": 1354700131406
+        },
+        {
+          "testID": "_XDrLQC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Toggle Comment",
+          "startTime": 1354700131453,
+          "endTime": 1354700147515
+        },
+        {
+          "testID": "_Xwh5sDVGEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_RCPWithIntro_Change Product Name",
+          "startTime": 1354700147578,
+          "endTime": 1354700174187
+        },
+        {
+          "testID": "_ZC2YsDkhEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Project Name Shoouldn\u0027t Be Empty",
+          "startTime": 1354700174250,
+          "endTime": 1354700188687
+        },
+        {
+          "testID": "_bp9aID3dEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add New Source Folder_Add Inclusion Pattern",
+          "startTime": 1354700188750,
+          "endTime": 1354700213593
+        },
+        {
+          "testID": "_eFq7IDO3EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Change Label for TOC",
+          "startTime": 1354700213640,
+          "endTime": 1354700234375
+        },
+        {
+          "testID": "_ftsC0DOsEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithView_Change Java Package Name",
+          "startTime": 1354700234484,
+          "endTime": 1354700259171
+        },
+        {
+          "testID": "_hUXzoD6rEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Delete ",
+          "startTime": 1354700259250,
+          "endTime": 1354700278234
+        },
+        {
+          "testID": "_iF6EIDO8EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Generate Tasks",
+          "startTime": 1354700278328,
+          "endTime": 1354700306937
+        },
+        {
+          "testID": "_lDEvsDkpEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Browse button and Location field should be disabled if default location is used",
+          "startTime": 1354700307000,
+          "endTime": 1354700320875
+        },
+        {
+          "testID": "_mL_oIDlAEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Edit Inclusion Pattern",
+          "startTime": 1354700320953,
+          "endTime": 1354700333312
+        },
+        {
+          "testID": "_nI6lgDeiEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Create Product Configuration",
+          "startTime": 1354700333359,
+          "endTime": 1354700350843
+        },
+        {
+          "testID": "_nssJkDITEeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "\"\u0026\" shouldn\u0027t be allowed in name\u0027s field ",
+          "startTime": 1354700350937,
+          "endTime": 1354700365656
+        },
+        {
+          "testID": "_ofHdgC_NEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Open Declaration",
+          "startTime": 1354700365734,
+          "endTime": 1354700384812
+        },
+        {
+          "testID": "_qNBO0DO0EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Project Nature Class Name",
+          "startTime": 1354700384875,
+          "endTime": 1354700409421
+        },
+        {
+          "testID": "_scaBIDL8EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPopUpMenu_Change Submenu Name",
+          "startTime": 1354700409484,
+          "endTime": 1354700432140
+        },
+        {
+          "testID": "_u4QAoD6xEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Remove Feature",
+          "startTime": 1354700432203,
+          "endTime": 1354700452515
+        },
+        {
+          "testID": "_vMzSsDVNEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_Mail_Change Application Class",
+          "startTime": 1354700452578,
+          "endTime": 1354700478250
+        },
+        {
+          "testID": "_xOuVoDrIEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "New Java Class Wizard_Configure Variable_Edit_Folder",
+          "startTime": 1354700478312,
+          "endTime": 1354700498125
+        },
+        {
+          "testID": "_yW2VYDLzEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Class Name",
+          "startTime": 1354700498578,
+          "endTime": 1354700521125
+        },
+        {
+          "testID": "_z5WsQC8JEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Copy Qualified Name",
+          "startTime": 1354700521250,
+          "endTime": 1354700546375
+        }
+      ]
+    },
+    {
+      "agentID": "tcp://192.168.4.111:4000",
+      "tests": [
+        {
+          "testID": "_1GehIDOzEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Project Builder Class Name",
+          "startTime": 1354699279687,
+          "endTime": 1354699329921
+        },
+        {
+          "testID": "_2P6RMDrAEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove JAR",
+          "startTime": 1354699330046,
+          "endTime": 1354699348875
+        },
+        {
+          "testID": "_2hRRwTVAEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_HelloRCP_Change Window Title",
+          "startTime": 1354699349000,
+          "endTime": 1354699374078
+        },
+        {
+          "testID": "_5SE7wDLrEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Editor Contributor Class Name",
+          "startTime": 1354699374250,
+          "endTime": 1354699397390
+        },
+        {
+          "testID": "_6hD2cC_BEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Syntax coloring_class determinations should be in red color",
+          "startTime": 1354699397484,
+          "endTime": 1354699414031
+        },
+        {
+          "testID": "_7BfZEDIpEeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "Create New Plugin Project",
+          "startTime": 1354699414187,
+          "endTime": 1354699430484
+        },
+        {
+          "testID": "_7IzfAC1oEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Update Site Project",
+          "startTime": 1354699430531,
+          "endTime": 1354699446203
+        },
+        {
+          "testID": "_7gULMDecEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Edit String Property Values",
+          "startTime": 1354699446281,
+          "endTime": 1354699467187
+        },
+        {
+          "testID": "_8o3ccD3jEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Configure Build Path",
+          "startTime": 1354699467296,
+          "endTime": 1354699479281
+        },
+        {
+          "testID": "_9Mqg0DVCEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_RCPWithView_Change Window Title",
+          "startTime": 1354699479421,
+          "endTime": 1354699501140
+        },
+        {
+          "testID": "_A_5mMDO0EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Project Builder ID",
+          "startTime": 1354699501234,
+          "endTime": 1354699524750
+        },
+        {
+          "testID": "_Apb5cD3lEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Source Folder_Configure Output Folder_Default",
+          "startTime": 1354699524875,
+          "endTime": 1354699543359
+        },
+        {
+          "testID": "_Bd_-sDeqEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add Double Property To Component Definition",
+          "startTime": 1354699543656,
+          "endTime": 1354699566781
+        },
+        {
+          "testID": "_DgiL8D3xEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Create New Category Definition",
+          "startTime": 1354699566843,
+          "endTime": 1354699585796
+        },
+        {
+          "testID": "_EIv-oDVCEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_HelloRCP_Change Application Class",
+          "startTime": 1354699585890,
+          "endTime": 1354699606015
+        },
+        {
+          "testID": "_FH2ZUTIPEeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "Bug 317600 - Can\u0027t set breakpoints in editor",
+          "startTime": 1354699606156,
+          "endTime": 1354699625046
+        },
+        {
+          "testID": "_FJ9WgDItEeKuaoPIIAkhPg",
+          "status": "Pass",
+          "testName": "Create New Hello World Project",
+          "startTime": 1354699625125,
+          "endTime": 1354699645718
+        },
+        {
+          "testID": "_GrHEUDLqEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "HelloWorldCommand_Change MessageBox Text",
+          "startTime": 1354699645812,
+          "endTime": 1354699671531
+        },
+        {
+          "testID": "_I7jpYDk_EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Include To Build Path",
+          "startTime": 1354699671671,
+          "endTime": 1354699688000
+        },
+        {
+          "testID": "_IyB3gD6xEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Copy Paste Feature",
+          "startTime": 1354699688125,
+          "endTime": 1354699707875
+        },
+        {
+          "testID": "_KZzoUD3aEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Link Source_Folder Name Should Be Unique",
+          "startTime": 1354699707921,
+          "endTime": 1354699719781
+        },
+        {
+          "testID": "_LLzIQDnwEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Select All Build Path Projects",
+          "startTime": 1354699720046,
+          "endTime": 1354699735062
+        },
+        {
+          "testID": "_NJbC0DeQEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Add Reference Plugins While Creating New Feature Project",
+          "startTime": 1354699735156,
+          "endTime": 1354699760828
+        },
+        {
+          "testID": "_NzodwDO8EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Generate Concepts",
+          "startTime": 1354699761046,
+          "endTime": 1354699786875
+        },
+        {
+          "testID": "_OMS1ADrFEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "New Java Class Wizard_Extent Variable",
+          "startTime": 1354699786953,
+          "endTime": 1354699806687
+        },
+        {
+          "testID": "_QHaPIDrLEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add Library_JRE System Library",
+          "startTime": 1354699806937,
+          "endTime": 1354699819875
+        },
+        {
+          "testID": "_Rb1XwTLxEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Wizard Java Package Name",
+          "startTime": 1354699819968,
+          "endTime": 1354699842812
+        },
+        {
+          "testID": "_Sp46cDlAEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Edit Exclusion Pattern",
+          "startTime": 1354699842937,
+          "endTime": 1354699858406
+        },
+        {
+          "testID": "_TbC14D63EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Cancel Create",
+          "startTime": 1354699858593,
+          "endTime": 1354699879453
+        },
+        {
+          "testID": "_UZZccDLuEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change File Extension",
+          "startTime": 1354699879515,
+          "endTime": 1354699897562
+        },
+        {
+          "testID": "_VRAu8DO0EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Project Builder Name",
+          "startTime": 1354699897671,
+          "endTime": 1354699920281
+        },
+        {
+          "testID": "_VkhLsDOyEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithProjectBuilder_Change Package Name",
+          "startTime": 1354699920500,
+          "endTime": 1354699944203
+        },
+        {
+          "testID": "_W-yrQC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Add Main Method During New Class Creation",
+          "startTime": 1354699944265,
+          "endTime": 1354699962500
+        },
+        {
+          "testID": "_W_X6EC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Configure Project Layout",
+          "startTime": 1354699962593,
+          "endTime": 1354699982921
+        },
+        {
+          "testID": "_W_xisC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create Class With Extended Interface",
+          "startTime": 1354699983031,
+          "endTime": 1354700005046
+        },
+        {
+          "testID": "_XA-ckC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create Two Classes in Java Project",
+          "startTime": 1354700005109,
+          "endTime": 1354700029390
+        },
+        {
+          "testID": "_XALLUC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Interface",
+          "startTime": 1354700029500,
+          "endTime": 1354700044562
+        },
+        {
+          "testID": "_XB63wC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Generate Comments",
+          "startTime": 1354700044609,
+          "endTime": 1354700062109
+        },
+        {
+          "testID": "_XCDaoC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Generate Element Comment",
+          "startTime": 1354700062265,
+          "endTime": 1354700075265
+        },
+        {
+          "testID": "_XClmIC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Launch From Context Menu",
+          "startTime": 1354700075328,
+          "endTime": 1354700093984
+        },
+        {
+          "testID": "_XDI_wC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Paste Code Snippets to Create a Type",
+          "startTime": 1354700094062,
+          "endTime": 1354700126109
+        },
+        {
+          "testID": "_XDioYC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Set Break Point",
+          "startTime": 1354700126171,
+          "endTime": 1354700140765
+        },
+        {
+          "testID": "_XEN90C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Use Templates to Create a Method",
+          "startTime": 1354700140828,
+          "endTime": 1354700160328
+        },
+        {
+          "testID": "_YvOWYDoDEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Add JARs",
+          "startTime": 1354700160421,
+          "endTime": 1354700181187
+        },
+        {
+          "testID": "_bl52AD3cEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add New Source Folder_Folder Name Should Be Unique",
+          "startTime": 1354700181453,
+          "endTime": 1354700197218
+        },
+        {
+          "testID": "_cmtZwDecEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add String Property to Component Definition",
+          "startTime": 1354700197296,
+          "endTime": 1354700215250
+        },
+        {
+          "testID": "_fsq8wDeqEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add Float Property To Component Definition",
+          "startTime": 1354700215328,
+          "endTime": 1354700234937
+        },
+        {
+          "testID": "_gsj8YDVNEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_Mail_Change Package Name",
+          "startTime": 1354700235000,
+          "endTime": 1354700255734
+        },
+        {
+          "testID": "_hbz1QD3jEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Add Library To Build Path",
+          "startTime": 1354700256187,
+          "endTime": 1354700275312
+        },
+        {
+          "testID": "_iIwSkDn4EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove Rules",
+          "startTime": 1354700275562,
+          "endTime": 1354700296562
+        },
+        {
+          "testID": "_lC6ewD6nEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "Category Definition_Category Must Have Unique ID",
+          "startTime": 1354700296671,
+          "endTime": 1354700315078
+        },
+        {
+          "testID": "_m4DM4DnwEeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Deselect All Build Path Projects",
+          "startTime": 1354700315312,
+          "endTime": 1354700332562
+        },
+        {
+          "testID": "_nGXZEDeoEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add Integer Property to Component Definition",
+          "startTime": 1354700332656,
+          "endTime": 1354700355140
+        },
+        {
+          "testID": "_nl84MDOvEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithEditor_Change Editor Name",
+          "startTime": 1354700355203,
+          "endTime": 1354700371453
+        },
+        {
+          "testID": "_oh5jIDLrEeK0utYbRJbZ1g",
+          "status": "Pass",
+          "testName": "PlugInWithMultipageEditor_Change Class Name",
+          "startTime": 1354700371546,
+          "endTime": 1354700392000
+        },
+        {
+          "testID": "_rY1dIDrEEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "New Java Project Wizard_Add Variable",
+          "startTime": 1354700392093,
+          "endTime": 1354700409734
+        },
+        {
+          "testID": "_soKSkD3bEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Cancel Link Source",
+          "startTime": 1354700410000,
+          "endTime": 1354700422500
+        },
+        {
+          "testID": "_v2CPcC_HEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Skip All Breakpoints",
+          "startTime": 1354700422703,
+          "endTime": 1354700463875
+        },
+        {
+          "testID": "_vgv28D6kEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Multiple Delete Category",
+          "startTime": 1354700463968,
+          "endTime": 1354700479937
+        },
+        {
+          "testID": "_x3a_YDk-EeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Exclude Class From Build Path",
+          "startTime": 1354700480000,
+          "endTime": 1354700495875
+        },
+        {
+          "testID": "_yyGXcDrJEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Class Wizard_Configure Variable_New_Folder",
+          "startTime": 1354700496109,
+          "endTime": 1354700517656
+        },
+        {
+          "testID": "_zWCicDOsEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithView_Change View Class Name",
+          "startTime": 1354700517734,
+          "endTime": 1354700538140
+        },
+        {
+          "testID": "_zoOIAD63EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Export Feature",
+          "startTime": 1354700538187,
+          "endTime": 1354700572484
+        }
+      ]
+    },
+    {
+      "agentID": "tcp://192.168.4.133:4000",
+      "tests": [
+        {
+          "testID": "_4Gmn8DedEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Remove String Property From Component Definition",
+          "startTime": 1354699486389,
+          "endTime": 1354699515576
+        },
+        {
+          "testID": "_Vs_RcDVCEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_HelloRCP_Add Branding",
+          "startTime": 1354699954920,
+          "endTime": 1354699997311
+        },
+        {
+          "testID": "_W-7OIC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Add Remove Block Comment",
+          "startTime": 1354699997436,
+          "endTime": 1354700012639
+        },
+        {
+          "testID": "_W_6FkC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create Class With Superclass",
+          "startTime": 1354700012701,
+          "endTime": 1354700033858
+        },
+        {
+          "testID": "_XAcREC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Java Project",
+          "startTime": 1354700033920,
+          "endTime": 1354700044858
+        },
+        {
+          "testID": "_XAtW0C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Create New Source Folder",
+          "startTime": 1354700044998,
+          "endTime": 1354700059936
+        },
+        {
+          "testID": "_XBgoEC1lEeKgx4EWM9YkNw",
+          "status": "Fail",
+          "testName": "Delete Method in Package Explorer",
+          "startTime": 1354700060061,
+          "endTime": 1354700075045
+        },
+        {
+          "testID": "_XCL9gC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Import Breakpoints",
+          "startTime": 1354700075514,
+          "endTime": 1354700095998
+        },
+        {
+          "testID": "_XCuwEC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Open Type Hierarchy",
+          "startTime": 1354700096061,
+          "endTime": 1354700117326
+        },
+        {
+          "testID": "_XDRioC1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Remove Breakpoint From Breakpoints View",
+          "startTime": 1354700117373,
+          "endTime": 1354700139639
+        },
+        {
+          "testID": "_XEEz4C1lEeKgx4EWM9YkNw",
+          "status": "Pass",
+          "testName": "Use Quick Fix to Create New Method",
+          "startTime": 1354700140826,
+          "endTime": 1354700167701
+        },
+        {
+          "testID": "_XkFGADefEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Multiple Remove Properties_Component Definition",
+          "startTime": 1354700167795,
+          "endTime": 1354700181123
+        },
+        {
+          "testID": "_ZMvCYD3gEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Remove From Build Path",
+          "startTime": 1354700181186,
+          "endTime": 1354700196545
+        },
+        {
+          "testID": "_cegAwC_MEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Open Implementation",
+          "startTime": 1354700196623,
+          "endTime": 1354700213061
+        },
+        {
+          "testID": "_esfgwDksEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Remove from build path",
+          "startTime": 1354700213155,
+          "endTime": 1354700234311
+        },
+        {
+          "testID": "_gmmScDkrEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Use project as source folder",
+          "startTime": 1354700234545,
+          "endTime": 1354700249123
+        },
+        {
+          "testID": "_hB6IUC8NEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Hide Static Fields And Methods",
+          "startTime": 1354700249201,
+          "endTime": 1354700261983
+        },
+        {
+          "testID": "_i8X0cC8OEeK8x-jSBDzgRw",
+          "status": "Pass",
+          "testName": "Hide Non-Public Methods",
+          "startTime": 1354700262326,
+          "endTime": 1354700279420
+        },
+        {
+          "testID": "_ipHUMDVDEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_RCPWithView_Change Application Class",
+          "startTime": 1354700279467,
+          "endTime": 1354700297233
+        },
+        {
+          "testID": "_k6I8cDn1EeKckJ7dABuxtQ",
+          "status": "Pass",
+          "testName": "New Java Project Wizard_Edit Access Rule",
+          "startTime": 1354700297420,
+          "endTime": 1354700317967
+        },
+        {
+          "testID": "_lTidcDeQEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Cancel Feature Project Creation",
+          "startTime": 1354700318045,
+          "endTime": 1354700332295
+        },
+        {
+          "testID": "_mRCncDrFEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "New Java Class Wizard_Configure Variable_Edit_File",
+          "startTime": 1354700332342,
+          "endTime": 1354700344233
+        },
+        {
+          "testID": "_niR18DOrEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithPropertyPage_Change Name Filter",
+          "startTime": 1354700344420,
+          "endTime": 1354700361717
+        },
+        {
+          "testID": "_odrcUDOtEeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithView_Change Category ID",
+          "startTime": 1354700361905,
+          "endTime": 1354700383592
+        },
+        {
+          "testID": "_ozXLgDrLEeKNqPSkY0DPCQ",
+          "status": "Fail",
+          "testName": "New Java Project Wizard_Add Library_JUnit Library",
+          "startTime": 1354700383655,
+          "endTime": 1354700397311
+        },
+        {
+          "testID": "_qivNcD33EeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Category Definition_Add New Category",
+          "startTime": 1354700397530,
+          "endTime": 1354700420326
+        },
+        {
+          "testID": "_t4VlsDVDEeK2lKowMm2KiQ",
+          "status": "Pass",
+          "testName": "RichClientApplication_RCPWithView_Add Branding",
+          "startTime": 1354700420483,
+          "endTime": 1354700449405
+        },
+        {
+          "testID": "_uXBlQDeSEeKmOu1iJSfk-g",
+          "status": "Pass",
+          "testName": "Install Handler Library While Creating Feature Project",
+          "startTime": 1354700449483,
+          "endTime": 1354700466701
+        },
+        {
+          "testID": "_w6SB8DO9EeKWyKj1hZOy8A",
+          "status": "Pass",
+          "testName": "PlugInWithHelpContent_Generate Primary TOC for testing",
+          "startTime": 1354700466748,
+          "endTime": 1354700499389
+        },
+        {
+          "testID": "_xmxXED3aEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "Java Project_Link Source_Folder Name Should Not Be Empty",
+          "startTime": 1354700500905,
+          "endTime": 1354700512201
+        },
+        {
+          "testID": "_ypQvEDrKEeKNqPSkY0DPCQ",
+          "status": "Pass",
+          "testName": "New Java Class Wizard_Cancel Add Variable",
+          "startTime": 1354700512264,
+          "endTime": 1354700523561
+        },
+        {
+          "testID": "_zjIHoTebEeKagI90zyK_pw",
+          "status": "Pass",
+          "testName": "Add File To Component Definition",
+          "startTime": 1354700523608,
+          "endTime": 1354700540733
+        }
+      ]
+    }
+  ],
+  "autArtifacts": [
+    "tests",
+    "artifacts0.zip",
+    "artifacts0.zip.md5",
+    "eclipse_SDK_I20121031_2000_win32.zip",
+    "eclipse_SDK_I20121031_2000_win32.zip.md5"
+  ],
+  "metadataArtifacts": [
+    "test.options.properties",
+    "metadata.properties",
+    "aut0.properties",
+    "q7.report",
+    "tcp___192.168.4.112_4000_0.console.log",
+    "tcp___192.168.4.112_4000_0.error.log",
+    "tcp___192.168.4.124_4000_0.console.log",
+    "tcp___192.168.4.124_4000_0.error.log",
+    "tcp___192.168.4.111_4000_0.console.log",
+    "tcp___192.168.4.111_4000_0.error.log",
+    "tcp___192.168.4.133_4000_0.console.log",
+    "tcp___192.168.4.133_4000_0.error.log",
+    "tcp___192.168.4.133_4000_1.console.log",
+    "tcp___192.168.4.133_4000_1.error.log",
+    "errors_0.log",
+    "tcp___192.168.4.111_4000.log_0.log",
+    "tcp___192.168.4.112_4000.log_0.log",
+    "tcp___192.168.4.133_4000.log_0.log",
+    "execution_0.log",
+    "tcp___192.168.4.124_4000.log_0.log"
+  ],
+  "id": "0000002",
+  "canceledCount": 0,
+  "passedCount": 224,
+  "executedCount": 234,
+  "globalID": 25,
+  "state": "FINISHED",
+  "suiteId": "com.xored-e4.jdt.tests",
+  "metadata": [
+    {
+      "key": "buildID",
+      "value": "0000002"
+    },
+    {
+      "key": "suiteName",
+      "value": "com.xored-e4.jdt.tests-0000002"
+    },
+    {
+      "key": "executionTime",
+      "value": "1354698892139"
+    }
+  ]
+}

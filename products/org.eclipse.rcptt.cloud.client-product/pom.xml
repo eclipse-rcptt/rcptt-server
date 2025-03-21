@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2011 Xored Software Inc and others
+
+This program and the accompanying materials are made available under the
+terms of the Eclipse Public License 2.0 which is available at
+http://www.eclipse.org/legal/epl-2.0.
+
+SPDX-License-Identifier: EPL-2.0
+
+Contributors:
+    Xored Software Inc - initial API and implementation
+-->
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>q7server</artifactId>
+		<groupId>org.eclipse.rcptt.cloud</groupId>
+		<version>2.5.5-SNAPSHOT</version>
+		<relativePath>../..</relativePath>
+	</parent>
+
+  <groupId>org.eclipse.rcptt.cloud</groupId>
+  <artifactId>client</artifactId>
+  <packaging>eclipse-repository</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <skip>false</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-p2-director-plugin</artifactId>
+        <version>${tycho-version}</version>
+        <executions>
+          <execution>
+            <id>materialize-products</id>
+            <phase>package</phase>
+            <goals>
+              <goal>materialize-products</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>archive-products</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>archive-products</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>java</executable>
+          <!-- optional -->
+          <workingDirectory>${project.build.directory}</workingDirectory>
+          <arguments>
+            <argument>
+              ${project.basedir}/scripts/scripts/UniversalProduct.java</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>${tycho-groupid}</groupId>
+        <artifactId>tycho-p2-repository-plugin</artifactId>
+        <version>${tycho-version}</version>
+        <executions>
+          <execution>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>archive-repository</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includeAllDependencies>true</includeAllDependencies>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

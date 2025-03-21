@@ -1,0 +1,165 @@
+#+TITLE: Q7 Cloud REST API by example
+#+AUTHOR: Gleb Kanterov <kanterov@xored.com>
+
+* Get executions ordered by id descending
+
+#+BEGIN_SRC foundation
+GET api/executions
+#+END_SRC
+
+  #+BEGIN_SRC js
+    [
+      {
+        id: 12, 
+        testSuiteName: "e4.platform.tests", 
+        tests: {failed: 0, succeded: 0, ignored: 0, total: 1010}, 
+        status: "PENDING", 
+        meta: {buildName: "I20121031-2000"}, // execution metadata passed from client
+        time: {...}
+      },
+      {
+        id: 11, 
+        testSuiteName: "e4.platform.tests", 
+        tests: {failed: 0, succeded: 100, ignored: 0, total: 1010}, 
+        status: "RUNNING", 
+        meta: {buildName: "I20121031-2000"},
+        time: {
+          elapsedCpu: 100, // time in milliseconds
+          elapsedCloud: 10, 
+          estimatedCpu: 1000, 
+          estimatedCloud: 100
+        }
+      },
+      {
+        id: 10, 
+        testSuiteName: "e4.platform.tests", 
+        tests: {failed: 10, succeded: 1000, ignored: 0, total: 1010}, 
+        status: "FINISHED", 
+        meta: {buildName: "I20121031-2000"},
+        time: {...}
+      }
+    ]
+  #+END_SRC
+
+* Get executions with filtering
+
+#+BEGIN_SRC foundation
+GET api/executions?testSuiteName=e4.platform.tests&status=RUNNING
+#+END_SRC
+
+#+BEGIN_SRC js
+  [{
+    id: 11, 
+    testSuiteName: "e4.platform.tests", 
+    tests: {failed: 0, succeded: 100, ignored: 0, total: 1010}, 
+    status: "RUNNING", 
+    meta: {buildName: "I20121031-2000"},
+    time: {...}
+  }]
+  
+#+END_SRC
+
+* Get single execution
+
+#+BEGIN_SRC foundation
+GET api/executions/11
+#+END_SRC
+
+#+BEGIN_SRC js
+  [{
+    id: 11, 
+    testSuiteName: "e4.platform.tests", 
+    tests: {failed: 0, succeded: 100, ignored: 0, total: 1010}, 
+    status: "RUNNING", 
+    meta: {buildName: "I20121031-2000"},
+    time: {...}
+  }]
+#+END_SRC
+
+* Get execution artifacts
+
+#+BEGIN_SRC foundation
+GET api/executions/11/artifacts
+#+END_SRC
+
+#+BEGIN_SRC js
+  [
+    {
+      name: 'eclipse-SDK-N20121118-2000-win32.zip',
+      type: 'aut',
+      size: 187926561, // size in bytes
+      created: 1354097020 // unix time
+    },
+    {
+      name: 'report.xml',
+      type: 'report',
+      size: 1000, // size in bytes
+      created: 1354097020 // unit time
+    }
+  ]
+#+END_SRC
+
+* Get artifact content
+
+#+BEGIN_SRC foundation
+GET api/executions/11/artifacts/report.xml
+#+END_SRC
+
+* Get execution report
+
+#+BEGIN_SRC foundation
+GET api/execution/11/report
+#+END_SRC
+
+#+BEGIN_SRC js
+// TODO: describe structure
+{
+}
+#+END_SRC
+
+* Long polling
+
+#+BEGIN_SRC foundation
+GET api/executions?feed=longpoll&since=11
+#+END_SRC
+
+Inspired by http://guide.couchdb.org/draft/notifications.html#long
+
+#+BEGIN_SRC js
+   {
+     id: 11, 
+     testSuiteName: "e4.platform.tests", 
+     tests: {failed: 0, succeded: 100, ignored: 0, total: 1010}, 
+     status: "RUNNING", 
+     meta: {buildName: "I20121031-2000"},
+     time: {elapsedCpu: 10, elapsedCloud: 1, estimatedCpu: 1000, estimatedCloud: 100},
+   }
+#+END_SRC
+
+Few minutes later
+
+#+BEGIN_SRC js
+  {
+    id: 11, 
+    testSuiteName: "e4.platform.tests", 
+    tests: {failed: 0, succeded: 200, ignored: 0, total: 1010}, 
+    status: "RUNNING", 
+    meta: {buildName: "I20121031-2000"},
+    time: {elapsedCpu: 100, elapsedCloud: 10, estimatedCpu: 1000, estimatedCloud: 100},
+    cpuTime: 2000,
+    cloudTime: 20
+  }
+#+END_SRC
+
+And so on... then
+
+#+BEGIN_SRC js
+   {
+     id: 11, 
+     testSuiteName: "e4.platform.tests", 
+     tests: {failed: 0, succeded: 1010, ignored: 0, total: 1010}, 
+     status: "FINISHED", 
+     meta: {buildName: "I20121031-2000"},
+     time: {elapsedCpu: 950, elapsedCloud: 95, estimatedCpu: 1000, estimatedCloud: 100}
+    }
+#+END_SRC

@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Automatic-Module-Name: org.eclipse.rcptt.cloud.server.rest
+Bundle-Name: Rest
+Bundle-SymbolicName: org.eclipse.rcptt.cloud.server.rest;singleton:=true
+Bundle-Version: 2.5.5.qualifier
+Bundle-Activator: org.eclipse.rcptt.cloud.server.rest.internal.RestAPIPlugin
+Bundle-Vendor: Eclipse RCP Testing Tool Project
+Require-Bundle: org.eclipse.core.runtime,
+ com.google.gson,
+ com.google.guava,
+ org.eclipse.rcptt.cloud.server.app,
+ org.eclipse.rcptt.cloud.server.ism,
+ org.eclipse.rcptt.cloud.server,
+ org.eclipse.rcptt.cloud.model,
+ org.eclipse.swt,
+ org.eclipse.rcptt.watson.core;bundle-version="[2.3.0,3.0.0)",
+ org.eclipse.rcptt.reporting;bundle-version="[2.3.0,3.0.0)",
+ org.eclipse.rcptt.core;bundle-version="[2.3.0,3.0.0)",
+ org.eclipse.rcptt.reporting.util;bundle-version="[2.3.0,3.0.0)",
+ org.eclipse.jetty.server;bundle-version="12.0.6",
+ org.eclipse.jetty.util;bundle-version="12.0.6",
+ org.eclipse.jetty.io;bundle-version="12.0.6",
+ org.eclipse.jetty.http;bundle-version="12.0.6"
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-ActivationPolicy: lazy

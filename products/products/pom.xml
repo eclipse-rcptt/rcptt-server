@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2011 Xored Software Inc and others
+
+This program and the accompanying materials are made available under the
+terms of the Eclipse Public License 2.0 which is available at
+http://www.eclipse.org/legal/epl-2.0.
+
+SPDX-License-Identifier: EPL-2.0
+
+Contributors:
+    Xored Software Inc - initial API and implementation
+-->
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>q7server</artifactId>
+		<groupId>org.eclipse.rcptt.cloud</groupId>
+		<version>2.5.5-SNAPSHOT</version>
+		<relativePath>../..</relativePath>
+	</parent>
+
+	<groupId>org.eclipse.rcptt.cloud</groupId>
+	<artifactId>agent-server-products</artifactId>
+	<packaging>eclipse-repository</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>${tycho-groupid}</groupId>
+				<artifactId>tycho-p2-director-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<executions>
+					<execution>
+						<id>materialize-products</id>
+						<phase>package</phase>
+						<goals>
+							<goal>materialize-products</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>archive-products</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>archive-products</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<products>
+						<product>
+							<id>org.eclipse.rcptt.cloud.server.product</id>
+							<attachId>server</attachId>
+						</product>
+						<product>
+							<id>org.eclipse.rcptt.cloud.agent.product</id>
+							<attachId>agent</attachId>
+						</product>
+					</products>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>${tycho-groupid}</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<environments>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>aarch64</arch>
+						</environment>
+					</environments>
+				</configuration>
+			</plugin>
+			<!--plugin>
+				<groupId>${tycho-groupid}</groupId>
+				<artifactId>tycho-p2-publisher-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<publishArtifacts>true</publishArtifacts>
+				</configuration>
+			</plugin-->
+		</plugins>
+	</build>
+</project>

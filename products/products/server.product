@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="RCPTT Server" uid="org.eclipse.rcptt.cloud.server.product" application="org.eclipse.rcptt.cloud.server.app.headless" version="2.5.5.qualifier" type="features" includeLaunchers="true" autoIncludeRequirements="true">
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
+      </vmArgsMac>
+   </launcherArgs>
+
+   <windowImages/>
+
+   <launcher>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+   </vm>
+
+   <license>
+        <url>http://www.eclipse.org/legal/epl-2.0</url>
+        <text>
+   Copyright (c) 2011 Xored Software Inc.
+
+This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ 
+SPDX-License-Identifier: EPL-2.0
+
+Contributors: 
+    Xored Software Inc. - initial API and implementation
+         </text>
+   </license>
+
+   <plugins>
+   </plugins>
+
+   <features>
+      <feature id="org.eclipse.rcptt.ecl.server"/>
+      <feature id="org.eclipse.rcptt.ecl.core"/>
+      <feature id="org.eclipse.emf.ecore"/>
+      <feature id="org.eclipse.emf.common"/>
+      <feature id="org.eclipse.rcptt.tesla"/>
+      <feature id="org.eclipse.rcptt.tesla.ecl"/>
+      <feature id="org.eclipse.emf.edit"/>
+      <feature id="org.eclipse.rcptt.cloud.server-feature"/>
+      <feature id="org.eclipse.rcptt.ecl.platform"/>
+      <feature id="org.eclipse.equinox.executable"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="4" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+   </configurations>
+
+</product>
