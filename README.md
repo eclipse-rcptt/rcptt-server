@@ -1,5 +1,5 @@
 # Eclipse RCPTT Server
-Eclipse RCPTT Server is a part of[Rich Client Platform Testing Tool Project](https://github.com/eclipse-rcptt/org.eclipse.rcptt).
+Eclipse RCPTT Server is a part of [Rich Client Platform Testing Tool Project](https://github.com/eclipse-rcptt/org.eclipse.rcptt).
 RCPTT Server implements client-server-agent pattern for rapid distributed execution of [Rich Client Platform Testing Tool](https://github.com/eclipse-rcptt/org.eclipse.rcptt) tests.
 
 - [Terms of Use](https://www.eclipse.org/legal/termsofuse.php)
