@@ -11,7 +11,8 @@ SPDX-License-Identifier: EPL-2.0
 Contributors:
     Xored Software Inc - initial API and implementation
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eclipse.rcptt.cloud</groupId>
@@ -26,10 +27,15 @@ Contributors:
 		<!--platformRepository>https://download.eclipse.org/rcptt/release/2.5.5/repository/</platformRepository-->
 	</properties>
 	<distributionManagement>
+		<repository>
+			<id>repo.eclipse.org</id>
+			<name>RCPTT Repository - Releases</name>
+			<url>https://repo.eclipse.org/content/repositories/rcptt-releases/</url>
+		</repository>
 		<snapshotRepository>
-			<id>github</id>
-			<name>Xored Q7 Maven repository</name>
-			<url>https://maven.pkg.github.org.eclipse.rcpttserver-pkg</url>
+			<id>repo.eclipse.org</id>
+			<name>RCPTT Repository - Snapshots</name>
+			<url>https://repo.eclipse.org/content/repositories/rcptt-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
@@ -37,22 +43,6 @@ Contributors:
 		<pluginRepository>
 			<id>dash-licenses</id>
 			<url>https://repo.eclipse.org/content/repositories/dash-licenses-releases/</url>
-		</pluginRepository>
-		<pluginRepository>
-			<snapshots>
-                <updatePolicy>always</updatePolicy>
-                </snapshots>
-                <id>synergy</id>
-                <name>Xored Maven repository</name>
-                <url>http://maven.xored.com/nexus/content/repositories/synergy/</url>
-      </pluginRepository>
-		<pluginRepository>
-			<snapshots>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-			<id>xored</id>
-			<name>Xored Maven repository</name>
-			<url>http://maven.xored.com/nexus/content/repositories/snapshots/</url>
 		</pluginRepository>
 	</pluginRepositories>
 	<modules>
@@ -73,13 +63,6 @@ Contributors:
 			</releases>
 			<url>http://download.eclipse.org/releases/2025-03</url>
 		</repository>
-		<!-- repository>
-			<snapshots>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-			<id>synergy</id>
-			<url>http://maven.xored.com/nexus/content/repositories/q7-snapshots/com/xored/synergy/p2repository/1.0.0-SNAPSHOT/p2repository-1.0.0-20171110.132230-3.zip</url>
-		</repository-->
 		<repository>
 			<snapshots>
 				<updatePolicy>always</updatePolicy>
@@ -134,7 +117,6 @@ Contributors:
 					</execution>
 				</executions>
 			</plugin>
-
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
@@ -164,5 +146,21 @@ Contributors:
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-p2-director-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<configuration>
+						<formats>
+							<win32>zip</win32>
+							<linux>zip</linux>
+							<macosx>zip</macosx>
+						</formats>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>
