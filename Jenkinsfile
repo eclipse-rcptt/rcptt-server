@@ -21,7 +21,12 @@ pipeline {
      disableConcurrentBuilds()
      timeout(time: 10, unit: 'HOURS')
   }
-
+  
+	tools {
+		jdk 'temurin-jdk21-latest'
+		maven 'apache-maven-latest'
+	}
+  
   stages {
     stage('Maven') {
       steps {
