@@ -28,7 +28,7 @@ function process_all() {
 
 cat > "$HEADER_FILE" <<EOF
 /********************************************************************************
- * Copyright (c) 2011 Xored Software Inc and others
+ * Copyright (c) 2025 Xored Software Inc and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -41,11 +41,11 @@ cat > "$HEADER_FILE" <<EOF
  ********************************************************************************/
 EOF
 
-find . -type f \( -name \*.java -or -name \*.js -or -name \*.css \) -not -path \*/gen-src/\* $MISSING_COPYRIGHT_DETECTION -print | process_all prepend
+find . -type f \( -name \*.java -or -name \*.js -or -name \*.css -or -name Jenkinsfile\* \) -not -path \*/gen-src/\* $MISSING_COPYRIGHT_DETECTION -print | process_all prepend
 
 cat > "$HEADER_FILE" <<EOF
 ###############################################################################
-# Copyright (c) 2011 Xored Software Inc.
+# Copyright (c) 2025 Xored Software Inc.
 # This program and the accompanying materials are made available
 # under the terms of the Eclipse Public License 2.0 which is available
 # at http://www.eclipse.org/legal/epl-2.0.
@@ -61,7 +61,7 @@ find . -type f -name "build.properties" $MISSING_COPYRIGHT_DETECTION -print | pr
 
 cat > "$HEADER_FILE" <<EOF
 <!--
-Copyright (c) 2011 Xored Software Inc and others
+Copyright (c) 2025 Xored Software Inc and others
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
