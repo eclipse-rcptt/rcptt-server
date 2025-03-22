@@ -1,4 +1,4 @@
-package com.xored.q7.maven;
+package org.eclipse.rcptt.maven;
 
 import java.io.File;
 import java.util.Arrays;
@@ -12,12 +12,11 @@ import org.codehaus.plexus.archiver.manager.ArchiverManager;
 import org.codehaus.plexus.util.FileUtils;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
-
 import org.eclipse.rcptt.maven.util.ArchiveUtil;
 import org.eclipse.rcptt.maven.util.CoordResolver;
-import com.xored.q7.maven.util.Q7Coords;
-import org.eclipse.rcptt.maven.util.TestOptions;
+import org.eclipse.rcptt.maven.util.Q7Coords;
 import org.eclipse.rcptt.maven.util.RCPTTMetadata;
+import org.eclipse.rcptt.maven.util.TestOptions;
 
 public abstract class AbstractQ7Mojo extends AbstractMojo {
 	public static final String HAS_TESTS_KEY = "hasq7tests";

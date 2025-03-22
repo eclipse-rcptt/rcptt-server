@@ -1,4 +1,4 @@
-package com.xored.q7.maven.util;
+package org.eclipse.rcptt.maven.util;
 
 public class Location {
 	private String classifier;

@@ -1,4 +1,4 @@
-package com.xored.q7.maven;
+package org.eclipse.rcptt.maven;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -22,10 +22,9 @@ import org.codehaus.plexus.util.cli.CommandLineException;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.cli.Commandline;
 import org.codehaus.plexus.util.cli.StreamConsumer;
-
 import org.eclipse.rcptt.maven.util.Injection;
 import org.eclipse.rcptt.maven.util.JavaExec;
-import com.xored.q7.maven.util.Location;
+import org.eclipse.rcptt.maven.util.Location;
 import org.eclipse.rcptt.maven.util.NetUtils;
 import org.eclipse.rcptt.maven.util.TestOptions;
 

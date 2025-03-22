@@ -1,6 +1,4 @@
-package com.xored.q7.maven.util;
-
-import org.eclipse.rcptt.maven.util.Coords;
+package org.eclipse.rcptt.maven.util;
 
 public class Q7Coords extends Coords {
 	private String clientId = null;

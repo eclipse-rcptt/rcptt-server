@@ -1,4 +1,4 @@
-package com.xored.q7.maven;
+package org.eclipse.rcptt.maven;
 
 import java.io.File;
 

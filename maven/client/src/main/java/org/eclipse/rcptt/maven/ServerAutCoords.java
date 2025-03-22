@@ -1,7 +1,7 @@
-package com.xored.q7.maven;
+package org.eclipse.rcptt.maven;
 
 import org.eclipse.rcptt.maven.util.AutCoords;
-import com.xored.q7.maven.util.Location;
+import org.eclipse.rcptt.maven.util.Location;
 
 public class ServerAutCoords extends AutCoords {
 
