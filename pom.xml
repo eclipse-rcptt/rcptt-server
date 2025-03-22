@@ -15,41 +15,28 @@ Contributors:
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.eclipse.rcptt.cloud</groupId>
+	<parent>
+		<groupId>org.eclipse.rcptt.cloud</groupId>
+		<artifactId>base</artifactId>
+		<version>2.5.5-SNAPSHOT</version>
+		<relativePath>base-pom.xml</relativePath>
+	</parent>
 	<artifactId>q7server</artifactId>
-	<version>2.5.5-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
 		<tycho-version>4.0.10</tycho-version>
 		<tycho-groupid>org.eclipse.tycho</tycho-groupid>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<platformRepository>https://download.eclipse.org/rcptt/nightly/2.6.0/latest/repository/</platformRepository>
+		<platformRepository>
+			https://download.eclipse.org/rcptt/nightly/2.6.0/latest/repository/</platformRepository>
 		<!--platformRepository>https://download.eclipse.org/rcptt/release/2.5.5/repository/</platformRepository-->
 	</properties>
-	<distributionManagement>
-		<repository>
-			<id>repo.eclipse.org</id>
-			<name>RCPTT Repository - Releases</name>
-			<url>https://repo.eclipse.org/content/repositories/rcptt-releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>repo.eclipse.org</id>
-			<name>RCPTT Repository - Snapshots</name>
-			<url>https://repo.eclipse.org/content/repositories/rcptt-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>dash-licenses</id>
-			<url>https://repo.eclipse.org/content/repositories/dash-licenses-releases/</url>
-		</pluginRepository>
-	</pluginRepositories>
 	<modules>
 		<module>tests</module>
 		<module>bundles</module>
 		<module>features</module>
 		<module>products</module>
+		<module>maven</module>
 	</modules>
 	<repositories>
 		<repository>
@@ -74,7 +61,8 @@ Contributors:
 		<repository>
 			<id>orbit</id>
 			<layout>p2</layout>
-			<url>https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository</url>
+			<url>
+				https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository</url>
 		</repository>
 		<repository>
 			<id>cbi</id>
@@ -87,10 +75,10 @@ Contributors:
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.0</version>
+				<version>3.14.0</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>8</source>
+					<target>8</target>
 				</configuration>
 			</plugin>
 			<plugin>
