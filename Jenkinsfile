@@ -32,6 +32,12 @@ pipeline {
       steps {
         sh 'mvn clean verify'
       }
+      post {
+        always {
+          junit "tests/*/target/*-reports/*.xml"
+          archiveArtifacts allowEmptyArchive: false, artifacts: 'products/products/target/products/*.zip,  products/org.eclipse.rcptt.cloud.client-product/target/products/*.zip, **/*.hrpof, **/*.log'
+        }
+      }
     }
   }
 
