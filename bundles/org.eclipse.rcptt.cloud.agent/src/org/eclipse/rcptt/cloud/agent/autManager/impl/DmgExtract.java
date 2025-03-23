@@ -71,9 +71,12 @@ final class DmgExtract {
 		processBuilder.redirectOutput(Redirect.INHERIT);
 
 		for (String point : mountpoints) {
-			copyFolder(Paths.get(point), target, NOFOLLOW_LINKS);
-			processBuilder.command("hdiutil", "detach", point);
-			completeProcess(processBuilder.start(), "" + processBuilder.command());
+			try {
+				copyFolder(Paths.get(point), target, NOFOLLOW_LINKS);
+			} finally {
+				processBuilder.command("hdiutil", "detach", point);
+				completeProcess(processBuilder.start(), "" + processBuilder.command());
+			}
 		}
 
 	}

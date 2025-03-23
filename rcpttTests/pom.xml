@@ -25,12 +25,13 @@ Contributors:
 	<!-- RCPTT Maven Plugin and RCPTT Runner are hosted in this repository -->
 	<pluginRepositories>
 		<pluginRepository>
-			<id>q7server-pkg</id>
-			<name>Q7 Maven Snapshots repository</name>
+			<id>eclipse-rcptt-snapshots</id>
+			<name>RCPTT Maven Releases repository</name>
+			<url>https://repo.eclipse.org/content/repositories/rcptt-snapshots/</url>
 			<snapshots>
+				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
 			</snapshots>
-			<url>https://maven.pkg.github.org.eclipse.rcpttserver-pkg</url>
 		</pluginRepository>
 		<pluginRepository>
 			<id>eclipse-rcptt-releases</id>
@@ -113,8 +114,8 @@ Contributors:
 			</plugin>
 
 			<plugin>
-				<groupId>com.xored.ci4rcptt</groupId>
-				<artifactId>q7-server-maven-plugin</artifactId>
+				<groupId>org.eclipse.rcptt</groupId>
+				<artifactId>client</artifactId>
 				<version>${rcptt-maven-version}</version>
 				<extensions>true</extensions>
 				<configuration>

@@ -9,13 +9,13 @@
 			<configuration>
 				<phases>
 					<generate-resources>
-						com.xored.ci4rcptt:q7-server-maven-plugin:resources
+						org.eclipse.rcptt:client:resources
 					</generate-resources>
 					<compile>
-						com.xored.ci4rcptt:q7-server-maven-plugin:execute 
+						org.eclipse.rcptt:client:execute 
 					</compile>
 					<package>
-						com.xored.ci4rcptt:q7-server-maven-plugin:package
+						org.eclipse.rcptt:client:package
 					</package>
 					<install>
 						org.apache.maven.plugins:maven-install-plugin:install

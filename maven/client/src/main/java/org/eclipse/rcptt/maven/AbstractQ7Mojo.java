@@ -1,5 +1,7 @@
 package org.eclipse.rcptt.maven;
 
+import static org.eclipse.rcptt.maven.util.CoordResolver.computeLocalClassifier;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -94,14 +96,15 @@ public abstract class AbstractQ7Mojo extends AbstractMojo {
 	 */
 	private Q7Coords q7client;
 
-	private static final String Q7_GROUP_ID = "com.xored.q7.cloud";
+	private static final String Q7_GROUP_ID = "org.eclipse.rcptt.cloud";
 	private static final String Q7_ARTIFACT_ID = "client";
 
 	protected Q7Coords getQ7Coords() {
 		if (q7client == null) {
 			q7client = new Q7Coords();
 		}
-		q7client.setClassifier("");
+		
+		q7client.setClassifier(computeLocalClassifier());
 		if (q7client.getArtifactId() == null) {
 			q7client.setArtifactId(Q7_ARTIFACT_ID);
 		}

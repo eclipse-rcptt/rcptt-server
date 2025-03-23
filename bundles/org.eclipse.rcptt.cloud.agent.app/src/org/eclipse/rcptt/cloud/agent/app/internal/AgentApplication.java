@@ -42,10 +42,10 @@ public class AgentApplication extends EclServerApplication {
 	@Arg
 	public String classifier;
 
-	@Arg
+	@Arg(isRequired = true, description = "RCPTT server port (should match server's -port argument)")
 	public String serverHost;
 
-	@Arg
+	@Arg(isRequired = true, description = "RCPTT server host")
 	public int serverPort;
 
 	@Arg(isRequired = false)
@@ -80,7 +80,7 @@ public class AgentApplication extends EclServerApplication {
 	public void setFetchCount(int fetchCount) {
 		this.fetchCount = fetchCount;
 	}
-
+	
 	@Override
 	public Object waitForCompletion() {
 		// SimpleFileQ7Monitor.setLogToConsole(true);

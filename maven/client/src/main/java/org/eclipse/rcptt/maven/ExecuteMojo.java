@@ -114,7 +114,7 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 		
 		// Application
 		cmd.createArg().setValue("-application");
-		cmd.createArg().setValue("com.xored.q7.cloud.client.headless");
+		cmd.createArg().setValue("org.eclipse.rcptt.cloud.client.headless");
 
 		// Workspace
 		cmd.createArg().setValue(WORKSPACE);
