@@ -4,8 +4,9 @@ set -exuo pipefail
 
 HEADER_FILE="/tmp/copyright.txt"
 TEMP_FILE="/tmp/temp.java"
-MISSING_COPYRIGHT_DETECTION=" "
+YEAR=2011
 
+MISSING_COPYRIGHT_DETECTION=" "
 for i in Copyright '(c)' Author @author ; do
 	MISSING_COPYRIGHT_DETECTION="$MISSING_COPYRIGHT_DETECTION -not -exec grep -q $i {} ; ";
 done
@@ -28,7 +29,7 @@ function process_all() {
 
 cat > "$HEADER_FILE" <<EOF
 /********************************************************************************
- * Copyright (c) 2025 Xored Software Inc and others
+ * Copyright (c) $YEAR Xored Software Inc and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -45,7 +46,7 @@ find . -type f \( -name \*.java -or -name \*.js -or -name \*.css -or -name Jenki
 
 cat > "$HEADER_FILE" <<EOF
 ###############################################################################
-# Copyright (c) 2025 Xored Software Inc.
+# Copyright (c) $YEAR Xored Software Inc.
 # This program and the accompanying materials are made available
 # under the terms of the Eclipse Public License 2.0 which is available
 # at http://www.eclipse.org/legal/epl-2.0.
@@ -61,7 +62,7 @@ find . -type f -name "build.properties" $MISSING_COPYRIGHT_DETECTION -print | pr
 
 cat > "$HEADER_FILE" <<EOF
 <!--
-Copyright (c) 2025 Xored Software Inc and others
+Copyright (c) $YEAR Xored Software Inc and others
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
