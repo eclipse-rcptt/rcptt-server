@@ -38,6 +38,10 @@ Contributors:
          id="org.eclipse.rcptt.launching"
          version="0.0.0"/>
 
+   <requires>
+      <import feature="org.eclipse.equinox.p2.core.feature"/>
+   </requires>
+
    <plugin
          id="org.eclipse.rcptt.reporting.html"
          version="0.0.0"/>
@@ -80,6 +84,10 @@ Contributors:
 
    <plugin
          id="com.google.guava"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.osgi.compatibility.state"
          version="0.0.0"/>
 
 </feature>
