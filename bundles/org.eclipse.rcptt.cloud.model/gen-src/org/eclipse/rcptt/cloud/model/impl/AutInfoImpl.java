@@ -44,6 +44,7 @@ import org.eclipse.rcptt.cloud.model.ModelPackage;
  *   <li>{@link org.eclipse.rcptt.cloud.model.impl.AutInfoImpl#getVmArgs <em>Vm Args</em>}</li>
  *   <li>{@link org.eclipse.rcptt.cloud.model.impl.AutInfoImpl#getUri <em>Uri</em>}</li>
  *   <li>{@link org.eclipse.rcptt.cloud.model.impl.AutInfoImpl#getLicenseUrl <em>License Url</em>}</li>
+ *   <li>{@link org.eclipse.rcptt.cloud.model.impl.AutInfoImpl#getExecutionEnvironment <em>Execution Environment</em>}</li>
  * </ul>
  *
  * @generated
@@ -198,6 +199,35 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 	 * @ordered
 	 */
 	protected String licenseUrl = LICENSE_URL_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getExecutionEnvironment() <em>Execution Environment</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getExecutionEnvironment()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String EXECUTION_ENVIRONMENT_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getExecutionEnvironment() <em>Execution Environment</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getExecutionEnvironment()
+	 * @generated
+	 * @ordered
+	 */
+	protected String executionEnvironment = EXECUTION_ENVIRONMENT_EDEFAULT;
+
+	/**
+	 * This is true if the Execution Environment attribute has been set.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	protected boolean executionEnvironmentESet;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -433,6 +463,56 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
+	public String getExecutionEnvironment() {
+		return executionEnvironment;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setExecutionEnvironment(String newExecutionEnvironment) {
+		String oldExecutionEnvironment = executionEnvironment;
+		executionEnvironment = newExecutionEnvironment;
+		boolean oldExecutionEnvironmentESet = executionEnvironmentESet;
+		executionEnvironmentESet = true;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ModelPackage.AUT_INFO__EXECUTION_ENVIRONMENT, oldExecutionEnvironment, executionEnvironment, !oldExecutionEnvironmentESet));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void unsetExecutionEnvironment() {
+		String oldExecutionEnvironment = executionEnvironment;
+		boolean oldExecutionEnvironmentESet = executionEnvironmentESet;
+		executionEnvironment = EXECUTION_ENVIRONMENT_EDEFAULT;
+		executionEnvironmentESet = false;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.UNSET, ModelPackage.AUT_INFO__EXECUTION_ENVIRONMENT, oldExecutionEnvironment, EXECUTION_ENVIRONMENT_EDEFAULT, oldExecutionEnvironmentESet));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public boolean isSetExecutionEnvironment() {
+		return executionEnvironmentESet;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
@@ -470,6 +550,8 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 				return getUri();
 			case ModelPackage.AUT_INFO__LICENSE_URL:
 				return getLicenseUrl();
+			case ModelPackage.AUT_INFO__EXECUTION_ENVIRONMENT:
+				return getExecutionEnvironment();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -512,6 +594,9 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 			case ModelPackage.AUT_INFO__LICENSE_URL:
 				setLicenseUrl((String)newValue);
 				return;
+			case ModelPackage.AUT_INFO__EXECUTION_ENVIRONMENT:
+				setExecutionEnvironment((String)newValue);
+				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -552,6 +637,9 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 			case ModelPackage.AUT_INFO__LICENSE_URL:
 				setLicenseUrl(LICENSE_URL_EDEFAULT);
 				return;
+			case ModelPackage.AUT_INFO__EXECUTION_ENVIRONMENT:
+				unsetExecutionEnvironment();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -583,6 +671,8 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 				return URI_EDEFAULT == null ? uri != null : !URI_EDEFAULT.equals(uri);
 			case ModelPackage.AUT_INFO__LICENSE_URL:
 				return LICENSE_URL_EDEFAULT == null ? licenseUrl != null : !LICENSE_URL_EDEFAULT.equals(licenseUrl);
+			case ModelPackage.AUT_INFO__EXECUTION_ENVIRONMENT:
+				return isSetExecutionEnvironment();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -614,6 +704,8 @@ public class AutInfoImpl extends EObjectImpl implements AutInfo {
 		result.append(uri);
 		result.append(", licenseUrl: ");
 		result.append(licenseUrl);
+		result.append(", executionEnvironment: ");
+		if (executionEnvironmentESet) result.append(executionEnvironment); else result.append("<unset>");
 		result.append(')');
 		return result.toString();
 	}

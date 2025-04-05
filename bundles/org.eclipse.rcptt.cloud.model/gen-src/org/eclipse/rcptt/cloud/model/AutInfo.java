@@ -34,6 +34,7 @@ import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
  *   <li>{@link org.eclipse.rcptt.cloud.model.AutInfo#getVmArgs <em>Vm Args</em>}</li>
  *   <li>{@link org.eclipse.rcptt.cloud.model.AutInfo#getUri <em>Uri</em>}</li>
  *   <li>{@link org.eclipse.rcptt.cloud.model.AutInfo#getLicenseUrl <em>License Url</em>}</li>
+ *   <li>{@link org.eclipse.rcptt.cloud.model.AutInfo#getExecutionEnvironment <em>Execution Environment</em>}</li>
  * </ul>
  *
  * @see org.eclipse.rcptt.cloud.model.ModelPackage#getAutInfo()
@@ -252,5 +253,54 @@ public interface AutInfo extends EObject {
 	 * @generated
 	 */
 	void setLicenseUrl(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Execution Environment</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Execution Environment</em>' attribute.
+	 * @see #isSetExecutionEnvironment()
+	 * @see #unsetExecutionEnvironment()
+	 * @see #setExecutionEnvironment(String)
+	 * @see org.eclipse.rcptt.cloud.model.ModelPackage#getAutInfo_ExecutionEnvironment()
+	 * @model unsettable="true"
+	 * @generated
+	 */
+	String getExecutionEnvironment();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.rcptt.cloud.model.AutInfo#getExecutionEnvironment <em>Execution Environment</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Execution Environment</em>' attribute.
+	 * @see #isSetExecutionEnvironment()
+	 * @see #unsetExecutionEnvironment()
+	 * @see #getExecutionEnvironment()
+	 * @generated
+	 */
+	void setExecutionEnvironment(String value);
+
+	/**
+	 * Unsets the value of the '{@link org.eclipse.rcptt.cloud.model.AutInfo#getExecutionEnvironment <em>Execution Environment</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isSetExecutionEnvironment()
+	 * @see #getExecutionEnvironment()
+	 * @see #setExecutionEnvironment(String)
+	 * @generated
+	 */
+	void unsetExecutionEnvironment();
+
+	/**
+	 * Returns whether the value of the '{@link org.eclipse.rcptt.cloud.model.AutInfo#getExecutionEnvironment <em>Execution Environment</em>}' attribute is set.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return whether the value of the '<em>Execution Environment</em>' attribute is set.
+	 * @see #unsetExecutionEnvironment()
+	 * @see #getExecutionEnvironment()
+	 * @see #setExecutionEnvironment(String)
+	 * @generated
+	 */
+	boolean isSetExecutionEnvironment();
 
 } // AutInfo

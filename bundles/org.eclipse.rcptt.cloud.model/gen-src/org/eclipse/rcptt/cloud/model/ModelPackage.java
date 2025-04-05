@@ -305,13 +305,22 @@ public interface ModelPackage extends EPackage {
 	int AUT_INFO__LICENSE_URL = 8;
 
 	/**
+	 * The feature id for the '<em><b>Execution Environment</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int AUT_INFO__EXECUTION_ENVIRONMENT = 9;
+
+	/**
 	 * The number of structural features of the '<em>Aut Info</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int AUT_INFO_FEATURE_COUNT = 9;
+	int AUT_INFO_FEATURE_COUNT = 10;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.rcptt.cloud.model.impl.AgentInfoImpl <em>Agent Info</em>}' class.
@@ -762,6 +771,17 @@ public interface ModelPackage extends EPackage {
 	EAttribute getAutInfo_LicenseUrl();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.rcptt.cloud.model.AutInfo#getExecutionEnvironment <em>Execution Environment</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Execution Environment</em>'.
+	 * @see org.eclipse.rcptt.cloud.model.AutInfo#getExecutionEnvironment()
+	 * @see #getAutInfo()
+	 * @generated
+	 */
+	EAttribute getAutInfo_ExecutionEnvironment();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.rcptt.cloud.model.AgentInfo <em>Agent Info</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1168,6 +1188,14 @@ public interface ModelPackage extends EPackage {
 		 * @generated
 		 */
 		EAttribute AUT_INFO__LICENSE_URL = eINSTANCE.getAutInfo_LicenseUrl();
+
+		/**
+		 * The meta object literal for the '<em><b>Execution Environment</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute AUT_INFO__EXECUTION_ENVIRONMENT = eINSTANCE.getAutInfo_ExecutionEnvironment();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.rcptt.cloud.model.impl.AgentInfoImpl <em>Agent Info</em>}' class.

@@ -35,6 +35,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/vmArgs"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/uri"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/licenseUrl"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AutInfo/executionEnvironment"/>
     </genClasses>
     <genClasses ecoreClass="model.ecore#//AgentInfo">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model.ecore#//AgentInfo/uri"/>

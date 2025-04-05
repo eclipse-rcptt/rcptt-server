@@ -25,9 +25,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -46,18 +48,22 @@ import org.eclipse.debug.core.model.IFlushableStreamMonitor;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IStreamMonitor;
 import org.eclipse.debug.core.model.IStreamsProxy;
-import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.launching.IPDEConstants;
 import org.eclipse.pde.internal.launching.launcher.LaunchConfigurationHelper;
 import org.eclipse.pde.launching.IPDELauncherConstants;
+import org.eclipse.rcptt.cloud.agent.IAgentMonitor.LogType;
+import org.eclipse.rcptt.cloud.common.ITestStore;
+import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.model.ModelUtil;
+import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
+import org.eclipse.rcptt.cloud.model.TestOptions;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.eclipse.rcptt.core.scenario.Scenario;
 import org.eclipse.rcptt.core.workspace.IWorkspaceFinder;
-import org.eclipse.rcptt.core.workspace.RcpttCore;
 import org.eclipse.rcptt.internal.core.model.Q7InternalTestCase;
 import org.eclipse.rcptt.internal.launching.ExecutionSession;
 import org.eclipse.rcptt.internal.launching.ExecutionStatus;
@@ -74,19 +80,13 @@ import org.eclipse.rcptt.launching.IExecutable;
 import org.eclipse.rcptt.launching.Q7Launcher;
 import org.eclipse.rcptt.launching.ext.Q7LaunchDelegateUtils;
 import org.eclipse.rcptt.launching.ext.Q7LaunchingUtil;
+import org.eclipse.rcptt.launching.ext.VmInstallMetaData;
 import org.eclipse.rcptt.launching.target.ITargetPlatformHelper;
 import org.eclipse.rcptt.launching.utils.TestSuiteUtils;
 import org.eclipse.rcptt.logging.IQ7Monitor;
 import org.eclipse.rcptt.logging.Q7LoggingManager;
 import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 import org.eclipse.rcptt.util.FileUtil;
-
-import org.eclipse.rcptt.cloud.agent.IAgentMonitor.LogType;
-import org.eclipse.rcptt.cloud.common.ITestStore;
-import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.model.ModelUtil;
-import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
-import org.eclipse.rcptt.cloud.model.TestOptions;
 
 @SuppressWarnings("restriction")
 public class TestExecutor implements ITestExecutor {
@@ -237,6 +237,9 @@ public class TestExecutor implements ITestExecutor {
 
 			config.setAttribute(ATTR_HEADLESS_LAUNCH, true);
 			config.setAttribute(ATTR_CAPTURE_OUTPUT, true);
+			findVm().ifPresent(metadata -> 
+				config.setAttribute(ATTR_JRE_CONTAINER_PATH, metadata.formatVmContainerPath())
+			);
 			String vmargs = Q7LaunchDelegateUtils.getJoinedVMArgs(helper,
 					aut.getVmArgs());
 			config.setAttribute(ATTR_VM_ARGUMENTS, vmargs);
@@ -245,7 +248,6 @@ public class TestExecutor implements ITestExecutor {
 						+ vmargs, IAgentMonitor.LogType.Both);
 			}
 			config.setAttribute(ATTR_PROGRAM_ARGUMENTS, sutArgs);
-			config.setAttribute(ATTR_JRE_CONTAINER_PATH, getVmContainerPath());
 			config.setAttribute(APPEND_ARGS_EXPLICITLY, true);
 
 			logMonitor.log("Save Launch Configuration", null);
@@ -311,14 +313,14 @@ public class TestExecutor implements ITestExecutor {
 			return filesToFill;
 		}
 		putFileIntoMap(filesToFill, new File(file,
-				"org.eclipse.equinox.simpleconfigurator"), "bundles.info");
-		putFileIntoMap(filesToFill, file, "config.ini");
+				"org.eclipse.equinox.simpleconfigurator"), "bundles.info", monitor);
+		putFileIntoMap(filesToFill, file, "config.ini", monitor);
 
 		// Obtain other created log files.
 		File[] files = file.listFiles();
 		for (File f : files) {
 			if (f.isFile() && f.getName().endsWith(".log")) {
-				putFileIntoMap(filesToFill, file, f.getName());
+				putFileIntoMap(filesToFill, file, f.getName(), monitor);
 			}
 		}
 		return filesToFill;
@@ -332,19 +334,21 @@ public class TestExecutor implements ITestExecutor {
 	}
 
 	private void putFileIntoMap(Map<String, String> filesToFill,
-			File parentFile, String fName) {
+			File parentFile, String fName, IProgressMonitor monitor) {
 		File file = new File(parentFile, fName);
 		if (file.exists()) {
-			try {
+			try (
 				BufferedInputStream fileStream = new BufferedInputStream(
-						new FileInputStream(file));
+						new FileInputStream(file))) {
 				byte[] streamContent = FileUtil.getStreamContent(fileStream);
 				if (streamContent != null) {
 					String content = new String(streamContent, "utf-8");
 					filesToFill.put(fName, content);
 				}
-			} catch (Exception e) {
-				// ignore
+			} catch (IOException e) {
+				String message = "Failed to read file " + file;
+				AgentPlugin.logErr(message, e);
+				log(monitor, message, IAgentMonitor.LogType.Both);
 			}
 		}
 	}
@@ -702,39 +706,6 @@ public class TestExecutor implements ITestExecutor {
 		return outStreamListener;
 	}
 
-	private static String getVmContainerPath() {
-		return String.format("%s/%s/%s", JavaRuntime.JRE_CONTAINER,
-				StandardVMType.ID_STANDARD_VM_TYPE, generateVmInstall());
-	}
-
-	private static String generateVmInstall() {
-		String randomName = UUID.randomUUID().toString();
-		File javaHome = new File(System.getProperty("java.home"));
-
-		int attemptCount = 5;
-		while (attemptCount-- > 0) {
-			IVMInstallType type = JavaRuntime
-					.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
-			// discard previous installs
-			for (IVMInstall install : type.getVMInstalls()) {
-				type.disposeVMInstall(install.getId());
-			}
-
-			IVMInstall install = type.createVMInstall(randomName);
-			install.setInstallLocation(javaHome);
-			install.setName(randomName);
-			try {
-				JavaRuntime.saveVMConfiguration();
-			} catch (CoreException e) {
-				// ignore
-				continue;
-			}
-			break;
-		}
-
-		return randomName;
-	}
-
 	private static class PrintStreamListener implements IStreamListener {
 		private PrintStream stream;
 
@@ -834,6 +805,40 @@ public class TestExecutor implements ITestExecutor {
 	@Override
 	public boolean needShutdownAUT() {
 		return needShutDown;
+	}
+	
+	private Optional<VmInstallMetaData> findVm() throws CoreException {
+		String ee = aut.getExecutionEnvironment();
+		if (ee != null) {
+			IExecutionEnvironment environment = JavaRuntime.getExecutionEnvironmentsManager().getEnvironment(ee);
+			if (environment == null) {
+				throw new CoreException(Status.error("Can't find execution environment " + ee));
+			}
+			Optional<IVMInstall> result = suitableVm(environment);
+			IVMInstall install = result.orElseThrow(() -> new CoreException(Status.error("Can't find an installed JVM strictly compatible with execution environment " + ee)));
+			VmInstallMetaData metadata = VmInstallMetaData.adapt(install).orElseThrow(() -> new CoreException(Status.error("Can't detect architecture of " + install.getInstallLocation())));
+			return Optional.of(metadata);
+		}
+
+		return addJvmFromIniFile();
+	}
+
+	private Optional<IVMInstall> suitableVm(IExecutionEnvironment e) {
+		IVMInstall result = e.getDefaultVM();
+		if (result != null) {
+			return Optional.of(result);
+		}
+		return Arrays.stream(e.getCompatibleVMs()).filter(e::isStrictlyCompatible).findFirst();
+	}
+	
+	private Optional<VmInstallMetaData> addJvmFromIniFile() throws CoreException {
+		Path vmFromIni = helper.getJavaHome().orElse(null);
+		if (vmFromIni == null) {
+			return Optional.empty();
+		}
+		System.out.println("Trying to use VM from application's ini file: "
+				+ vmFromIni);
+		return Optional.of(VmInstallMetaData.register(vmFromIni));
 	}
 
 }

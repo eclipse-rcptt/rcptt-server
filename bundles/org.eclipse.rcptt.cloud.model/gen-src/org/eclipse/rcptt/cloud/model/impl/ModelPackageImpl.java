@@ -379,6 +379,16 @@ public class ModelPackageImpl extends EPackageImpl implements ModelPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getAutInfo_ExecutionEnvironment() {
+		return (EAttribute)autInfoEClass.getEStructuralFeatures().get(9);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getAgentInfo() {
 		return agentInfoEClass;
 	}
@@ -625,6 +635,7 @@ public class ModelPackageImpl extends EPackageImpl implements ModelPackage {
 		createEAttribute(autInfoEClass, AUT_INFO__VM_ARGS);
 		createEAttribute(autInfoEClass, AUT_INFO__URI);
 		createEAttribute(autInfoEClass, AUT_INFO__LICENSE_URL);
+		createEAttribute(autInfoEClass, AUT_INFO__EXECUTION_ENVIRONMENT);
 
 		agentInfoEClass = createEClass(AGENT_INFO);
 		createEAttribute(agentInfoEClass, AGENT_INFO__URI);
@@ -711,6 +722,7 @@ public class ModelPackageImpl extends EPackageImpl implements ModelPackage {
 		initEAttribute(getAutInfo_VmArgs(), ecorePackage.getEString(), "vmArgs", null, 0, -1, AutInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getAutInfo_Uri(), ecorePackage.getEString(), "uri", null, 0, 1, AutInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getAutInfo_LicenseUrl(), ecorePackage.getEString(), "licenseUrl", null, 0, 1, AutInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getAutInfo_ExecutionEnvironment(), ecorePackage.getEString(), "executionEnvironment", null, 0, 1, AutInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(agentInfoEClass, AgentInfo.class, "AgentInfo", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getAgentInfo_Uri(), ecorePackage.getEString(), "uri", null, 0, 1, AgentInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
