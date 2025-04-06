@@ -42,6 +42,7 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 	private static final String JUNIT_REPORT = "-junitReport";
 	private static final String AGENT_RESULTS_DIR = "-agentResultsDir";
 	private static final String AUT_ARGS = "-autArgs";
+	private static final String AUT_EXECUTION_ENVIRONMENT = "-autExecutionEnvironment";
 	private static final String AUT_VM_ARGS = "-autVMArgs";
 	private static final String AUT_URI = "-autUri";
 	private static final String AUT_ID = "-autId";
@@ -164,6 +165,11 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 		// Q7 Server location
 		cmd.createArg().setValue(SERVER);
 		cmd.createArg().setValue(q7server);
+		
+		if (aut.executionEnvironment != null) {
+			cmd.createArg().setValue(AUT_EXECUTION_ENVIRONMENT);
+			cmd.createArg().setValue(aut.executionEnvironment);
+		}
 
 		// AUT VM Args
 		if (aut.getVmArgs() != null && aut.getVmArgs().length > 0) {

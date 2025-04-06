@@ -4,5 +4,6 @@ target/
 .DS_Store
 /com.xored.q7.cloud.server.rest/.settings/org.eclipse.jdt.core.prefs
 .polyglot.META-INF
+.polyglot.pom.tycho
 .tycho-consumer-pom.xml
 *.bck

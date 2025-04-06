@@ -132,6 +132,9 @@ public class ClientApplication extends CommandLineApplication {
 	@Arg(isRequired = false)
 	public String autArgs;
 
+	@Arg(isRequired = false, argCount = 1)
+	public String autExecutionEnvironment;
+
 	@Arg(isRequired = false)
 	public String autVMArgs;
 
@@ -384,45 +387,43 @@ public class ClientApplication extends CommandLineApplication {
 			reportFile.delete();
 		}
 
-		final SherlockReportOutputStream out;
-		try {
-			out = new SherlockReportOutputStream(new BufferedOutputStream(
-					new FileOutputStream(reportFile)));
+		try (
+			SherlockReportOutputStream out = new SherlockReportOutputStream(new BufferedOutputStream(
+					new FileOutputStream(reportFile)))) {
+
+			// Add excluded reports
+			for (Map.Entry<String, String> skipped : excluded.entrySet()) {
+				String name = "<undefined>";
+				out.write(generateSkippedReport(skipped.getKey(), name,
+						skipped.getValue()));
+			}
+			// Copy all from server report file
+			if (serverReportFile.exists()) {
+				SherlockReportIterator iterator = new SherlockReportIterator(
+						serverReportFile);
+				while (iterator.hasNext()) {
+					Report next = iterator.next();
+					if (next != null) {
+						EObject root = next.getRoot().getProperties()
+								.get(IQ7ReportConstants.ROOT);
+						EObject agentID = next.getRoot().getProperties()
+								.get(IQ7ReportConstants.AGENTID);
+	
+						if (root instanceof Q7Info && agentID instanceof BoxedValue) {
+							Q7Info info = (Q7Info) root;
+							launchBuilder.addLine(
+									BoxedValues.toString((BoxedValue) agentID),
+									info.getId());
+						}
+						out.write(next);
+					}
+				}
+			}
 		} catch (FileNotFoundException e1) {
 			ClientAppPlugin.logErr("Failed to create final report file", e1);
 			return null;
 		}
 
-		// Add excluded reports
-		for (Map.Entry<String, String> skipped : excluded.entrySet()) {
-			String name = "<undefined>";
-			out.write(generateSkippedReport(skipped.getKey(), name,
-					skipped.getValue()));
-		}
-		// Copy all from server report file
-		if (serverReportFile.exists()) {
-			SherlockReportIterator iterator = new SherlockReportIterator(
-					serverReportFile);
-			while (iterator.hasNext()) {
-				Report next = iterator.next();
-				if (next != null) {
-					EObject root = next.getRoot().getProperties()
-							.get(IQ7ReportConstants.ROOT);
-					EObject agentID = next.getRoot().getProperties()
-							.get(IQ7ReportConstants.AGENTID);
-
-					if (root instanceof Q7Info && agentID instanceof BoxedValue) {
-						Q7Info info = (Q7Info) root;
-						launchBuilder.addLine(
-								BoxedValues.toString((BoxedValue) agentID),
-								info.getId());
-					}
-					out.write(next);
-				}
-			}
-		}
-
-		out.close();
 
 		try (Q7ReportIterator summary = new Q7ReportIterator(reportFile)) {
 
@@ -1010,6 +1011,7 @@ public class ClientApplication extends CommandLineApplication {
 
 		aut.getArgs().addAll(createArgs(autArgs));
 		aut.getVmArgs().addAll(createArgs(autVMArgs));
+		aut.setExecutionEnvironment(autExecutionEnvironment);
 		return aut;
 	}
 

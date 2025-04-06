@@ -18,8 +18,10 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -79,9 +81,8 @@ public class AutRegistryTests {
 		}
 
 		@Override
-		public String getVmFromIniFile() {
-			// TODO Auto-generated method stub
-			return null;
+		public Optional<Path> getJavaHome() {
+			return Optional.empty();
 		}
 
 		@Override
@@ -233,7 +234,6 @@ public class AutRegistryTests {
 
 	@Test
 	public void testTargetPlatfromFailure() throws CoreException {
-		final boolean initialized[] = {false};
 		AutRegistry registry = new AutRegistry(baseLocation, new AutRegistry.ITargetPlatformManager() {
 			
 			@Override
@@ -258,7 +258,6 @@ public class AutRegistryTests {
 	
 	@Test
 	public void testInitializationFailure() throws CoreException {
-		final boolean initialized[] = {false};
 		AutRegistry registry = new AutRegistry(baseLocation, new AutRegistry.ITargetPlatformManager() {
 			
 			@Override

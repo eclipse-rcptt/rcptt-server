@@ -25,6 +25,13 @@
 		<nature>org.eclipse.m2e.core.maven2Nature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>target_classes</name>
+			<type>2</type>
+			<location>//Users/vasiligulevich/git/rcptt-server/maven/client/target/classes/</location>
+		</link>
+	</linkedResources>
 	<filteredResources>
 		<filter>
 			<id>1743933032489</id>
