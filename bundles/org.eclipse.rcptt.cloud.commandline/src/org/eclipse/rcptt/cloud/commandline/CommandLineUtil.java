@@ -27,10 +27,10 @@ public class CommandLineUtil {
 
 	public static void processCommandLine(Object obj, String[] cmd) {
 		Map<Field, Arg> args = getArgs(obj.getClass());
-		Map<Field, String[]> vals = parseArgs(cmd, args);
 		try {
+			Map<Field, String[]> vals = parseArgs(cmd, args);
 			setArgs(vals, obj);
-		} catch (Exception e) {
+		} catch (InvalidCommandLineArgException e) {
 			System.out.println(String.format("Error processing command line: %s", e.getMessage()));
 			System.out.println("Valid arguments are:");
 			printUsage(args);
@@ -77,10 +77,14 @@ public class CommandLineUtil {
 		return result;
 	}
 
-	static void setArgs(Map<Field, String[]> valsByField, Object obj) throws IllegalArgumentException, IllegalAccessException {
-		for(Entry<Field, String[]> entry : valsByField.entrySet()) {
-			Field field = entry.getKey();
-			setField(field, entry.getValue(), obj);
+	static void setArgs(Map<Field, String[]> valsByField, Object obj) throws IllegalArgumentException {
+		try {
+			for(Entry<Field, String[]> entry : valsByField.entrySet()) {
+				Field field = entry.getKey();
+				setField(field, entry.getValue(), obj);
+			}
+		} catch (IllegalAccessException e) {
+			throw new IllegalArgumentException(e);
 		}
 	}
 
@@ -114,7 +118,7 @@ public class CommandLineUtil {
 		throw new IllegalArgumentException(String.format("Class %s is not supported", clazz.getSimpleName()));
 	}
 
-	static Map<Field, String[]> parseArgs(String[] vals, Map<Field, Arg> args) {
+	static Map<Field, String[]> parseArgs(String[] vals, Map<Field, Arg> args) throws InvalidCommandLineArgException {
 		Map<Field, String[]> result = new HashMap<Field, String[]>();
 		Map<String, Field> fieldsByArgName = new HashMap<String, Field>();
 		List<Arg> unsetRequiredArgs = new ArrayList<Arg>();
@@ -130,7 +134,7 @@ public class CommandLineUtil {
 		while(valIterator.hasNext()) {
 			String name = valIterator.next();
 			if(!fieldsByArgName.containsKey(name)) {
-				throw new IllegalArgumentException(String.format("Unknown arg %s", name));
+				throw new InvalidCommandLineArgException(String.format("Unknown arg %s", name), name);
 			}
 
 			Field field = fieldsByArgName.get(name);
