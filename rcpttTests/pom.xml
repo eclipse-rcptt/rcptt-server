@@ -26,7 +26,7 @@ Contributors:
 	<pluginRepositories>
 		<pluginRepository>
 			<id>eclipse-rcptt-snapshots</id>
-			<name>RCPTT Maven Releases repository</name>
+			<name>RCPTT Maven Snapshots repository</name>
 			<url>https://repo.eclipse.org/content/repositories/rcptt-snapshots/</url>
 			<snapshots>
 				<enabled>true</enabled>
@@ -86,7 +86,7 @@ Contributors:
 								<path>${project.build.directory}/eclipse-java-2024-03-R-macosx-cocoa-aarch64.dmg</path>
 							</location-->
 						</locations>
-						<executionEnvironment>JavaSE-17</executionEnvironment>
+						<executionEnvironment>JavaSE-21</executionEnvironment>
 
 
 						<!--uri>http://localhost:8000/1cedt-2024.1.0-win32.win32.x86_64.zip</uri-->
