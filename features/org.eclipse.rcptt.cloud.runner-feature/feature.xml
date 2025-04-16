@@ -90,4 +90,8 @@ Contributors:
          id="org.eclipse.osgi.compatibility.state"
          version="0.0.0"/>
 
+   <plugin
+         id="org.eclipse.equinox.event"
+         version="0.0.0"/>
+
 </feature>
