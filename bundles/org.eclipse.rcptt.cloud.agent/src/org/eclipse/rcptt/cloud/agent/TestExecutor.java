@@ -254,7 +254,7 @@ public class TestExecutor implements ITestExecutor {
 			savedConfig = config.doSave();
 			Aut aut = AutManager.INSTANCE.getByLaunch(savedConfig);
 
-			Q7TargetPlatformManager.setHelper(helper.getName(), helper);
+			Q7TargetPlatformManager.setHelper(config, helper);
 			CachedInfo info = LaunchInfoCache.getInfo(savedConfig);
 			info.target = helper;
 			long start = System.currentTimeMillis();
@@ -581,7 +581,7 @@ public class TestExecutor implements ITestExecutor {
 				shutdown();
 			}
 
-			return createScenarioReport(exec, scenarioName, monitor);
+			return createScenarioReport(exec, monitor);
 		} finally {
 			DebugPlugin.getDefault().getLaunchManager()
 					.removeLaunch(testLaunch);
@@ -599,8 +599,7 @@ public class TestExecutor implements ITestExecutor {
 		return (System.currentTimeMillis() - startTime) > ((timeout + 10) * 1000);
 	}
 
-	private Report createScenarioReport(IExecutable exec, String scenarioName,
-			IProgressMonitor monitor) {
+	private Report createScenarioReport(IExecutable exec, IProgressMonitor monitor) {
 		Report report = exec.getResultReport();
 		if (report == null) {
 			IStatus resultStatus = exec.getResultStatus();

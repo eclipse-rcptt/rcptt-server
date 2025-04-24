@@ -31,6 +31,14 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.equinox.p2.metadata.Version;
+import org.eclipse.rcptt.cloud.agent.autManager.IAutProvider;
+import org.eclipse.rcptt.cloud.common.monitor.Q7LogProgressMonitor;
+import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.util.IOUtil;
+import org.eclipse.rcptt.cloud.util.IOUtil.HttpSrc;
+import org.eclipse.rcptt.cloud.util.IOUtil.HttpsSrc;
+import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
+import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.Q7Info;
 import org.eclipse.rcptt.launching.IQ7Launch;
@@ -46,16 +54,6 @@ import org.eclipse.rcptt.launching.target.TargetPlatformManager;
 import org.eclipse.rcptt.logging.IQ7Monitor;
 import org.eclipse.rcptt.logging.Q7LoggingManager;
 import org.eclipse.rcptt.util.FileUtil;
-
-import org.eclipse.rcptt.cloud.agent.autManager.IAutProvider;
-import org.eclipse.rcptt.cloud.common.AutUtil;
-import org.eclipse.rcptt.cloud.common.monitor.Q7LogProgressMonitor;
-import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.util.IOUtil;
-import org.eclipse.rcptt.cloud.util.IOUtil.HttpSrc;
-import org.eclipse.rcptt.cloud.util.IOUtil.HttpsSrc;
-import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
-import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 
 /**
  * Manages AUTs.
@@ -147,8 +145,6 @@ public class AutRegistry {
 										+ Long.toString(end - start),
 								IAgentMonitor.LogType.LogOnly);
 					}
-
-					target[0].setTargetName(AutUtil.getName(aut));
 
 					InjectionConfiguration injectionConfiguration = InjectionFactory.eINSTANCE.createInjectionConfiguration();
 					Map<String, Version> versions = target[0].getVersions();

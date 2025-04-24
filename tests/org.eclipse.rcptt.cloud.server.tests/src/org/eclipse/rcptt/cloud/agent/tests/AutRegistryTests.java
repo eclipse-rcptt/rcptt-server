@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,7 +30,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.equinox.p2.metadata.Version;
-import org.eclipse.pde.core.target.ITargetDefinition;
+import org.eclipse.rcptt.cloud.agent.AutRegistry;
+import org.eclipse.rcptt.cloud.agent.autManager.IAutProvider;
+import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
+import org.eclipse.rcptt.cloud.server.tests.Activator;
 import org.eclipse.rcptt.internal.launching.ext.OSArchitecture;
 import org.eclipse.rcptt.launching.ext.AUTInformation;
 import org.eclipse.rcptt.launching.ext.OriginalOrderProperties;
@@ -46,11 +51,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import com.google.common.collect.ImmutableMap;
-import org.eclipse.rcptt.cloud.agent.AutRegistry;
-import org.eclipse.rcptt.cloud.agent.autManager.IAutProvider;
-import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
-import org.eclipse.rcptt.cloud.server.tests.Activator;
 
 public class AutRegistryTests {
 	
@@ -59,10 +59,6 @@ public class AutRegistryTests {
 
 	private class DummyTargetPlatformHelper implements ITargetPlatformHelper {
 		private String name; 
-		@Override
-		public void setTargetName(String name) {
-			this.name = name;
-		}
 
 		@Override
 		public void save() {
@@ -155,11 +151,6 @@ public class AutRegistryTests {
 			return null;
 		}
 
-		@Override
-		public String getBundlesList() {
-			// TODO Auto-generated method stub
-			return null;
-		}
 
 		@Override
 		public String[] getApplications() {
@@ -202,15 +193,21 @@ public class AutRegistryTests {
 		}
 
 		@Override
-		public ITargetDefinition getTarget() {
+		public String getUserArea() {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public String getUserArea() {
+		public Stream<Model> getModels() {
 			// TODO Auto-generated method stub
 			return null;
+		}
+
+		@Override
+		public int size() {
+			// TODO Auto-generated method stub
+			return 0;
 		}
 	}
 
