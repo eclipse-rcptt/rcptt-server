@@ -7,3 +7,4 @@ target/
 .polyglot.pom.tycho
 .tycho-consumer-pom.xml
 *.bck
+pom.tycho
