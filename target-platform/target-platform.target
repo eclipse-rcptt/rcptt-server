@@ -19,28 +19,14 @@
 <unit id="org.eclipse.jetty.ee10.servlet" version="0.0.0"/>
 <repository location="http://download.eclipse.org/releases/2025-03"/>
 </location>
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.rcptt.core.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.ecl.core.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.ecl.ide.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.ecl.platform.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.ecl.platform.ui.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.ecl.server.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.external.dependencies.feature.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.launching.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.module.nebula.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.module.testrail.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.platform.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.rap.ui.feature.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.tesla.ecl.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.tesla.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.updates.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.rcptt.watson.feature.group" version="0.0.0"/>
-<repository location="https://download.eclipse.org/rcptt/nightly/2.6.0/latest/repository/"/>
-</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		<repository location="http://download.eclipse.org/releases/2025-03"/>
 		<unit id="org.eclipse.equinox.p2.core.feature.feature.group" version="1.7.500.v20250212-0912"/>
+	</location>
+	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+		<repository location="file:/Users/vasiligulevich/git/org.eclipse.rcptt/repository/full/target/repository/"/>
+		<unit id="org.eclipse.rcptt.modules.launching.feature.group" version="0.0.0"/>
+		<unit id="org.eclipse.rcptt.launching.feature.group" version="0.0.0"/>
 	</location>
 </locations>
 </target>
