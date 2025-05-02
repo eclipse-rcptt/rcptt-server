@@ -156,7 +156,7 @@ public class ClientApplication extends CommandLineApplication {
 	@Arg(isRequired = false, argCount = -1, name = "skipTags")
 	public String[] skipTags = new String[] { "skipExecution" };
 
-	@Arg(isRequired = false, argCount = -1, description = "classifer|path. Example:win32.win32.x86_64|target/eclipse-java-2024-12-R-win32-win32-x86_64.zip")
+	@Arg(isRequired = true, argCount = -1, description = "classifer|path. Example:win32.win32.x86_64|target/eclipse-java-2024-12-R-win32-win32-x86_64.zip")
 	public String[] auts;
 	@Arg
 	public String autId;

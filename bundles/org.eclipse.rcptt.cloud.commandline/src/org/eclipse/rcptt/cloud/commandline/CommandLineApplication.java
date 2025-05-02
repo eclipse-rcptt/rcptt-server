@@ -23,8 +23,8 @@ public abstract class CommandLineApplication implements IApplication {
 
 	public Object start(IApplicationContext context) throws Exception {
 		this.context = context;
-		CommandLineUtil.processCommandLine(this, (String[]) context.getArguments().get(IApplicationContext.APPLICATION_ARGS));
 		try {
+			CommandLineUtil.processCommandLine(this, (String[]) context.getArguments().get(IApplicationContext.APPLICATION_ARGS));
 			return run();
 		} catch(InvalidCommandLineArgException e) {
 			System.out.println(String.format("Invalid value for argument %s\n%s", e.argName, e.getMessage()));

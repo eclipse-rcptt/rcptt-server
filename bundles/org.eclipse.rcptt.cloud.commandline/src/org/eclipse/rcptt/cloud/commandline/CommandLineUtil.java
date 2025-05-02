@@ -25,16 +25,10 @@ import java.util.TreeMap;
 
 public class CommandLineUtil {
 
-	public static void processCommandLine(Object obj, String[] cmd) {
+	public static void processCommandLine(Object obj, String[] cmd) throws InvalidCommandLineArgException {
 		Map<Field, Arg> args = getArgs(obj.getClass());
-		try {
-			Map<Field, String[]> vals = parseArgs(cmd, args);
-			setArgs(vals, obj);
-		} catch (InvalidCommandLineArgException e) {
-			System.out.println(String.format("Error processing command line: %s", e.getMessage()));
-			System.out.println("Valid arguments are:");
-			printUsage(args);
-		}
+		Map<Field, String[]> vals = parseArgs(cmd, args);
+		setArgs(vals, obj);
 	}
 
 	public static void printUsage(Object obj) {
