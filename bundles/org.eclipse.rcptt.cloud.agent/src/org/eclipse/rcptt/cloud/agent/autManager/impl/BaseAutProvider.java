@@ -12,8 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent.autManager.impl;
 
-import static org.eclipse.rcptt.cloud.agent.AgentPlugin.createException;
 import static java.lang.String.format;
+import static org.eclipse.rcptt.cloud.agent.AgentPlugin.createException;
 
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -30,10 +30,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.util.Base64;
-import org.eclipse.rcptt.util.FileUtil;
-
 import org.eclipse.rcptt.cloud.agent.AgentPlugin;
 import org.eclipse.rcptt.cloud.agent.AutFileUtil;
 import org.eclipse.rcptt.cloud.agent.AutRegistry;
@@ -43,6 +39,9 @@ import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.util.IOUtil;
 import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
 import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.util.Base64;
+import org.eclipse.rcptt.util.FileUtil;
 
 public abstract class BaseAutProvider implements IAutProvider, Closeable {
 	

@@ -40,44 +40,13 @@ Contributors:
 	</properties>
 
 	<modules>
+		<module>target-platform</module>
 		<module>tests</module>
 		<module>bundles</module>
 		<module>features</module>
 		<module>products</module>
 		<module>maven</module>
 	</modules>
-	<repositories>
-		<repository>
-			<id>eclipse_2024-03</id>
-			<layout>p2</layout>
-			<snapshots>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-			<releases>
-				<updatePolicy>always</updatePolicy>
-			</releases>
-			<url>http://download.eclipse.org/releases/2025-03</url>
-		</repository>
-		<repository>
-			<snapshots>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-			<id>q7-repository</id>
-			<layout>p2</layout>
-			<url>${platformRepository}</url>
-		</repository>
-		<repository>
-			<id>orbit</id>
-			<layout>p2</layout>
-			<url>
-				https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository</url>
-		</repository>
-		<repository>
-			<id>cbi</id>
-			<layout>p2</layout>
-			<url>http://download.eclipse.org/cbi/updates/license/</url>
-		</repository>
-	</repositories>
 	<build>
 		<plugins>
 			<plugin>
@@ -117,6 +86,15 @@ Contributors:
 				<groupId>${tycho-groupid}</groupId>
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
+				<configuration>
+					<target>
+						<artifact>
+							<groupId>${project.groupId}</groupId>
+							<artifactId>target-platform</artifactId>
+							<version>2.5.5-SNAPSHOT</version>
+						</artifact>
+					</target>
+				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-deploy-plugin</artifactId>

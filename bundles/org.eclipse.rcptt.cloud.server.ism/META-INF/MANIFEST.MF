@@ -6,7 +6,7 @@ Bundle-Version: 2.5.5.qualifier
 Bundle-ClassPath: .
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: com.xored.emfjson,
  org.eclipse.rcptt.cloud.server.ism,
  org.eclipse.rcptt.cloud.server.ism.internal,
