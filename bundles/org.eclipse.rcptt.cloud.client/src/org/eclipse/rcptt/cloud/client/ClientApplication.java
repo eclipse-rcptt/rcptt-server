@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -83,6 +85,7 @@ import org.eclipse.rcptt.util.NetworkUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.eclipse.rcptt.cloud.client.AutTcpConnector.Aut;
@@ -298,6 +301,7 @@ public class ClientApplication extends CommandLineApplication {
 		int total = values.size();
 		long prevTime = System.currentTimeMillis();
 		int ch = 0;
+		CompletableFuture<Void> upload = null;
 		for (final Q7ArtifactRef ref : values) {
 			if (bout == null) {
 				bout = new ByteArrayOutputStream();
@@ -324,15 +328,40 @@ public class ClientApplication extends CommandLineApplication {
 				chunk++;
 				if (bout.size() >= chunkSize * 1024 * 1024) {
 					zout.close();
+					if (upload != null) {
+						try {
+							upload.get();
+						} catch (ExecutionException e) {
+							Throwable cause = e.getCause();
+							if (cause != null) {
+								cause = cause.getCause();
+								if (cause instanceof CoreException e2) {
+									throw e2;
+								}
+							}
+							Throwables.throwIfInstanceOf(e, Exception.class);
+							Throwables.throwIfUnchecked(e);
+						} finally {
+							upload = null;
+						}
+					}
+					byte[] sending = bout.toByteArray();
 					System.out.println("");
 					logInfo(String
 							.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d from %d artifacts.",
-									Integer.valueOf(bout.size() / (1024 * 1024)), Integer.valueOf(chunk), Integer.valueOf(index),
+									Integer.valueOf(sending.length / (1024 * 1024)), Integer.valueOf(chunk), Integer.valueOf(index),
 									Integer.valueOf(resourcesById.size())));
-					URI relative = api.uploadDataAsFile(suiteID,
-							bout.toByteArray(), "artifacts" + ch + ".zip",
-							false);
-					addTestResource(relative);
+					String chunkName =  "artifacts" + ch + ".zip";
+					upload = CompletableFuture.runAsync(() -> {
+						try {
+							URI relative = api.uploadDataAsFile(suiteID,
+									sending ,chunkName,
+									false);
+							addTestResource(relative);
+						} catch (CoreException e) {
+							throw new RuntimeException(e);
+						}
+					});
 					zout = null;
 					bout = null;
 					chunk = 0;
