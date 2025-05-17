@@ -35,10 +35,6 @@ Contributors:
          version="0.0.0"/>
 
    <plugin
-         id="com.ibm.icu"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.commands"
          version="0.0.0"/>
 
@@ -108,10 +104,6 @@ Contributors:
          version="0.0.0"/>
 
    <plugin
-         id="javax.inject"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.equinox.event"
          version="0.0.0"/>
 
@@ -133,14 +125,6 @@ Contributors:
 
    <plugin
          id="org.osgi.service.cm"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.osgi.service.metatype"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.felix.gogo.runtime"
          version="0.0.0"/>
 
    <plugin
@@ -169,14 +153,6 @@ Contributors:
 
    <plugin
          id="org.eclipse.core.databinding"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.felix.gogo.command"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.felix.gogo.shell"
          version="0.0.0"/>
 
    <plugin
