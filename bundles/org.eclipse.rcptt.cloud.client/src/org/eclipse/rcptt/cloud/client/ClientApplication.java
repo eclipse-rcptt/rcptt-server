@@ -48,10 +48,38 @@ import java.util.zip.ZipOutputStream;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.rcptt.cloud.client.AutTcpConnector.Aut;
+import org.eclipse.rcptt.cloud.commandline.Arg;
+import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
+import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
+import org.eclipse.rcptt.cloud.common.ReportUtil;
+import org.eclipse.rcptt.cloud.common.commonCommands.AddAut;
+import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
+import org.eclipse.rcptt.cloud.common.commonCommands.AddTestSuite;
+import org.eclipse.rcptt.cloud.common.commonCommands.BeginTestSuite;
+import org.eclipse.rcptt.cloud.common.commonCommands.CancelSuite;
+import org.eclipse.rcptt.cloud.common.commonCommands.CommonCommandsFactory;
+import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.model.Envelope;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
+import org.eclipse.rcptt.cloud.model.ModelUtil;
+import org.eclipse.rcptt.cloud.model.Q7Artifact;
+import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
+import org.eclipse.rcptt.cloud.model.RefKind;
+import org.eclipse.rcptt.cloud.model.TestOptions;
+import org.eclipse.rcptt.cloud.model.TestSuite;
+import org.eclipse.rcptt.cloud.server.serverCommands.ExecTestSuite;
+import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionProgress;
+import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
+import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
+import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
+import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 import org.eclipse.rcptt.core.internal.builder.MigrateProjectsJob;
 import org.eclipse.rcptt.core.model.IQ7Element;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
@@ -88,32 +116,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.eclipse.rcptt.cloud.client.AutTcpConnector.Aut;
-import org.eclipse.rcptt.cloud.commandline.Arg;
-import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
-import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
-import org.eclipse.rcptt.cloud.common.ReportUtil;
-import org.eclipse.rcptt.cloud.common.commonCommands.AddAut;
-import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
-import org.eclipse.rcptt.cloud.common.commonCommands.AddTestSuite;
-import org.eclipse.rcptt.cloud.common.commonCommands.BeginTestSuite;
-import org.eclipse.rcptt.cloud.common.commonCommands.CancelSuite;
-import org.eclipse.rcptt.cloud.common.commonCommands.CommonCommandsFactory;
-import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.model.Envelope;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
-import org.eclipse.rcptt.cloud.model.ModelUtil;
-import org.eclipse.rcptt.cloud.model.Q7Artifact;
-import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
-import org.eclipse.rcptt.cloud.model.RefKind;
-import org.eclipse.rcptt.cloud.model.TestOptions;
-import org.eclipse.rcptt.cloud.model.TestSuite;
-import org.eclipse.rcptt.cloud.server.serverCommands.ExecTestSuite;
-import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionProgress;
-import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
-import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
-import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
-import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 
 public class ClientApplication extends CommandLineApplication {
 
@@ -194,6 +196,7 @@ public class ClientApplication extends CommandLineApplication {
 	@Arg(isRequired = false, description = "License URL for Enterprise mode")
 	public String licenseUrl = null;
 
+	private static final ILog LOG = Platform.getLog(ClientApplication.class);
 	private final Map<String, IQ7NamedElement> resourceFilesById = new HashMap<>();
 	private final Map<String, Q7ArtifactRef> resourcesById = new HashMap<>();
 
@@ -559,7 +562,7 @@ public class ClientApplication extends CommandLineApplication {
 				api.execute(cs);
 			} catch (CoreException e) {
 				System.out.println("Cancel test suite failed:");
-				ClientAppPlugin.getDefault().getLog().log(e.getStatus());
+				LOG.log(e.getStatus());
 			}
 		}
 	};
@@ -861,7 +864,7 @@ public class ClientApplication extends CommandLineApplication {
 									e);
 				}
 
-				ClientAppPlugin.getDefault().error(
+				LOG.error(
 						"Timeout during access server", e);
 				continue; // try one more time.
 			}
@@ -1220,13 +1223,13 @@ public class ClientApplication extends CommandLineApplication {
 	}
 
 	private static void logInfo(String message) {
-		ClientAppPlugin.getDefault().info(message);
+		LOG.info(message);
 		System.out.println(message);
 		System.out.flush();
 	}
 
 	private static void logInfo(String message, Throwable e) {
-		ClientAppPlugin.getDefault().error(message, e);
+		LOG.error(message, e);
 		System.out.println(message);
 		if (e != null) {
 			e.printStackTrace();
