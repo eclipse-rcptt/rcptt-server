@@ -146,7 +146,7 @@ Contributors:
            -->
 					</aut>
 
-					<runner>
+					<q7client>
 						<!-- RCPTT Runner location can be set using the same
 						methods 
                  as AUT location:
@@ -165,7 +165,7 @@ Contributors:
 							<vmArg>-Xmx1024m</vmArg>
 							<vmArg>-XX:MaxPermSize=256m</vmArg>
 						</vmArgs>
-					</runner>
+					</q7client>
 
 					<!-- Test options for RCPTT Runner, most popular options
 					listed here.
