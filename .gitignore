@@ -5,6 +5,8 @@ target/
 /com.xored.q7.cloud.server.rest/.settings/org.eclipse.jdt.core.prefs
 .polyglot.META-INF
 .polyglot.pom.tycho
+.polyglot.feature.xml
+.polyglot.target-platform.target
 .tycho-consumer-pom.xml
 *.bck
 pom.tycho

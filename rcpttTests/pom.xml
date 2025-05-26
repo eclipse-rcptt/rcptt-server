@@ -62,7 +62,7 @@ Contributors:
 				<version>${rcptt-maven-version}</version>
 				<extensions>true</extensions>
 				<configuration>
-					<q7server>http://localhost:5007</q7server>
+					<q7server>http://172.29.1.229:5007</q7server>
 					<aut>
 						<locations>
 							<!--location>
@@ -163,7 +163,6 @@ Contributors:
 
 						<vmArgs>
 							<vmArg>-Xmx1024m</vmArg>
-							<vmArg>-XX:MaxPermSize=256m</vmArg>
 						</vmArgs>
 					</q7client>
 

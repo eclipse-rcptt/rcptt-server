@@ -30,6 +30,7 @@
 		<unit id="org.eclipse.rcptt.modules.launching.feature.group" version="0.0.0"/>
 		<unit id="org.eclipse.rcptt.launching.feature.group" version="0.0.0"/>
 		<unit id="org.eclipse.rcptt.watson.feature.group" version="0.0.0"/>
+		<unit id="org.eclipse.rcptt.cli.common" version="0.0.0"/>
 	</location>
 </locations>
 </target>
