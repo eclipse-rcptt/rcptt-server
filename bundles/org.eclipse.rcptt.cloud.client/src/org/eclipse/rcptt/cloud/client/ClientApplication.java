@@ -645,7 +645,7 @@ public class ClientApplication extends CommandLineApplication {
 		dependants.get(master).add(slave);
 	}
 
-	private void loadArtifactRefs() throws CoreException {
+	private void loadArtifactRefs() throws CoreException, InterruptedException {
 		Map<Q7ArtifactRef, IQ7NamedElement> resources = loader
 				.artifactRefs(suites);
 		Set<String> idsToRemove = new HashSet<>();

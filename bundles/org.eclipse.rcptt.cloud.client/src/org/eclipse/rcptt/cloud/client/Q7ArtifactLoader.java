@@ -34,6 +34,11 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
+import org.eclipse.rcptt.cloud.model.Q7Artifact;
+import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
+import org.eclipse.rcptt.cloud.model.RefKind;
 import org.eclipse.rcptt.core.ContextType;
 import org.eclipse.rcptt.core.model.IContext;
 import org.eclipse.rcptt.core.model.IQ7Element.HandleType;
@@ -56,11 +61,6 @@ import org.eclipse.rcptt.internal.core.model.index.TestSuiteElementCollector;
 import org.eclipse.rcptt.workspace.WorkspaceContext;
 
 import com.google.common.base.Strings;
-import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
-import org.eclipse.rcptt.cloud.model.Q7Artifact;
-import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
-import org.eclipse.rcptt.cloud.model.RefKind;
 
 public class Q7ArtifactLoader {
 	private static final boolean USE_MD5 = false;
@@ -71,7 +71,7 @@ public class Q7ArtifactLoader {
 	}
 
 	public Map<Q7ArtifactRef, IQ7NamedElement> artifactRefs(String... suites)
-			throws CoreException {
+			throws CoreException, InterruptedException {
 		NamedElementCollector collector = null;
 		if (suites.length == 0) {
 			collector = new NamedElementCollector();
@@ -89,7 +89,7 @@ public class Q7ArtifactLoader {
 					names.add(el.getElementName());
 				}
 				List<String> missingNames = Arrays.asList(suites);
-				missingNames.remove(names);
+				missingNames.removeAll(names);
 				if (missingNames.size() > 0) {
 					System.out
 							.println("ERROR: Failed to locate testsuites by name:\n"
@@ -111,38 +111,34 @@ public class Q7ArtifactLoader {
 		}
 
 		// ModelManager.getModelManager().getIndexManager().waitUntilReady();
-		ExecutorService executor = Executors.newFixedThreadPool(Runtime
-				.getRuntime().availableProcessors() + 1);
-		final int[] count = { 0 };
-		System.out.println("Processing resources (" + count[0] + " of "
-				+ elements.size() + ")");
-		for (final IQ7NamedElement e : elements) {
-			executor.execute(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						int c = collectArtifactsRefs(e, result);
-						if (c >= 1) {
-							count[0]++;
-						}
-					} catch (Throwable e1) {
-						ClientAppPlugin.logErr(e1.getMessage(), e1);
-					}
-				}
-			});
-		}
-		executor.shutdown();
-		// Wait until all threads are finish
-		while (!executor.isTerminated()) {
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+		try (ExecutorService executor = Executors.newFixedThreadPool(Runtime
+				.getRuntime().availableProcessors() + 1)) {
+			final int[] count = { 0 };
 			System.out.println("Processing resources (" + count[0] + " of "
 					+ elements.size() + ")");
+			for (final IQ7NamedElement e : elements) {
+				executor.execute(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							int c = collectArtifactsRefs(e, result);
+							if (c >= 1) {
+								count[0]++;
+							}
+						} catch (Throwable e1) {
+							ClientAppPlugin.logErr(e1.getMessage(), e1);
+						}
+					}
+				});
+			}
+			executor.shutdown();
+			while (!executor.isTerminated()) {
+				Thread.sleep(500);
+				System.out.println("Processing resources (" + count[0] + " of "
+						+ elements.size() + ")");
+			}
 		}
+		// Wait until all threads are finish
 		System.out.println(elements.size() + " resources processed");
 		return result;
 	}

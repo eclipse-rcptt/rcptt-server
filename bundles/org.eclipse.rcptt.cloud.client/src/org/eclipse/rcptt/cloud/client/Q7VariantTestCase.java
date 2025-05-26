@@ -12,15 +12,13 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.client;
 
-import java.util.Map;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
 import org.eclipse.rcptt.core.model.IContext;
-import org.eclipse.rcptt.core.model.IQ7Element;
 import org.eclipse.rcptt.core.model.IQ7Project;
 import org.eclipse.rcptt.core.model.ITestCase;
 import org.eclipse.rcptt.core.model.ModelException;
@@ -32,8 +30,6 @@ import org.eclipse.rcptt.internal.core.model.Q7Element;
 import org.eclipse.rcptt.internal.core.model.Q7TestCase;
 import org.eclipse.rcptt.util.FileUtil;
 import org.eclipse.rcptt.util.StringUtils;
-
-import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
 
 public class Q7VariantTestCase extends Q7TestCase {
 
@@ -130,8 +126,8 @@ public class Q7VariantTestCase extends Q7TestCase {
 
 	@Override
 	protected boolean buildStructure(OpenableElementInfo info,
-			IProgressMonitor pm, Map<IQ7Element, Object> newElements,
-			IResource underlyingResource) throws ModelException {
+			IProgressMonitor pm,
+			IResource underlyingResource) {
 		return true;
 	}
 }
