@@ -19,5 +19,8 @@ Contributors:
       <provider
             class="org.eclipse.rcptt.cloud.server.internal.providers.http.HttpServerAutProvider">
       </provider>
+      <provider
+            class="org.eclipse.rcptt.cloud.server.internal.providers.FileServerAutProvider">
+      </provider>
    </extension>
 </plugin>
