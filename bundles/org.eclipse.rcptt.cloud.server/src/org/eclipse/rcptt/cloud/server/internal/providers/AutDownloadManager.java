@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.rcptt.ecl.internal.core.CorePlugin;
-
+import org.osgi.framework.FrameworkUtil;
 import org.eclipse.rcptt.cloud.model.AutInfo;
 
 public class AutDownloadManager {
@@ -33,7 +33,7 @@ public class AutDownloadManager {
 		return instance;
 	}
 
-	private final static String EXTPT = "com.xored.q7.cloud.server.autProvider";
+	private final static String EXTPT = FrameworkUtil.getBundle(AutDownloadManager.class).getSymbolicName() + ".autProvider";
 	private final static String CLASS_ATTR = "class";
 
 	private List<IServerAutProvider> providers;
