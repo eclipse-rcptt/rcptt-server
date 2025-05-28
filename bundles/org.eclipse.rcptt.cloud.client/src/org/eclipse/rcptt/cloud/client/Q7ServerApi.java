@@ -230,7 +230,8 @@ public class Q7ServerApi {
 			HttpEntity resEntity = execute(post).getEntity();
 
 			if (resEntity != null) {
-				return URI.create(EntityUtils.toString(resEntity));
+				String serverUri = EntityUtils.toString(resEntity);
+				return URI.create(serverUri);
 			} else {
 				throw new CoreException(ClientAppPlugin.createErrorStatus(
 						"null response received", null));

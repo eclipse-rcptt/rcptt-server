@@ -167,7 +167,7 @@ public class ClientApplication extends CommandLineApplication {
 	@Arg(isRequired = false, argCount = -1, name = "skipTags")
 	public String[] skipTags = new String[] { "skipExecution" };
 
-	@Arg(isRequired = true, argCount = -1, description = "classifer|path. Example:win32.win32.x86_64|target/eclipse-java-2024-12-R-win32-win32-x86_64.zip")
+	@Arg(isRequired = false, argCount = -1, description = "classifer|path. Example:win32.win32.x86_64|target/eclipse-java-2024-12-R-win32-win32-x86_64.zip")
 	public String[] auts;
 	@Arg
 	public String autId;
@@ -203,6 +203,8 @@ public class ClientApplication extends CommandLineApplication {
 	public String licenseUrl = null;
 
 	private static final ILog LOG = Platform.getLog(ClientApplication.class);
+
+	private static final boolean DEBUG = false;
 	private final Map<String, IQ7NamedElement> resourceFilesById = new HashMap<>();
 	private final Map<String, Q7ArtifactRef> resourcesById = new HashMap<>();
 
@@ -341,52 +343,48 @@ public class ClientApplication extends CommandLineApplication {
 				// zout.setLevel(0);
 			}
 			processed++;
-			if (System.currentTimeMillis() - prevTime > 500) {
-				System.out.println("Compressing resources (" + processed
-						+ " of " + total + ")");
-				prevTime = System.currentTimeMillis();
+			Q7Artifact artifact = getArtifact(ref);
+			if (!artifact.getId().equals(ref.getId())) {
+				throw new AssertionError("Requested: " + ref.getId() + ", received: " + artifact.getId());
 			}
-			try {
-				Q7Artifact artifact = getArtifact(ref);
+			System.out.printf("Compressing resource %s, %s (%d of %d)\n", resourceFilesById.get(ref.getId()).getPath(), artifact.getId(), processed, total);
+				prevTime = System.currentTimeMillis();
+			
 
-				ECLBinaryResourceImpl r = new ECLBinaryResourceImpl();
-				r.getContents().add(EcoreUtil.copy(artifact));
+			ECLBinaryResourceImpl r = new ECLBinaryResourceImpl();
+			r.getContents().add(EcoreUtil.copy(artifact));
 
-				ZipEntry entry = new ZipEntry(ref.getId());
-				zout.putNextEntry(entry);
-				r.save(zout, null);
-				zout.closeEntry();
-				index++;
-				chunk++;
-				if (bout.size() >= chunkSize * 1024 * 1024) {
-					zout.close();
-					waitFor(upload);
-					upload = null;
-					byte[] sending = bout.toByteArray();
-					System.out.println("");
-					logInfo(String
-							.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d from %d artifacts.",
-									Integer.valueOf(sending.length / (1024 * 1024)), Integer.valueOf(chunk), Integer.valueOf(index),
-									Integer.valueOf(resourcesById.size())));
-					String chunkName =  "artifacts" + ch + ".zip";
-					upload = CompletableFuture.runAsync(() -> {
-						try {
-							URI relative = api.uploadDataAsFile(suiteID,
-									sending ,chunkName,
-									false);
-							addTestResource(relative);
-						} catch (CoreException e) {
-							throw new RuntimeException(e);
-						}
-					});
-					zout = null;
-					bout = null;
-					chunk = 0;
-					ch++;
-				}
-			} catch (CoreException e) {
-				logInfo("Exception:" + e.getMessage());
-				e.printStackTrace();
+			ZipEntry entry = new ZipEntry(ref.getId());
+			zout.putNextEntry(entry);
+			r.save(zout, null);
+			zout.closeEntry();
+			index++;
+			chunk++;
+			if (bout.size() >= chunkSize * 1024 * 1024) {
+				zout.close();
+				waitFor(upload);
+				upload = null;
+				byte[] sending = bout.toByteArray();
+				System.out.println("");
+				logInfo(String
+						.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d from %d artifacts.",
+								Integer.valueOf(sending.length / (1024 * 1024)), Integer.valueOf(chunk), Integer.valueOf(index),
+								Integer.valueOf(resourcesById.size())));
+				String chunkName =  "artifacts" + ch + ".zip";
+				upload = CompletableFuture.runAsync(() -> {
+					try {
+						URI relative = api.uploadDataAsFile(suiteID,
+								sending ,chunkName,
+								false);
+						addTestResource(relative);
+					} catch (CoreException e) {
+						throw new RuntimeException(e);
+					}
+				});
+				zout = null;
+				bout = null;
+				chunk = 0;
+				ch++;
 			}
 		}
 		if (zout != null) {
@@ -394,6 +392,7 @@ public class ClientApplication extends CommandLineApplication {
 		}
 
 		if (bout != null) {
+			waitFor(upload);
 			// Send last fragment
 			System.out.println("Sending last resources chunk (" + chunk
 					+ " artifacts).");
@@ -771,15 +770,17 @@ public class ClientApplication extends CommandLineApplication {
 		if (!resourcesToExclude.isEmpty()) {
 			throw new InvalidCommandLineArgException(errorMessage.toString(), "-import");
 		}
-		StringBuilder output = new StringBuilder();
-		output.append("Following artifacts were found:\n");
-		for (Map.Entry<String, IQ7NamedElement> i: resourceFilesById.entrySet()) {
-			output.append(i.getValue().getPath());
-			output.append(" ");
-			output.append(i.getKey());
-			output.append("\n");
+		if (DEBUG) {
+			StringBuilder output = new StringBuilder();
+			output.append("Following artifacts were found:\n");
+			for (Map.Entry<String, IQ7NamedElement> i: resourceFilesById.entrySet()) {
+				output.append(i.getValue().getPath());
+				output.append(" ");
+				output.append(i.getKey());
+				output.append("\n");
+			}
+			System.out.println(output);
 		}
-		System.out.println(output);
 	}
 
 	private Q7Artifact getArtifact(Q7ArtifactRef ref) throws CoreException {
@@ -1259,12 +1260,12 @@ public class ClientApplication extends CommandLineApplication {
 	private String suiteID;
 
 	private void updateAutUri() throws CoreException,
-			UnsupportedEncodingException {
+			UnsupportedEncodingException, InvalidCommandLineArgException {
 		if (autUri == null && autsData == null) {
 
 			if (auts == null || auts.length == 0) {
-				throw new IllegalArgumentException(
-						"One from 'autUri' or 'auts' parameters must be specified.");
+				throw new InvalidCommandLineArgException (
+						"One from 'autUri' or 'auts' parameters must be specified.", "auts");
 			}
 
 			autsData = new ArrayList<>();
