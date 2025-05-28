@@ -28,10 +28,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
@@ -41,11 +45,13 @@ import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.RefKind;
 import org.eclipse.rcptt.core.ContextType;
 import org.eclipse.rcptt.core.model.IContext;
+import org.eclipse.rcptt.core.model.IQ7Element;
 import org.eclipse.rcptt.core.model.IQ7Element.HandleType;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.eclipse.rcptt.core.model.ITestCase;
 import org.eclipse.rcptt.core.model.IVerification;
 import org.eclipse.rcptt.core.model.ModelException;
+import org.eclipse.rcptt.core.model.Q7Status;
 import org.eclipse.rcptt.core.scenario.Context;
 import org.eclipse.rcptt.core.scenario.GroupContext;
 import org.eclipse.rcptt.core.scenario.NamedElement;
@@ -132,8 +138,7 @@ public class Q7ArtifactLoader {
 				});
 			}
 			executor.shutdown();
-			while (!executor.isTerminated()) {
-				Thread.sleep(500);
+			while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
 				System.out.println("Processing resources (" + count[0] + " of "
 						+ elements.size() + ")");
 			}
@@ -142,88 +147,78 @@ public class Q7ArtifactLoader {
 		System.out.println(elements.size() + " resources processed");
 		return result;
 	}
+	
+	interface ArtifactReferenceById {
+		Q7ArtifactRef apply(String id) throws CoreException;
+	}
 
 	public static Q7Artifact getArtifact(IQ7NamedElement base,
-			Map<String, Q7ArtifactRef> refs) throws CoreException {
+			ArtifactReferenceById refs) throws CoreException {
 
-		if (base instanceof Q7VariantTestCase) {
-			Q7Artifact result = ModelFactory.eINSTANCE.createQ7Artifact();
-			Q7VariantTestCase content = (Q7VariantTestCase) base;
-			result.setId(content.getID());
-			Scenario el = EcoreUtil.copy(content.getNamedElement());
-			result.setContent(el);
-			for (String contextId : el.getContexts()) {
-				if (!refs.containsKey(contextId)) {
-					throw ClientAppPlugin.createException(String.format(
-							"Inconsistent workspace - context %s is not found",
-							contextId));
+			try {
+			if (base instanceof Q7VariantTestCase) {
+				Q7Artifact result = ModelFactory.eINSTANCE.createQ7Artifact();
+				Q7VariantTestCase content = (Q7VariantTestCase) base;
+				result.setId(content.getID());
+				Scenario el = EcoreUtil.copy(content.getNamedElement());
+				result.setContent(el);
+				for (String contextId : el.getContexts()) {
+					result.getRefs().add(refs.apply(contextId));
 				}
-				result.getRefs().add(EcoreUtil.copy(refs.get(contextId)));
+				return result;
 			}
-			return result;
-		}
-
-		IQ7NamedElement content = base
-				.getWorkingCopy(new NullProgressMonitor());
-		try {
-			Q7Artifact result = ModelFactory.eINSTANCE.createQ7Artifact();
-			result.setId(content.getID());
-			NamedElement el = EcoreUtil.copy(content.getNamedElement());
-			result.setContent(el);
-			if (el instanceof Context) {
-				IContext ctx = (IContext) content;
-				if (result.getContent() instanceof WorkspaceContext) {
-					ContextType type = ctx.getType();
-					if (type != null) {
-						type.getMaker().makeExecutable((Context) el, content);
-					}
-				}
-				if (el instanceof GroupContext) {
-					for (String contextId : ((GroupContext) el)
-							.getContextReferences()) {
-						if (!refs.containsKey(contextId)) {
-							throw ClientAppPlugin
-									.createException(String
-											.format("Inconsistent workspace - context %s is not found",
-													contextId));
+	
+			IQ7NamedElement content = base.getWorkingCopy(new NullProgressMonitor());
+			try {
+				Q7Artifact result = ModelFactory.eINSTANCE.createQ7Artifact();
+				result.setId(content.getID());
+				NamedElement el = EcoreUtil.copy(content.getNamedElement());
+				result.setContent(el);
+				if (el instanceof Context) {
+					IContext ctx = (IContext) content;
+					if (result.getContent() instanceof WorkspaceContext) {
+						ContextType type = ctx.getType();
+						if (type != null) {
+							type.getMaker().makeExecutable((Context) el, content);
 						}
-						result.getRefs().add(
-								EcoreUtil.copy(refs.get(contextId)));
+					}
+					if (el instanceof GroupContext) {
+						for (String contextId : ((GroupContext) el)
+								.getContextReferences()) {
+							result.getRefs().add(
+									EcoreUtil.copy(refs.apply(contextId)));
+						}
 					}
 				}
-			}
-			if (el instanceof Scenario) {
-				Scenario scenario = (Scenario) el;
-				if (refs.containsKey(scenario.getId())) {
+				if (el instanceof Scenario) {
+					Scenario scenario = (Scenario) el;
 					int ind = 0;
-					for (String contextRef : refs.get(scenario.getId()).getRefs()) {
+					for (String contextRef : refs.apply(scenario.getId()).getRefs()) {
 						assert contextRef != null;
 						if (
 							!scenario.getContexts().contains(contextRef) &&
-							refs.get(contextRef).getKind() == RefKind.CONTEXT 
+							refs.apply(contextRef).getKind() == RefKind.CONTEXT 
 						) {
 							scenario.getContexts().add(ind, contextRef);
 							ind++;
 						}
 					}
-				}
-				for (String contextId : scenario.getContexts()) {
-					if (!refs.containsKey(contextId)) {
-						throw ClientAppPlugin
-								.createException(String
-										.format("Inconsistent workspace - context %s is not found",
-												contextId));
+					for (String contextId : scenario.getContexts()) {
+						result.getRefs().add(refs.apply(contextId));
 					}
-					result.getRefs().add(EcoreUtil.copy(refs.get(contextId)));
 				}
+	
+				return result;
+			} finally {
+				content.discardWorkingCopy();
 			}
-
-			return result;
-		} finally {
-			content.discardWorkingCopy();
+		} catch (CoreException e) {
+			throw new CoreException(new MultiStatus(Q7ArtifactLoader.class, 0, new IStatus[]{e.getStatus()}, "Failed to load " + base.getPath(), e));
+		} catch (Exception e) {
+			throw new CoreException(Status.error("Failed to load " + base.getPath(), e));
 		}
 	}
-
+	
 	public static byte[] md5(IQ7NamedElement obj) throws CoreException {
 		if (USE_MD5) {
 			MessageDigest md;
@@ -300,7 +295,10 @@ public class Q7ArtifactLoader {
 					addVerifications(element, result);
 
 					synchronized (results) {
-						results.put(result, element);
+						IQ7NamedElement old = results.put(result, element);
+						if (old != null) {
+							throw new AssertionError();
+						}
 						count++;
 					}
 				} else {
@@ -364,6 +362,8 @@ public class Q7ArtifactLoader {
 				}
 			}
 			return count;
+		} catch (CoreException e) {
+			throw new CoreException(new MultiStatus(getClass(), 0, new IStatus[] {e.getStatus()},  "Processing " + element.getElementName(), e));
 		} finally {
 			element.discardWorkingCopy();
 		}
@@ -375,6 +375,7 @@ public class Q7ArtifactLoader {
 				WorkspaceFinder.getInstance(), false);
 		if (verifications != null) {
 			for (IVerification v : verifications) {
+				checkExists(v);
 				String id = v.getID();
 				checkNotNull(id);
 				result.getRefs().add(id);
@@ -385,11 +386,18 @@ public class Q7ArtifactLoader {
 	private static void addContextReferences(Q7ArtifactRef result,
 			IContext[] configContexts) throws ModelException {
 		for (IContext ctx : configContexts) {
+			checkExists(ctx);
 			String ctxID = ctx.getID();
 			if (!RcpttCore.DEFAULT_WORKBENCH_CONTEXT_ID.equals(ctxID)) {
 				checkNotNull(ctxID);
 				result.getRefs().add(ctxID);
 			}
+		}
+	}
+	
+	private static void checkExists(IQ7NamedElement element) throws ModelException {
+		if (!element.exists()) {
+			throw new ModelException(new Q7Status(0, String.format("Context %s does not exist", element.getID())));
 		}
 	}
 

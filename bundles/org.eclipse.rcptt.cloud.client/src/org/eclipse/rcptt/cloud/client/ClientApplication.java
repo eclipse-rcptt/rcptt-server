@@ -45,16 +45,21 @@ import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.client.AutTcpConnector.Aut;
+import org.eclipse.rcptt.cloud.client.Q7ArtifactLoader.ArtifactReferenceById;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
 import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
@@ -89,6 +94,7 @@ import org.eclipse.rcptt.ecl.core.BoxedValue;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 import org.eclipse.rcptt.ecl.runtime.BoxedValues;
 import org.eclipse.rcptt.internal.core.RcpttPlugin;
+import org.eclipse.rcptt.internal.core.model.ModelManager;
 import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
 import org.eclipse.rcptt.launching.injection.InjectionFactory;
 import org.eclipse.rcptt.launching.injection.util.InjectionUtil;
@@ -115,7 +121,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class ClientApplication extends CommandLineApplication {
 
@@ -125,7 +131,7 @@ public class ClientApplication extends CommandLineApplication {
 	@Arg(isRequired = true, name = "testSuiteName", description="Unique suite/project name")
 	public String testSuiteName;
 
-	@Arg(isRequired = true, argCount = -1, name = "import")
+	@Arg(isRequired = true, argCount = -1, name = "import", description="A list of paths to test projects and their dependencies.")
 	public String[] projectDirs = new String[0];
 
 	@Arg(isRequired = false, argCount = -1, name = "injectSites")
@@ -213,6 +219,11 @@ public class ClientApplication extends CommandLineApplication {
 
 	@Override
 	protected Object run() throws Exception {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceDescription description = workspace.getDescription();
+		description.setAutoBuilding(false);
+		workspace.setDescription(description);
+
 		NetworkUtils.initTimeouts();
 		if (shutdownListenerPort > 0) {
 			createShutdownListener(shutdownListenerPort);
@@ -223,6 +234,8 @@ public class ClientApplication extends CommandLineApplication {
 			throw ClientAppPlugin
 					.createException("No project directories is specified");
 		}
+		
+				
 
 		try {
 			if (!server.contains("://")) {
@@ -261,22 +274,38 @@ public class ClientApplication extends CommandLineApplication {
 		this.loader = new Q7ArtifactLoader(skipTags);
 
 		ProjectUtil.importProjects(projectDirFiles, System.out);
-		new MigrateProjectsJob(ResourcesPlugin.getWorkspace().getRoot())
+		new MigrateProjectsJob(workspace.getRoot())
 				.runSync();
+		
+		for (var p: ModelManager.getModelManager().getModel().getProjects()) {
+			checkProjectReferences(p.getProject());
+		}
 
-		updateAUTs();
+		CompletableFuture<Void> autResult = CompletableFuture.runAsync(CheckedExceptionWrapper.encode(this::updateAUTs));
 
 		long st = System.currentTimeMillis();
 		logInfo("Load Artifacts");
 
 		loadArtifactRefs();
 		long ed = System.currentTimeMillis();
-		System.out.println("Loading artifacts complete:" + (ed - st));
-
+		
 		logInfo("Ensure Integrity");
-		Map<String, String> excluded = ensureIntegrity();
-
+		ensureIntegrity();
+		
 		checkLicensing();
+		
+		
+		try {
+			autResult.get();
+		} catch (ExecutionException e) {
+			if (e.getCause() instanceof CheckedExceptionWrapper e2) {
+				e2.rethrow(CoreException.class);
+				e2.rethrow(InvalidCommandLineArgException.class);
+				throw e2;
+			}
+			throw e;
+		}
+
 
 		logInfo("Create Test Suite");
 		suite = createTestSuite();
@@ -331,23 +360,8 @@ public class ClientApplication extends CommandLineApplication {
 				chunk++;
 				if (bout.size() >= chunkSize * 1024 * 1024) {
 					zout.close();
-					if (upload != null) {
-						try {
-							upload.get();
-						} catch (ExecutionException e) {
-							Throwable cause = e.getCause();
-							if (cause != null) {
-								cause = cause.getCause();
-								if (cause instanceof CoreException e2) {
-									throw e2;
-								}
-							}
-							Throwables.throwIfInstanceOf(e, Exception.class);
-							Throwables.throwIfUnchecked(e);
-						} finally {
-							upload = null;
-						}
-					}
+					waitFor(upload);
+					upload = null;
 					byte[] sending = bout.toByteArray();
 					System.out.println("");
 					logInfo(String
@@ -423,12 +437,6 @@ public class ClientApplication extends CommandLineApplication {
 			SherlockReportOutputStream out = new SherlockReportOutputStream(new BufferedOutputStream(
 					new FileOutputStream(reportFile)))) {
 
-			// Add excluded reports
-			for (Map.Entry<String, String> skipped : excluded.entrySet()) {
-				String name = "<undefined>";
-				out.write(generateSkippedReport(skipped.getKey(), name,
-						skipped.getValue()));
-			}
 			// Copy all from server report file
 			if (serverReportFile.exists()) {
 				SherlockReportIterator iterator = new SherlockReportIterator(
@@ -488,6 +496,37 @@ public class ClientApplication extends CommandLineApplication {
 			}
 		}
 		return null;
+	}
+
+	private <T> T waitFor(CompletableFuture<T> upload)
+			throws InterruptedException, CoreException, Exception {
+		if (upload == null) {
+			return null;
+		}
+		try {
+			return upload.get();
+		} catch (ExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause != null) {
+				cause = cause.getCause();
+				Throwables.throwIfInstanceOf(cause, CoreException.class);
+				Throwables.throwIfInstanceOf(e, InterruptedException.class);
+				Throwables.throwIfInstanceOf(e, Exception.class);
+			}
+			Throwables.throwIfInstanceOf(e, InterruptedException.class);
+			Throwables.throwIfInstanceOf(e, Exception.class);
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(cause);
+		}
+	}
+
+	private void checkProjectReferences(IProject project) throws InvalidCommandLineArgException, CoreException {
+		for (var p: project.getReferencedProjects()) {
+			if (!p.exists()) {
+				throw new InvalidCommandLineArgException(String.format("Project %s references an absent project %s. Add %2$s to -import argument.", project.getName(), p.getName()), "import");
+			}
+			checkProjectReferences(p);
+		}
 	}
 
 	IProject getProject(Q7ArtifactRef ref) {
@@ -645,7 +684,7 @@ public class ClientApplication extends CommandLineApplication {
 		dependants.get(master).add(slave);
 	}
 
-	private void loadArtifactRefs() throws CoreException, InterruptedException {
+	private void loadArtifactRefs() throws CoreException, InterruptedException, InvalidCommandLineArgException {
 		Map<Q7ArtifactRef, IQ7NamedElement> resources = loader
 				.artifactRefs(suites);
 		Set<String> idsToRemove = new HashSet<>();
@@ -675,28 +714,27 @@ public class ClientApplication extends CommandLineApplication {
 				resourceFilesById.remove(id);
 				resourcesById.remove(id);
 				dependants.remove(id);
-				builder.append(
-						"Found resource with duplicate ID:"
-								+ iq7NamedElement.getPath().toString()).append(
-						"\n");
+				builder.append(String.format("Resource %s has duplicate ID: %s", iq7NamedElement.getPath(), id));
 			}
-			logInfo(builder.toString());
+			throw new InvalidCommandLineArgException(builder.toString(), "-import");
 		}
+		
 	}
 
 	/**
 	 * based on dependants map find missing resources and exclude it's
 	 * dependants
 	 */
-	private Map<String, String> ensureIntegrity() {
-		Map<String, String> resourcesToExclude = Maps.newHashMap();
+	private void ensureIntegrity() throws InvalidCommandLineArgException {
+		Set<String> resourcesToExclude = Sets.newHashSet();
 		boolean found = true;
+		StringBuilder errorMessage = new StringBuilder();
 		while (found) {
 			found = false;
 			for (Entry<String, Q7ArtifactRef> entry : resourcesById.entrySet()) {
 				Q7ArtifactRef ref = entry.getValue();
 				String id = entry.getKey();
-				if (resourcesToExclude.containsKey(id)) {
+				if (resourcesToExclude.contains(id)) {
 					continue;
 				}
 				for (String refId : ref.getRefs()) {
@@ -704,7 +742,7 @@ public class ClientApplication extends CommandLineApplication {
 					if (Strings.isNullOrEmpty(refId) || "null".equals(refId))
 						throw new NullPointerException("Broken artifact: " + ref);
 					if (!resourcesById.containsKey(refId)
-							|| resourcesToExclude.containsKey(refId)) {
+							|| resourcesToExclude.contains(refId)) {
 						String type = ref.getKind().toString().toLowerCase();
 						String location = resourceFilesById.get(id).getPath()
 								.toPortableString();
@@ -712,22 +750,36 @@ public class ClientApplication extends CommandLineApplication {
 						String refLocation = refFile == null ? "<undefined location>"
 								: refFile.getPath().toPortableString();
 
-						String cause = String
-								.format("%s '%s' refers to missing resource %s '%s', excluding",
-										type, location, refId, refLocation);
+						errorMessage.append(String
+								.format("%s '%s' refers to missing resource %s '%s'",
+										type, location, refId, refLocation));
 
-						ClientAppPlugin.logWarn(cause, null);
-						resourcesToExclude.put(id, cause);
+						resourcesToExclude.add(id);
 						found = true;
 					}
 				}
 			}
 		}
-		for (String id : resourcesToExclude.keySet()) {
+		for (String id : resourcesToExclude) {
 			resourcesById.remove(id);
 			resourceFilesById.remove(id);
 		}
-		return resourcesToExclude;
+		if (!resourcesById.keySet().equals(resourceFilesById.keySet())) {
+			throw new AssertionError("Index mismatch: differences " + Sets.symmetricDifference(resourcesById.keySet(), resourceFilesById.keySet()));
+		}
+		
+		if (!resourcesToExclude.isEmpty()) {
+			throw new InvalidCommandLineArgException(errorMessage.toString(), "-import");
+		}
+		StringBuilder output = new StringBuilder();
+		output.append("Following artifacts were found:\n");
+		for (Map.Entry<String, IQ7NamedElement> i: resourceFilesById.entrySet()) {
+			output.append(i.getValue().getPath());
+			output.append(" ");
+			output.append(i.getKey());
+			output.append("\n");
+		}
+		System.out.println(output);
 	}
 
 	private Q7Artifact getArtifact(Q7ArtifactRef ref) throws CoreException {
@@ -736,7 +788,16 @@ public class ClientApplication extends CommandLineApplication {
 			throw ClientAppPlugin.createException(String.format(
 					"Requested resource %s is not found", ref.getId()));
 		}
-		return Q7ArtifactLoader.getArtifact(file, resourcesById);
+		return Q7ArtifactLoader.getArtifact(file, new ArtifactReferenceById() {
+			@Override
+			public Q7ArtifactRef apply(String id) throws CoreException {
+				Q7ArtifactRef eObject = resourcesById.get(id);
+				if (eObject == null) {
+					throw new CoreException(new Status(IStatus.ERROR, getClass(), EFS.ERROR_NOT_EXISTS, "A resource with ID " + id + " is not found", null));
+				}
+				return EcoreUtil.copy(eObject);
+			}
+		});
 	}
 
 	private void addTestResource(URI artifactsFile) throws CoreException {
