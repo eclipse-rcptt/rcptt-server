@@ -26,13 +26,7 @@ public class AgentUtils {
 			List<AgentInfo> agents) {
 		Map<String, Integer> byClassifier = new HashMap<String, Integer>();
 		for (AgentInfo agentInfo : agents) {
-			Integer value = byClassifier.get(agentInfo.getClassifier());
-			if (value == null) {
-				value = Integer.valueOf(1);
-			} else {
-				value = Integer.valueOf(1 + value.intValue());
-			}
-			byClassifier.put(agentInfo.getClassifier(), value);
+			byClassifier.compute(agentInfo.getClassifier(), (ignored, count) ->  count == null ? 1 : (count + 1));
 		}
 		return byClassifier;
 	}
