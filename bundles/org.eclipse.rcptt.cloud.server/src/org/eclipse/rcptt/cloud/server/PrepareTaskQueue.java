@@ -12,73 +12,36 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server;
 
+import java.io.Closeable;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
-public class PrepareTaskQueue {
-	private List<Thread> tasks = new ArrayList<Thread>();
+import com.google.common.base.Throwables;
 
-	private Map<String, List<String>> lastMessages = new HashMap<String, List<String>>();
-
-	private Exception exception;
-	/*
-	 * 25 minutes, Move to server options.
-	 */
-	private static final long pendingTimeout = 30 * 60 * 1000;
+public class PrepareTaskQueue implements Closeable {
+	private final ExecutorService executions = Executors.newVirtualThreadPerTaskExecutor();
+	private final CompletionService<Void> completionService = new ExecutorCompletionService<Void>(executions);
+	private final List<Future<Void>> tasks = Collections.synchronizedList(new ArrayList<>());
 
 	public static interface IPrepareRunnable {
 		void run() throws Exception;
 	}
 
 	public void addTask(final IPrepareRunnable r, String action) {
-		Thread t = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					r.run();
-				} catch (Exception e) {
-					// log exception
-					ServerPlugin.err(e.getMessage(), e);
-					exception = e;
-					// Stop all other executions,
-					synchronized (tasks) {
-						tasks.remove(Thread.currentThread());
-						for (Thread t : tasks) {
-							t.interrupt();
-						}
-					}
-				} finally {
-					synchronized (tasks) {
-						tasks.remove(Thread.currentThread());
-						tasks.notifyAll();
-					}
-				}
-			}
-		}, action);
-		t.start();
 		synchronized (tasks) {
-			tasks.add(t);
+			tasks.add(completionService.submit(() -> {Thread.currentThread().setName(action); r.run(); return null;}));
 		}
-	}
-
-	public List<String> getLastMessages() {
-		List<String> result = new ArrayList<String>();
-		synchronized (lastMessages) {
-			if (lastMessages.size() > 0) {
-				for (Map.Entry<String, List<String>> e : lastMessages
-						.entrySet()) {
-					for (String s : e.getValue()) {
-						result.add(e.getKey() + ": " + s);
-					}
-				}
-			}
-			lastMessages.clear();
-		}
-		return result;
 	}
 
 	/**
@@ -89,60 +52,41 @@ public class PrepareTaskQueue {
 	 * @throws Exception
 	 *             - rethrows notifier exception or InterruptedException
 	 */
-	public boolean waitForTasks(Callable<Boolean> notifier) throws Exception {
-		long start = System.currentTimeMillis();
-		boolean cancelled = false;
-		try {
-			synchronized (tasks) {
-				while (tasks.size() > 0
-						&& !cancelled) {
-					tasks.wait(1000);
-					if (notifier != null) {
-						cancelled = notifier.call();
-					}
-					if ((System.currentTimeMillis() - start) < pendingTimeout)
-						cancelled = true;
-				}
-				if (cancelled) {
-					// In case of timeout, lets terminate all pending tasks.
-					for (Thread t : tasks) {
-						t.interrupt();
-					}
-				}
+	public boolean waitForTasks(BooleanSupplier isCancelled, Duration timeout) throws Exception {
+		Instant stop = Instant.now().plus(timeout);
+		executions.shutdown();
+		while (!isCancelled.getAsBoolean() && Instant.now().isBefore(stop)) {
+			if (tasks.isEmpty()) {
+				return true;
 			}
-			if (exception != null) {
-				return false;
+			Future<Void> result = completionService.poll(100, TimeUnit.MILLISECONDS);
+			if (result == null) {
+				continue;
 			}
-			return true;
-		} finally {
-			if (notifier != null) {
-				notifier.call();
+			assert result.isDone();
+			try {
+				if (!tasks.remove(result)) {
+					throw new AssertionError("Unknown future detected");
+				}
+				result.get();
+			} catch (InterruptedException e) {
+				executions.shutdownNow();
+				throw e;
+			} catch (ExecutionException e) {
+				executions.shutdownNow();
+				Throwables.throwIfInstanceOf(e.getCause(), Exception.class);
+				Throwables.throwIfUnchecked(e.getCause());
+				throw new AssertionError(e);
 			}
 		}
+		return false;
 	}
-
-	public Exception getException() {
-		return exception;
-	}
-
-	public void addMessage(String key, String message) {
-		synchronized (lastMessages) {
-			List<String> list = lastMessages.get(key);
-			if (list == null) {
-				list = new ArrayList<String>();
-				lastMessages.put(key, list);
-			}
-			list.add(message);
-		}
-	}
-
-	public void terminate(Exception e) {
+	
+	@Override
+	public void close() {
 		synchronized (tasks) {
-			for (Thread t : tasks) {
-				t.interrupt();
-			}
-			tasks.clear();
-			exception = e;
+			executions.close();
 		}
 	}
+
 }

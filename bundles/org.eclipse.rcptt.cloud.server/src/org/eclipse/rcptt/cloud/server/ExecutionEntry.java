@@ -22,11 +22,16 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -39,18 +44,6 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.equinox.internal.p2.core.ProvisioningAgent;
 import org.eclipse.equinox.internal.p2.repository.Transport;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
-import org.eclipse.rcptt.launching.injection.Entry;
-import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
-import org.eclipse.rcptt.launching.injection.UpdateSite;
-import org.eclipse.rcptt.launching.p2utils.P2Utils;
-import org.eclipse.rcptt.logging.FileQ7Monitor;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.logging.IQ7Monitor.IQ7LogListener;
-import org.eclipse.rcptt.util.Base64;
-import org.eclipse.rcptt.util.FileUtil;
-
-import com.google.common.base.Function;
-import com.google.common.io.Closeables;
 import org.eclipse.rcptt.cloud.common.ITestStore;
 import org.eclipse.rcptt.cloud.common.TestSuiteDirectory;
 import org.eclipse.rcptt.cloud.model.AutInfo;
@@ -62,6 +55,19 @@ import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
 import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
+import org.eclipse.rcptt.launching.injection.Entry;
+import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
+import org.eclipse.rcptt.launching.injection.UpdateSite;
+import org.eclipse.rcptt.launching.p2utils.P2Utils;
+import org.eclipse.rcptt.logging.FileQ7Monitor;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.logging.IQ7Monitor.IQ7LogListener;
+import org.eclipse.rcptt.util.Base64;
+import org.eclipse.rcptt.util.FileUtil;
+
+import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 
 
 
@@ -76,7 +82,7 @@ public class ExecutionEntry {
 	private final ISMHandle<Execution> handle;
 
 	private Object profiler;
-	private PrepareTaskQueue pendingQueue = new PrepareTaskQueue();
+	private final PrepareTaskQueue pendingQueue = new PrepareTaskQueue();
 
 	// Map contain on server location -> file location mapping for auts and
 	// update sites.
@@ -95,7 +101,7 @@ public class ExecutionEntry {
 		this.suiteDir = testSuiteDirectory;
 	}
 
-	public PrepareTaskQueue getPrepareQueue() {
+	private PrepareTaskQueue getPrepareQueue() {
 		return pendingQueue;
 	}
 
@@ -235,6 +241,7 @@ public class ExecutionEntry {
 	}
 
 	private int updateSiteIndex = 0;
+	private List<String> messages = Collections.synchronizedList(new ArrayList<>());
 
 	private static IStatus createError(String message) {
 		return new Status(IStatus.ERROR, PLUGIN_ID, message);
@@ -299,9 +306,9 @@ public class ExecutionEntry {
 
 					@Override
                     public void run() throws Exception {
-						String msg = "Begin AUT download.";
+						String msg = "Begin AUT download to " + autFile;
 						downloadMonitor.log(msg);
-						getPrepareQueue().addMessage(
+						addMessage(
 								Thread.currentThread().getName(), msg);
 
 						final IQ7Monitor log = getMonitor(ExecutionEntry.DOWNLOAD_MONITOR
@@ -311,7 +318,7 @@ public class ExecutionEntry {
 
 							@Override
                             public void added(String message) {
-								getPrepareQueue().addMessage(
+								addMessage(
 										Thread.currentThread().getName(),
 										message);
 							}
@@ -319,6 +326,7 @@ public class ExecutionEntry {
 						provider.download(ExecutionEntry.this, originalInfo,
 								originalInfo.getClassifier(), autFile,
 								new NullProgressMonitor(), log);
+						downloadMonitor.log("AUT download is complete.");
 					}
 				}, "Download AUT");
 
@@ -388,14 +396,9 @@ public class ExecutionEntry {
 		} catch (Exception e) {
 			downloadMonitor.log(e.getMessage(), e);
 			// terminate all pretend tasks
-			getPrepareQueue().terminate(e);
-			if (e instanceof CoreException)
-            {
-                throw (CoreException) e;
-            }
-            else {
-				throw new CoreException(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage(), e));
-			}
+			getPrepareQueue().close();
+			Throwables.throwIfInstanceOf(e, CoreException.class);
+			throw new CoreException(Status.error(e.getMessage(), e));
 		}
 	}
 
@@ -431,7 +434,7 @@ public class ExecutionEntry {
 		try {
 			String msg = "Begin Mirroring: " + downloadSite.getUri();
 			downloadMonitor.log(msg);
-			getPrepareQueue().addMessage(Thread.currentThread().getName(), msg);
+			addMessage(Thread.currentThread().getName(), msg);
 
 			final IQ7Monitor log = getMonitor(ExecutionEntry.DOWNLOAD_MONITOR
 					+ "_" + FileUtil.getID(file.getName()));
@@ -439,7 +442,7 @@ public class ExecutionEntry {
 				@Override
                 public void log(String message) {
 					log.log("\t--" + message);
-					getPrepareQueue().addMessage(
+					addMessage(
 							Thread.currentThread().getName(), message);
 				}
 			};
@@ -453,7 +456,7 @@ public class ExecutionEntry {
 				@Override
                 public void logDownloaded(String msg) {
 					log.log("\t--" + msg);
-					getPrepareQueue().addMessage(
+					addMessage(
 							Thread.currentThread().getName(), msg);
 				}
 			});
@@ -473,7 +476,7 @@ public class ExecutionEntry {
 					}, downloadSite, file, logMonitor, agent, 10, 5000)) {
 						log.log("\t--" + "Failed to mirror update site: "
 								+ tool.getErrorMessage());
-						getPrepareQueue().addMessage(
+						addMessage(
 								Thread.currentThread().getName(),
 								"Failed to mirror update site: "
 										+ downloadSite.getUri() + ": "
@@ -583,5 +586,19 @@ public class ExecutionEntry {
 			// ignore
 		}
 		return defaultValue;
+	}
+
+	public boolean waitForTasks(BooleanSupplier isCancelled, Duration timeout) throws Exception {
+		return getPrepareQueue().waitForTasks(isCancelled, timeout);
+	}
+
+	private void addMessage(String name, String message) {
+		messages.add(message + ": " + message);
+	}
+
+	public List<String> drainMessages() {
+		synchronized (messages) {
+			return List.copyOf(messages);
+		}
 	}
 }

@@ -62,6 +62,7 @@ public class ExecutionRegistry {
 
 		ISMHandle<Execution> handle = suite
 				.commit(new Function<SuiteStats, ISMHandle<Execution>>() {
+					@Override
 					public ISMHandle<Execution> apply(
 							final SuiteStats suiteStats) {
 						int last = suiteStats.getLastSuiteID();
@@ -71,6 +72,7 @@ public class ExecutionRegistry {
 						ISMHandle<Execution> execHandle = executionStore
 								.getHandle(getID(newID, 7));
 						execHandle.commit(new Function<Execution, Void>() {
+							@Override
 							public Void apply(Execution input) {
 								if (input.getSuiteId() == null) {
 									input.setSuiteId(suiteStats.getSuiteName());
@@ -144,6 +146,7 @@ public class ExecutionRegistry {
 
 	private void clearAUTArtifacts(final ISMHandle<Execution> ismHandle) {
 		ismHandle.commit(new Function<Execution, Void>() {
+			@Override
 			public Void apply(Execution exec) {
 				EList<String> list = exec.getAutArtifacts();
 				File root = ismHandle.getFileRoot();
@@ -169,6 +172,7 @@ public class ExecutionRegistry {
 
 		Collections.sort(result, new Comparator<ISMHandle<Execution>>() {
 
+			@Override
 			public int compare(ISMHandle<Execution> o1, ISMHandle<Execution> o2) {
 				long s1 = 0, s2 = 0;
 				s1 = getTimestamp(o1);

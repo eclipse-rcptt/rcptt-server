@@ -18,18 +18,22 @@ import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 public class ExecutionAdapter implements ExecutionListener {
 
 
+	@Override
 	public void created(ISMHandle<Execution> execution) {
 	}
 
 
+	@Override
 	public void started(ISMHandle<Execution> execution) {
 	}
 
 
+	@Override
 	public void updated(ISMHandle<Execution> execution) {
 	}
 
 
+	@Override
 	public void completed(ISMHandle<Execution> execution) {
 	}
 

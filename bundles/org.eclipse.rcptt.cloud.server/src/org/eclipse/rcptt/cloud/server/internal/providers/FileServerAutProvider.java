@@ -23,6 +23,7 @@ public class FileServerAutProvider extends BaseServerAutProvider {
 	private static final String SCHEME_HTTPS = "https";
 
 
+	@Override
 	public boolean isSupported(AutInfo aut) {
 		return isSupported(aut, "file");
 	}

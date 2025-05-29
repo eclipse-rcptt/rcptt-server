@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +37,9 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -759,12 +762,9 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		@Override
 		public void run() {
 			// Wait for aut and update site downloads.
-			Callable<Boolean> notifier = new Callable<Boolean>() {
-				@Override
-				public Boolean call() {
-					sendPrepareNotifications();
-					return result.get() != null;
-				}
+			BooleanSupplier isCancelled = () -> {
+				sendPrepareNotifications();
+				return result.get() != null;
 			};
 			monitor.log("Prepare tasks...", null);
 			try {
@@ -787,9 +787,8 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 
 				};
 
-				if (!handle.getPrepareQueue().waitForTasks(notifier)) {
-					Exception exception = handle.getPrepareQueue().getException();
-					throw new RuntimeException("Failed to prepare execution: " + exception.getMessage(), exception);
+				if (!handle.waitForTasks(isCancelled, Duration.ofMinutes(30))) {
+					throw new TimeoutException("Failed to prepare execution " + handle.getSuiteId());
 				}
 
 				// Register suites in queue
@@ -1061,7 +1060,7 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 	}
 
 	private void sendPrepareNotifications() {
-		List<String> list = handle.getPrepareQueue().getLastMessages();
+		List<String> list = handle.drainMessages();
 		if (list != null) {
 			for (String msg : list) {
 				sendClientMessage(msg);

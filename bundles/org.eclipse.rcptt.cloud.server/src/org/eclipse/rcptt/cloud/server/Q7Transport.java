@@ -85,6 +85,7 @@ final class Q7Transport extends Transport {
 			byte[] bytes = IOUtil.download(getSrc(toDownload), monitor,
 					new IDownloadMonitor() {
 
+						@Override
 						public void logDownloaded(String msg) {
 						}
 					});

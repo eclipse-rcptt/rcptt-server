@@ -133,6 +133,7 @@ public class ExecutionIndex {
 				}
 				System.out.print("*");
 				execution.commit(new Function<Execution, Void>() {
+					@Override
 					public Void apply(Execution exec) {
 						setSuiteID(suiteID, exec);
 						setMetadata(execution, exec);
@@ -224,6 +225,7 @@ public class ExecutionIndex {
 			}
 		}
 
+		@Override
 		public Integer apply(Execution execution) {
 			int id = lastId() + 1;
 			execution.setGlobalID(id);
@@ -232,6 +234,7 @@ public class ExecutionIndex {
 	};
 
 	public static Function<Execution, EMap<String, String>> getMetadata = new Function<Execution, EMap<String, String>>() {
+		@Override
 		public EMap<String, String> apply(Execution input) {
 			return input.getMetadata();
 		}
@@ -242,18 +245,21 @@ public class ExecutionIndex {
 	}
 
 	private static Function<Execution, Long> getStartTime = new Function<Execution, Long>() {
+		@Override
 		public Long apply(Execution exec) {
 			return exec.getStartTime();
 		}
 	};
 
 	private static Function<Execution, Integer> getId = new Function<Execution, Integer>() {
+		@Override
 		public Integer apply(Execution exec) {
 			return exec.getGlobalID();
 		}
 	};
 
 	public static Function<SuiteStats, String> getSuiteId = new Function<SuiteStats, String>() {
+		@Override
 		public String apply(SuiteStats exec) {
 			return exec.getSuiteName();
 		}

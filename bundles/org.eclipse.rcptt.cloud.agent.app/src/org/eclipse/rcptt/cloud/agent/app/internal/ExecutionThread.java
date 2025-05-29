@@ -125,7 +125,7 @@ final class ExecutionThread extends Thread {
 							true, true);// Restart
 					// AUT
 					continue;
-				} catch (CoreException e) {
+				} catch (Throwable e) {
 					this.agentThread.err("Exception during test execution:", e);
 					TaskStatus returnCause = (executor != null && !executor
 							.isStarted()) ? TaskStatus.FAILED_TO_START_AUT

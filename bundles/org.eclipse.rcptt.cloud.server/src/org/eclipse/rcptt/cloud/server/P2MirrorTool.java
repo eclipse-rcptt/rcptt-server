@@ -183,6 +183,7 @@ public class P2MirrorTool {
 
 			FileUtil.traverse(siteRoot, siteRoot,
 					new FileUtil.ITraverseRunnable() {
+						@Override
 						public boolean accept(File file, String name) {
 							if (file.isFile()) {
 								totalSize[0] += file.length();

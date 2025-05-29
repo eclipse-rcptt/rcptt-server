@@ -36,6 +36,7 @@ import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 
 public abstract class BaseServerAutProvider implements IServerAutProvider {
 
+	@Override
 	public void download(ExecutionEntry execution, AutInfo aut,
 			String classifier, File autFile, final IProgressMonitor monitor,
 			final IQ7Monitor log) throws CoreException {
@@ -68,6 +69,7 @@ public abstract class BaseServerAutProvider implements IServerAutProvider {
 			IOUtil.download(factory, autFile, monitor, md,
 					new IDownloadMonitor() {
 
+						@Override
 						public void logDownloaded(String msg) {
 							log.log(msg, null);
 						}
@@ -121,6 +123,7 @@ public abstract class BaseServerAutProvider implements IServerAutProvider {
 		}
 	}
 
+	@Override
 	public File getAutFile(ExecutionEntry entry, AutInfo aut, String classifier) {
 		String autFileName = getAutFileName(aut);
 		String autZip = UriUtil.autZip(autFileName, classifier);

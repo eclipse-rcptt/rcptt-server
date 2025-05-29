@@ -108,10 +108,8 @@ public class Q7ServerApi {
 				}
 
 			});
-		} catch (KeyManagementException e) {
-		} catch (UnrecoverableKeyException e) {
-		} catch (NoSuchAlgorithmException e) {
-		} catch (KeyStoreException e) {
+		} catch (Exception e) {
+			throw new CheckedExceptionWrapper(e);
 		}
 
 		client.getConnectionManager().getSchemeRegistry()

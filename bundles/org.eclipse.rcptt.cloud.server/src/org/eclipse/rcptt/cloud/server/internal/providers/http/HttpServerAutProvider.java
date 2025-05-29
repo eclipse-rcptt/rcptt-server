@@ -25,6 +25,7 @@ public class HttpServerAutProvider extends BaseServerAutProvider {
 	private static final String SCHEME_HTTPS = "https";
 
 
+	@Override
 	public boolean isSupported(AutInfo aut) {
 		return isSupported(aut, SCHEME_HTTP) || isSupported(aut, SCHEME_HTTPS);
 	}
