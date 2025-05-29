@@ -92,11 +92,9 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 
 		autHashFile.delete();
 		autFile.delete();
-		boolean clean = FileUtil.deleteFile(autBaseDir);
-		if (!clean) {
-			// TODO: we need to select new folder here.
-			agentLog(monitor, "AUT target directory is not empty",
-					IAgentMonitor.LogType.LogOnly);
+		FileUtil.deleteFile(autBaseDir);
+		if (autBaseDir.exists()) {
+			throw new CoreException(Status.error("Can not delete directory " + autBaseDir));
 		}
 		try {
 			ISrcFactory factory = getZipSourceFactory(aut, classifier);
