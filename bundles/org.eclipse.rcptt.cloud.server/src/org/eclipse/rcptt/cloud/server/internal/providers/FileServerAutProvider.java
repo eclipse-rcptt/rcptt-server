@@ -38,11 +38,11 @@ public class FileServerAutProvider extends BaseServerAutProvider {
 
 	@Override
 	protected ISrcFactory getMd5SourceFactory(AutInfo aut, String classifier) {
+		String uri = UriUtil.autZip(aut.getUri(), classifier);
 		return new ISrcFactory() {
 			
 			@Override
 			public InputStream reopen() throws IOException {
-				String uri = UriUtil.autZip(aut.getUri(), classifier);
 				Path path;
 				try {
 					path = Path.of(URI.create(uri));
@@ -71,6 +71,11 @@ public class FileServerAutProvider extends BaseServerAutProvider {
 			public void done() {
 				// all resources are closed in reopen()
 			}
+			
+			@Override
+			public String toString() {
+				return uri;
+			}
 		};
 	}
 
@@ -88,6 +93,11 @@ public class FileServerAutProvider extends BaseServerAutProvider {
 			@Override
 			public void done() {
 				// org.eclipse.rcptt.cloud.util.IOUtil.downloadSafe(ISrcFactory, IDstFactory, DownloadOptions, IProgressMonitor, MessageDigest, IDownloadMonitor) should close result of reopen()	
+			}
+			
+			@Override
+			public String toString() {
+				return uri;
 			}
 		};
 	}

@@ -684,28 +684,26 @@ public class ClientApplication extends CommandLineApplication {
 	}
 
 	private void loadArtifactRefs() throws CoreException, InterruptedException, InvalidCommandLineArgException {
-		Map<Q7ArtifactRef, IQ7NamedElement> resources = loader
-				.artifactRefs(suites);
 		Set<String> idsToRemove = new HashSet<>();
 		List<IQ7NamedElement> problemElements = new ArrayList<>();
-		for (Entry<Q7ArtifactRef, IQ7NamedElement> entry : resources.entrySet()) {
-			String id = entry.getKey().getId();
+		loader.artifactRefs(suites).toList().forEach(entry-> {
+			String id = entry.references().getId();
+			if (entry.element() == null)
+				throw new NullPointerException("Null IQ7NamedElement for id " + id);
 			if (resourceFilesById.containsKey(id)) {
 				idsToRemove.add(id);
-				problemElements.add(entry.getValue());
+				problemElements.add(entry.element());
 				problemElements.add(resourceFilesById.get(id));
-				continue;// If already registered
+				return;// If already registered
 			}
-			if (entry.getValue() == null)
-				throw new NullPointerException("Null IQ7NamedElement for id " + id);
-			resourceFilesById.put(id, entry.getValue());
-			resourcesById.put(id, entry.getKey());
+			resourceFilesById.put(id, entry.element());
+			resourcesById.put(id, entry.references());
 
-			for (String refId : entry.getKey().getRefs()) {
+			for (String refId : entry.references().getRefs()) {
 				assert refId != null;
 				addDependant(refId, id);
 			}
-		}
+		});
 		if (problemElements.size() > 0) {
 			StringBuilder builder = new StringBuilder();
 			for (IQ7NamedElement iq7NamedElement : problemElements) {

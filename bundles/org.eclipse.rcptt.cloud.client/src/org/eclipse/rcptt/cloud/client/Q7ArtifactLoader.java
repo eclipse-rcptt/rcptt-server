@@ -21,21 +21,29 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ICoreRunnable;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
@@ -45,7 +53,6 @@ import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.RefKind;
 import org.eclipse.rcptt.core.ContextType;
 import org.eclipse.rcptt.core.model.IContext;
-import org.eclipse.rcptt.core.model.IQ7Element;
 import org.eclipse.rcptt.core.model.IQ7Element.HandleType;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.eclipse.rcptt.core.model.ITestCase;
@@ -63,7 +70,8 @@ import org.eclipse.rcptt.core.workspace.WorkspaceFinder;
 import org.eclipse.rcptt.internal.core.model.ModelManager;
 import org.eclipse.rcptt.internal.core.model.Q7Element;
 import org.eclipse.rcptt.internal.core.model.index.NamedElementCollector;
-import org.eclipse.rcptt.internal.core.model.index.TestSuiteElementCollector;
+import org.eclipse.rcptt.launching.CheckedExceptionWrapper;
+import org.eclipse.rcptt.launching.utils.TestSuiteElementCollector;
 import org.eclipse.rcptt.workspace.WorkspaceContext;
 
 import com.google.common.base.Strings;
@@ -75,8 +83,15 @@ public class Q7ArtifactLoader {
 	public Q7ArtifactLoader(String[] skipTags) {
 		this.skipTags = skipTags;
 	}
+	
+	public record ElementAndReferences(IQ7NamedElement element, Q7ArtifactRef references) {
+		public ElementAndReferences {
+			Objects.requireNonNull(element);
+			Objects.requireNonNull(references);
+		}
+	};
 
-	public Map<Q7ArtifactRef, IQ7NamedElement> artifactRefs(String... suites)
+	public Stream<ElementAndReferences> artifactRefs(String... suites)
 			throws CoreException, InterruptedException {
 		NamedElementCollector collector = null;
 		if (suites.length == 0) {
@@ -86,66 +101,55 @@ public class Q7ArtifactLoader {
 		}
 		ModelManager.getModelManager().getModel().accept(collector);
 
-		if (suites.length > 0) {
-			List<IQ7NamedElement> elements = collector.getElements();
-			if (elements.size() < suites.length) {
-				// print not found suites
-				Set<String> names = new HashSet<>();
-				for (IQ7NamedElement el : elements) {
-					names.add(el.getElementName());
-				}
-				List<String> missingNames = Arrays.asList(suites);
-				missingNames.removeAll(names);
-				if (missingNames.size() > 0) {
-					System.out
-							.println("ERROR: Failed to locate testsuites by name:\n"
-									+ Arrays.toString(missingNames.toArray()));
-
-				}
+		if (collector instanceof TestSuiteElementCollector suiteCollector) {
+			Set<String> absent = suiteCollector.getAbsentSuites();
+			if (!absent.isEmpty()) {
+				throw new CoreException(Status.error("Following suites are not found: " + absent));
 			}
 		}
 
-		final Map<Q7ArtifactRef, IQ7NamedElement> result = new HashMap<>();
 		List<IQ7NamedElement> elements = collector.getElements();
 
-		if (suites.length > 0) {
-			// Collect also all contexts
-			NamedElementCollector contexts = new NamedElementCollector(
-					HandleType.Context, HandleType.Verification);
-			ModelManager.getModelManager().getModel().accept(contexts);
-			elements.addAll(contexts.getElements());
-		}
 
 		// ModelManager.getModelManager().getIndexManager().waitUntilReady();
-		try (ExecutorService executor = Executors.newFixedThreadPool(Runtime
-				.getRuntime().availableProcessors() + 1)) {
-			final int[] count = { 0 };
-			System.out.println("Processing resources (" + count[0] + " of "
-					+ elements.size() + ")");
-			for (final IQ7NamedElement e : elements) {
-				executor.execute(new Runnable() {
-					@Override
-					public void run() {
+			class ProgressJob extends Job {
+				private final AtomicInteger count = new AtomicInteger(0);
+				public ProgressJob() {
+					super("Report progress");
+				}
+
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					while (!monitor.isCanceled()) {
+						System.out.println("Processing resources (" + count.get() + " of " + elements.size() + ")");
 						try {
-							int c = collectArtifactsRefs(e, result);
-							if (c >= 1) {
-								count[0]++;
-							}
-						} catch (Throwable e1) {
-							ClientAppPlugin.logErr(e1.getMessage(), e1);
+							Thread.sleep(10000);
+						} catch (InterruptedException e) {
+							return Status.OK_STATUS;
 						}
 					}
-				});
+					System.out.println(count.get() + " resources processed");
+					return Status.OK_STATUS;
+				}
 			}
-			executor.shutdown();
-			while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-				System.out.println("Processing resources (" + count[0] + " of "
-						+ elements.size() + ")");
+			ProgressJob progressJob = new ProgressJob();
+			progressJob.schedule(10000);
+			try {
+				return elements.parallelStream().flatMap(e -> {
+					try {
+						return collectArtifactsRefs(e);
+					} catch (CoreException e1) {
+						throw new CheckedExceptionWrapper(e1);
+					}
+				}).peek(ignored -> progressJob.count.getAndIncrement()).onClose(progressJob::cancel);
+			} catch (CheckedExceptionWrapper e) {
+				e.rethrow(InterruptedException.class);
+				e.rethrow(CoreException.class);
+				e.rethrowUnchecked();
+				throw e;
+			} finally {
+				progressJob.cancel();
 			}
-		}
-		// Wait until all threads are finish
-		System.out.println(elements.size() + " resources processed");
-		return result;
 	}
 	
 	interface ArtifactReferenceById {
@@ -247,15 +251,12 @@ public class Q7ArtifactLoader {
 			} catch (NoSuchAlgorithmException e) {
 				throw createException("Can't calc md5 hash", e);
 			}
-			InputStream contents = new BufferedInputStream(
-					resource.getContents());
-			byte[] buffer = new byte[4096];
-			int len = 0;
-			try {
+			try (InputStream contents = new BufferedInputStream(resource.getContents())) {
+				byte[] buffer = new byte[4096];
+				int len = 0;
 				while ((len = contents.read(buffer)) > 0) {
 					md.update(buffer, 0, len);
 				}
-				contents.close();
 			} catch (IOException e) {
 				createException("Failed to calculate md5", e);
 			}
@@ -266,16 +267,19 @@ public class Q7ArtifactLoader {
 		return new byte[0];
 	}
 
-	private int collectArtifactsRefs(IQ7NamedElement base,
-			Map<Q7ArtifactRef, IQ7NamedElement> results) throws CoreException {
+	private Stream<ElementAndReferences> collectArtifactsRefs(IQ7NamedElement base) throws CoreException {
 		IQ7NamedElement element = base
-				.getWorkingCopy(new NullProgressMonitor());
+				.getIndexingWorkingCopy(new NullProgressMonitor());
 		try {
-			int count = 0;
 			if (element instanceof ITestCase
 					&& isSkipExecuton((ITestCase) element)) {
-				return 0;
+				return Stream.empty();
 			}
+			Q7ArtifactRef result = ModelFactory.eINSTANCE
+					.createQ7ArtifactRef();
+			result.setId(element.getID());
+			result.setHash(md5(element));
+
 			if (element instanceof ITestCase) {
 				// Add Contexts
 				IContext[] contexts = RcpttCore.getInstance().getContexts(
@@ -284,55 +288,43 @@ public class Q7ArtifactLoader {
 				List<IContext> superContexts = SuperContextSupport
 						.findSuperContexts(contexts);
 				if (superContexts == null || superContexts.isEmpty()) {
-					Q7ArtifactRef result = ModelFactory.eINSTANCE
-							.createQ7ArtifactRef();
-					result.setId(element.getID());
-					result.setHash(md5(element));
 					result.setKind(RefKind.SCENARIO);
 					addContextReferences(result, contexts);
 
 					// Add verifications
 					addVerifications(element, result);
 
-					synchronized (results) {
-						IQ7NamedElement old = results.put(result, element);
-						if (old != null) {
-							throw new AssertionError();
-						}
-						count++;
-					}
+					return Stream.of(new ElementAndReferences(base, result));
 				} else {
 					List<ContextConfiguration> variants = SuperContextSupport
 							.findContextVariants(superContexts, contexts);
-					for (ContextConfiguration contextConfiguration : variants) {
-						Q7ArtifactRef result = ModelFactory.eINSTANCE
-								.createQ7ArtifactRef();
-
-						result.setHash(md5(element));
-						result.setKind(RefKind.SCENARIO);
-
-						Q7VariantTestCase varian = new Q7VariantTestCase((Q7Element) element.getParent(),
-								(ITestCase) element, contextConfiguration);
-						result.setId(varian.getID());
-
-						IContext[] configContexts = contextConfiguration
-								.getContexts();
-
-						addContextReferences(result, configContexts);
-						// Add verifications
-						addVerifications(element, result);
-
-						synchronized (results) {
-							results.put(result, varian);
-							count++;
-						}
+					try {
+						return variants.stream().map(CheckedExceptionWrapper.wrap(contextConfiguration -> {
+							Q7ArtifactRef result2 = ModelFactory.eINSTANCE
+									.createQ7ArtifactRef();
+							result2.setHash(md5(element));
+							result2.setKind(RefKind.SCENARIO);
+	
+							Q7VariantTestCase varian = new Q7VariantTestCase((Q7Element) element.getParent(),
+									(ITestCase) base, contextConfiguration);
+							result2.setId(varian.getID());
+	
+							IContext[] configContexts = contextConfiguration
+									.getContexts();
+	
+							addContextReferences(result2, configContexts);
+							// Add verifications
+							addVerifications(element, result2);
+	
+							return new ElementAndReferences(varian, result2);
+						}));
+					} catch (CheckedExceptionWrapper e) {
+						e.rethrow(CoreException.class);
+						e.rethrowUnchecked();
+						throw e;
 					}
 				}
 			} else if (element instanceof IContext) {
-				Q7ArtifactRef result = ModelFactory.eINSTANCE
-						.createQ7ArtifactRef();
-				result.setId(element.getID());
-				result.setHash(md5(element));
 				NamedElement namedElement = element.getNamedElement();
 				if (namedElement instanceof GroupContext) {
 					EList<String> refs = ((GroupContext) namedElement)
@@ -346,22 +338,12 @@ public class Q7ArtifactLoader {
 					result.getRefs().addAll(new ArrayList<>(refs));
 				}
 				result.setKind(RefKind.CONTEXT);
-				synchronized (results) {
-					results.put(result, element);
-					count++;
-				}
+				return Stream.of(new ElementAndReferences(base, result));
 			} else if (element instanceof IVerification) {
-				Q7ArtifactRef result = ModelFactory.eINSTANCE
-						.createQ7ArtifactRef();
-				result.setId(element.getID());
-				result.setHash(md5(element));
 				result.setKind(RefKind.VERIFICATION);
-				synchronized (results) {
-					results.put(result, element);
-					count++;
-				}
+				return Stream.of(new ElementAndReferences(base, result));
 			}
-			return count;
+			return Stream.empty();
 		} catch (CoreException e) {
 			throw new CoreException(new MultiStatus(getClass(), 0, new IStatus[] {e.getStatus()},  "Processing " + element.getElementName(), e));
 		} finally {
@@ -397,7 +379,7 @@ public class Q7ArtifactLoader {
 	
 	private static void checkExists(IQ7NamedElement element) throws ModelException {
 		if (!element.exists()) {
-			throw new ModelException(new Q7Status(0, String.format("Context %s does not exist", element.getID())));
+			throw new ModelException(new Q7Status(0, String.format("Element %s does not exist", element.getID())));
 		}
 	}
 

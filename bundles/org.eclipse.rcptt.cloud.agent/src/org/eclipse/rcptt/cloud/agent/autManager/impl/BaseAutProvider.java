@@ -110,7 +110,7 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 			try {
 				md = MessageDigest.getInstance("md5");
 			} catch (NoSuchAlgorithmException e) {
-				// ignore.
+				throw new IllegalStateException(e);
 			}
 			IOUtil.download(factory, autFile, monitor, md,
 					new IDownloadMonitor() {
