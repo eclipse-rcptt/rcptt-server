@@ -100,15 +100,20 @@ public class Q7ArtifactLoader {
 			collector = new TestSuiteElementCollector(Arrays.asList(suites), true);
 		}
 		ModelManager.getModelManager().getModel().accept(collector);
+		List<IQ7NamedElement> elements = collector.getElements();
 
 		if (collector instanceof TestSuiteElementCollector suiteCollector) {
 			Set<String> absent = suiteCollector.getAbsentSuites();
 			if (!absent.isEmpty()) {
 				throw new CoreException(Status.error("Following suites are not found: " + absent));
 			}
+			// Collect also all contexts
+			NamedElementCollector contexts = new NamedElementCollector(
+					HandleType.Context, HandleType.Verification);
+			ModelManager.getModelManager().getModel().accept(contexts);
+			elements.addAll(contexts.getElements());
 		}
 
-		List<IQ7NamedElement> elements = collector.getElements();
 
 
 		// ModelManager.getModelManager().getIndexManager().waitUntilReady();
