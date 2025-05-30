@@ -14,11 +14,6 @@
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/pom.xml</locationURI>
 		</link>
-		<link>
-			<name>target-platform.target</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/target-platform.target</locationURI>
-		</link>
 	</linkedResources>
 	<filteredResources>
 		<filter>
