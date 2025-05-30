@@ -15,6 +15,7 @@ package org.eclipse.rcptt.cloud.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.util.HashMap;
 
 import org.apache.http.HttpEntity;
@@ -51,7 +52,7 @@ public class HttpEclClient {
 	}
 
 	public ExecutionResult execute(Command command, int timeout)
-			throws CoreException {
+			throws CoreException, ConnectException {
 		HttpResponse response = null;
 		byte[] bs = null;
 		try {
@@ -86,7 +87,8 @@ public class HttpEclClient {
 			EntityUtils.consume(responseEntity);
 
 			return new ExecutionResult(status, results.toArray());
-
+		} catch (ConnectException e) {
+			throw e;
 		} catch (Exception e) {
 			UtilPlugin def = UtilPlugin.getDefault();
 			if (def != null && def.getLog() != null) {

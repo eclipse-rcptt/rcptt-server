@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -241,12 +242,12 @@ public class Q7ServerApi {
 		}
 	}
 
-	public ExecutionResult execute(Command command) throws CoreException {
+	public ExecutionResult execute(Command command) throws CoreException, ConnectException {
 		return eclClient.execute(command, DEFAULT_TIMEOUT);
 	}
 
 	public ExecutionResult execute(Command command, int timeout)
-			throws CoreException {
+			throws CoreException, ConnectException {
 		return eclClient.execute(command, timeout);
 	}
 

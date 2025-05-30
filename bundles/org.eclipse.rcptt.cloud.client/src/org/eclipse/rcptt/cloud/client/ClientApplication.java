@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -598,9 +599,11 @@ public class ClientApplication extends CommandLineApplication {
 			cs.setSuiteId(getSuiteId());
 			try {
 				api.execute(cs);
-			} catch (CoreException e) {
+			} catch ( CoreException e) {
 				System.out.println("Cancel test suite failed:");
 				LOG.log(e.getStatus());
+			} catch (ConnectException e) {
+				e.printStackTrace();
 			}
 		}
 	};
@@ -667,21 +670,9 @@ public class ClientApplication extends CommandLineApplication {
 		reporter.generateReport(files, testSuiteName, report);
 	}
 
-	/**
-	 * key - artifact id values - ids of artifacts referencing to a key artifact
-	 */
-	private final Map<String, List<String>> dependants = new HashMap<>();
-
 	private Map<String, String> uploadMap = new HashMap<>();
 
 	private URI reportUri;
-
-	private void addDependant(String master, String slave) {
-		if (!dependants.containsKey(master)) {
-			dependants.put(master, new ArrayList<String>());
-		}
-		dependants.get(master).add(slave);
-	}
 
 	private void loadArtifactRefs() throws CoreException, InterruptedException, InvalidCommandLineArgException {
 		Set<String> idsToRemove = new HashSet<>();
@@ -701,7 +692,6 @@ public class ClientApplication extends CommandLineApplication {
 
 			for (String refId : entry.references().getRefs()) {
 				assert refId != null;
-				addDependant(refId, id);
 			}
 		});
 		if (problemElements.size() > 0) {
@@ -710,12 +700,12 @@ public class ClientApplication extends CommandLineApplication {
 				String id = iq7NamedElement.getID();
 				resourceFilesById.remove(id);
 				resourcesById.remove(id);
-				dependants.remove(id);
 				builder.append(String.format("Resource %s has duplicate ID: %s", iq7NamedElement.getPath(), id));
 			}
 			throw new InvalidCommandLineArgException(builder.toString(), "-import");
 		}
-		
+		assert resourcesById.keySet().equals(resourceFilesById.keySet());
+		System.out.printf("Loaded %d artifacts", resourcesById.size());
 	}
 
 	/**
@@ -748,8 +738,8 @@ public class ClientApplication extends CommandLineApplication {
 								: refFile.getPath().toPortableString();
 
 						errorMessage.append(String
-								.format("%s '%s' refers to missing resource %s '%s'",
-										type, location, refId, refLocation));
+								.format("%s '%s' refers to missing resource %s\n",
+										type, location, refId));
 
 						resourcesToExclude.add(id);
 						found = true;
@@ -805,7 +795,11 @@ public class ClientApplication extends CommandLineApplication {
 		cmd.setResource(null);
 		cmd.setSuiteId(suiteID);
 		cmd.setArtifactsPath(artifactsFile.toASCIIString());
-		api.execute(cmd);
+		try {
+			api.execute(cmd);
+		} catch (ConnectException e) {
+			throw new CoreException(Status.error("Server is unavilable", e));
+		}
 	}
 
 	private List<AutInfo> updateAuts(List<AutInfo> toUpdate) throws CoreException {
@@ -814,7 +808,12 @@ public class ClientApplication extends CommandLineApplication {
 			AddAut cmd = CommonCommandsFactory.eINSTANCE.createAddAut();
 			cmd.setSuiteId(suiteID);
 			cmd.setAut(EcoreUtil.copy(autInfo));
-			ExecutionResult result = api.execute(cmd);
+			ExecutionResult result;
+			try {
+				result = api.execute(cmd);
+			} catch (ConnectException e) {
+				throw new CoreException(Status.error("Server is unavilable", e));
+			}
 			if (!result.status.isOK()) {
 				throw new CoreException(result.status);
 			}
@@ -834,7 +833,7 @@ public class ClientApplication extends CommandLineApplication {
 		return results;
 	}
 
-	private boolean beginTestSuite(String suiteId) throws CoreException {
+	private boolean beginTestSuite(String suiteId) throws CoreException, InvalidCommandLineArgException {
 		Preconditions.checkNotNull(suiteId);
 		BeginTestSuite cmd = CommonCommandsFactory.eINSTANCE
 				.createBeginTestSuite();
@@ -850,6 +849,8 @@ public class ClientApplication extends CommandLineApplication {
 					return true;
 				}
 			}
+		} catch (ConnectException e) {
+			throw new InvalidCommandLineArgException("Can't connect to server " + serverUri, "-server");
 		} catch (Exception e) {
 			logInfo("Failed to begin test suite execution: " + e.getMessage());
 		}
@@ -866,7 +867,12 @@ public class ClientApplication extends CommandLineApplication {
 		cmd.getAuts().addAll(autInformation);
 		cmd.setOptions(options);
 		applyMetadata(cmd.getMetadata()::put);
-		ExecutionResult result = api.execute(cmd);
+		ExecutionResult result;
+		try {
+			result = api.execute(cmd);
+		} catch (ConnectException e) {
+			throw new CoreException(Status.error("Server is unavailable", e));
+		}
 		if (!result.status.isOK()) {
 			throw new CoreException(result.status);
 		}
