@@ -27,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -920,7 +921,8 @@ public class ClientApplication extends CommandLineApplication {
 			try {
 				result = api.execute(command, Q7ServerApi.DEFAULT_TIMEOUT);
 				lastSuccess = System.currentTimeMillis();
-			} catch (Exception e) {
+			} catch (SocketException e) {
+				LOG.error("Server is unavailable", e);
 				if (System.currentTimeMillis() - lastSuccess > 20 * 60 * 1000) { // >=
 					// 20
 					// minutes
@@ -930,8 +932,6 @@ public class ClientApplication extends CommandLineApplication {
 									e);
 				}
 
-				LOG.error(
-						"Timeout during access server", e);
 				continue; // try one more time.
 			}
 
