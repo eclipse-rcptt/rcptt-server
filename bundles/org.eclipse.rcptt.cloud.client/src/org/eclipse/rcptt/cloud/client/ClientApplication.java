@@ -923,6 +923,7 @@ public class ClientApplication extends CommandLineApplication {
 				lastSuccess = System.currentTimeMillis();
 			} catch (SocketException e) {
 				LOG.error("Server is unavailable", e);
+				Thread.sleep(60);
 				if (System.currentTimeMillis() - lastSuccess > 20 * 60 * 1000) { // >=
 					// 20
 					// minutes
