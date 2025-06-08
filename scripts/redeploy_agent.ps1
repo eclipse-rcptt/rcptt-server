@@ -14,7 +14,9 @@ function Restart-Agent {
 	& taskkill.exe /F /IM java.exe 
 	Start-Sleep -Seconds 2.5
 	if (Test-Path agent) {
-		Remove-Item -Recurse -Force agent -ErrorAction Stop
+		# \\?\ allows referencing a very long path
+		# It is needed even when the original path is short if -Recurse is given
+		Get-Item agent | ForEach-Object { "\\?\" + $_.FullName } | Remove-Item -Recurse -Force  -ErrorAction Stop
 	}
 	Expand-Archive -Path $zipPath -DestinationPath "agent"
 	Start-Process -PassThru agent\eclipsec.exe -ArgumentList "-consoleLog -serverHost 172.29.1.229  -serverPort 5009 -data agent\ws -vm `"C:\Users\Test\Documents\jdk-21.0.6.7-hotspot\bin\java.exe`" -vmargs -XX:+HeapDumpOnOutOfMemoryError -Xlog:gc"
@@ -57,3 +59,4 @@ while ($true) {
 	
 	Start-Sleep 10
 }  
+ 
