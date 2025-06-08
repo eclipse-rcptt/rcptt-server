@@ -1320,7 +1320,7 @@ public class ClientApplication extends CommandLineApplication {
 				Runtime.getRuntime().exit(0);
 			}
 		};
-
+		ShutdownListenerThread.setDaemon(true);
 		ShutdownListenerThread.start();
 	}
 

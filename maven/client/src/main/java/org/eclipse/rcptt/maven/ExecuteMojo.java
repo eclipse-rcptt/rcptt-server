@@ -273,19 +273,21 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 					String.format("The execution timeout is set to %d seconds",
 							duration));
 
-			Runtime.getRuntime().addShutdownHook(ShutdownHook);
-
-			int code = CommandLineUtils.executeCommandLine(cmd, outConsumer, errConsumer,
+			try {
+				int code = CommandLineUtils.executeCommandLine(cmd, outConsumer, errConsumer,
 					duration);
-			
-			if (code == 64) {
-				throw new MojoExecutionException("Configuration is invalid");
-			}
-			if (code == 56) {
-				throw new MojoFailureException("There are test failures");
-			}
-			if (code != 0) {
-				throw new MojoExecutionException(format("Q7 client exited with code %d", code));
+				
+				if (code == 64) {
+					throw new MojoExecutionException("Configuration is invalid");
+				}
+				if (code == 56) {
+					throw new MojoFailureException("There are test failures");
+				}
+				if (code != 0) {
+					throw new MojoExecutionException(format("Q7 client exited with code %d", code));
+				}
+			} finally {
+				ShutdownHook.start();
 			}
 			outConsumer.done();
 			errConsumer.done();
