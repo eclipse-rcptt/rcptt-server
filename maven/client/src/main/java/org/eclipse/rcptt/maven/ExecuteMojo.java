@@ -439,13 +439,18 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 	 */
 	private String q7server;
 
-	Thread ShutdownHook = new Thread() {
+	private final Thread ShutdownHook = new Thread() {
+		{
+			setDaemon(false);
+		}
 		public void run() {
-			getLog().info(
-					"Process terminated. Send shutdown request to Q7 runner.");
-			try (Socket ignored = new Socket("127.0.0.1", shutdownListenerPort)) {
-			} catch (IOException e) {
-				System.out.println(e);
+			if (shutdownListenerPort >= 0) {
+				getLog().info(
+						"Process terminated. Send shutdown request to Q7 runner.");
+				try (Socket ignored = new Socket("127.0.0.1", shutdownListenerPort)) {
+				} catch (IOException e) {
+					System.out.println(e);
+				}
 			}
 		}
 	};
