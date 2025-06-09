@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 
 import org.apache.http.HttpEntity;
@@ -87,6 +88,10 @@ public class HttpEclClient {
 			EntityUtils.consume(responseEntity);
 
 			return new ExecutionResult(status, results.toArray());
+		} catch (SocketTimeoutException e) {
+			ConnectException e1 = new ConnectException(e.getLocalizedMessage());
+			e1.initCause(e);
+			throw e1;
 		} catch (ConnectException e) {
 			throw e;
 		} catch (Exception e) {
