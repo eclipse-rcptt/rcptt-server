@@ -1,5 +1,7 @@
 package org.eclipse.rcptt.maven;
 
+import static java.lang.String.format;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -26,9 +28,14 @@ import org.eclipse.rcptt.maven.util.CoordResolver;
  */
 public class PrepareMojo extends AbstractQ7Mojo {
 	public void execute() throws MojoExecutionException, MojoFailureException {
-            if(skipTests) {
-                return;
-            }
+		int feature = Runtime.version().feature();
+		int required = 21;
+		if (feature < required) {
+			throw new MojoExecutionException(format("Java version is %d, required %d", feature, required));
+		}
+		if (skipTests) {
+			return;
+		}
 
 		unpackApps();
 		copyProjectToTarget();
