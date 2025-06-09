@@ -26,7 +26,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.BasicInternalEList;
@@ -38,10 +37,7 @@ import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl.EObjectOutputStream
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl.EObjectOutputStream.Check;
 import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
 
-import org.eclipse.rcptt.cloud.util.internal.UtilPlugin;
-
 public class HttpEclClient {
-
 	private final ProcessStatusConverter statusConverter = new ProcessStatusConverter();
 
 	private final HttpClient client;
@@ -52,8 +48,7 @@ public class HttpEclClient {
 		this.url = url;
 	}
 
-	public ExecutionResult execute(Command command, int timeout)
-			throws CoreException, ConnectException {
+	public ExecutionResult execute(Command command, int timeout) throws ConnectException {
 		HttpResponse response = null;
 		byte[] bs = null;
 		try {
@@ -75,19 +70,20 @@ public class HttpEclClient {
 			response = client.execute(post);
 			HttpEntity responseEntity = response.getEntity();
 
-			InputStream responseContent = responseEntity.getContent();
-			bs = IOUtil.getStreamContent(responseContent);
-			EObjectInputStream ein = new EObjectInputStream(
-					new ByteArrayInputStream(bs), new HashMap<Object, Object>());
-			IStatus status = statusConverter.fromEObject((ProcessStatus) ein
-					.loadEObject());
-			InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
-					InternalEObject.class);
-			ein.loadEObjects(results);
-
-			EntityUtils.consume(responseEntity);
-
-			return new ExecutionResult(status, results.toArray());
+			try (InputStream responseContent = responseEntity.getContent()) {
+				bs = IOUtil.getStreamContent(responseContent);
+				EObjectInputStream ein = new EObjectInputStream(
+						new ByteArrayInputStream(bs), new HashMap<Object, Object>());
+				IStatus status = statusConverter.fromEObject((ProcessStatus) ein
+						.loadEObject());
+				InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
+						InternalEObject.class);
+				ein.loadEObjects(results);
+	
+				EntityUtils.consume(responseEntity);
+	
+				return new ExecutionResult(status, results.toArray());
+			}
 		} catch (SocketTimeoutException e) {
 			ConnectException e1 = new ConnectException(e.getLocalizedMessage());
 			e1.initCause(e);
@@ -95,14 +91,9 @@ public class HttpEclClient {
 		} catch (ConnectException e) {
 			throw e;
 		} catch (Exception e) {
-			UtilPlugin def = UtilPlugin.getDefault();
-			if (def != null && def.getLog() != null) {
-				def.getLog().log(
-						UtilPlugin.createStatus("Response from: " + url
-								+ "command: " + command.getClass().getName()
-								+ (bs != null ? new String(bs) : ""), e));
-			}
-			throw UtilPlugin.createException(e.getMessage());
+			throw new IllegalStateException("Response from: " + url
+					+ "command: " + command.getClass().getName()
+					+ (bs != null ? new String(bs) : ""), e);
 		}
 	}
 
