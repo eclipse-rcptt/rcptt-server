@@ -275,7 +275,7 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 
 			try {
 				int code = CommandLineUtils.executeCommandLine(cmd, outConsumer, errConsumer,
-					duration);
+					duration + 1000);
 				
 				if (code == 64) {
 					throw new MojoExecutionException("Configuration is invalid");
