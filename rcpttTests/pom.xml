@@ -30,6 +30,7 @@ Contributors:
 			<url>https://repo.eclipse.org/content/repositories/rcptt-snapshots/</url>
 			<snapshots>
 				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
 			</snapshots>
 		</pluginRepository>
 		<pluginRepository>
