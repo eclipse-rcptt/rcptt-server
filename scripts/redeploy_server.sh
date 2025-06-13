@@ -8,6 +8,6 @@ sleep 1
 rm -r server
 unzip -d server /tmp/org.eclipse.rcptt.cloud.server.product-linux.gtk.x86_64.zip
 cd server
-nohup ./eclipse -port 5009 -data ws -consoleLog -vmargs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000' &
+nohup ./eclipse -port 5009 -data ../ws -consoleLog -vmargs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000' &
 sleep 5
 tail -n 100 nohup.out
