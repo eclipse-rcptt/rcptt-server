@@ -12,7 +12,7 @@ function Restart-Agent {
 	cd C:\Users\Test\Documents
 	& taskkill.exe /F /IM eclipsec.exe
 	& taskkill.exe /F /IM java.exe 
-	Start-Sleep -Seconds 2.5
+	Start-Sleep -Seconds 10
 	if (Test-Path agent) {
 		# \\?\ allows referencing a very long path
 		# It is needed even when the original path is short if -Recurse is given

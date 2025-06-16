@@ -336,7 +336,49 @@ Contributors:
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>linux</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.googlecode.maven-download-plugin</groupId>
+						<artifactId>download-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>generate-resources</phase>
+								<id>windows</id>
+								<goals>
+									<goal>wget</goal>
+								</goals>
+								<configuration>
+									<url>
+										https://archive.eclipse.org/technology/epp/downloads/release/2024-03/R/eclipse-java-2024-03-R-linux-gtk-x86_64.tar.gz</url>
+									<outputFileName>aut.zip</outputFileName>
+									<sha512>973c94a0a029c29d717823a53c3a65f99fa53d51f605872c5dd854620e16cd4cb2c2ff8a5892cd550a70ab19e1a0a0d2e792661e936bd3d2bef4532bc533048b</sha512>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 
+					<plugin>
+						<groupId>org.eclipse.rcptt</groupId>
+						<artifactId>client</artifactId>
+						<extensions>true</extensions>
+						<configuration>
+							<aut>
+								<locations>
+									<location>
+										<classifier>win32.win32.x86_64</classifier>
+										<path>${project.build.directory}/aut.zip</path>
+									</location>
+								</locations>
+								<executionEnvironment>JavaSE-17</executionEnvironment>
+							</aut>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 </project>
