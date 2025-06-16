@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?>
+<target includeMode="feature" name="local" sequenceNumber="84">
+<locations>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.apache.felix.scr" version="2.0.10.v20170501-2007"/>
+<unit id="org.apache.felix.scr.source" version="2.0.10.v20170501-2007"/>
+<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20170919201930/repository/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.emf.sdk.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.emf.transaction.sdk.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.emf.validation.sdk.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.xsd.sdk.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
+		<unit id="org.eclipse.equinox.p2.core.feature.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.equinox.server.jetty.feature.group" version="0.0.0"/>
+<repository location="http://download.eclipse.org/releases/2025-03"/>
+</location>
+	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="jakarta.servlet-api" version="0.0.0"/>
+<unit id="jakarta.servlet" version="0.0.0"/>
+<unit id="org.osgi.service.cm" version="0.0.0"/>
+<unit id="org.eclipse.jetty.ee10.servlet" version="0.0.0"/>
+<unit id="org.eclipse.equinox.launcher" version="0.0.0"/>
+		<repository location="http://download.eclipse.org/releases/2025-03"/>
+	</location>
+	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+		<repository location="file:${project_loc:org.eclipse.rcptt.cloud.target}/../../org.eclipse.rcptt/repository/full/target/repository/"/>
+		<unit id="org.eclipse.rcptt.modules.launching.feature.group" version="0.0.0"/>
+		<unit id="org.eclipse.rcptt.launching.feature.group" version="0.0.0"/>
+		<unit id="org.eclipse.rcptt.watson.feature.group" version="0.0.0"/>
+		<unit id="org.eclipse.rcptt.cli.common" version="0.0.0"/>
+	</location>
+</locations>
+</target>

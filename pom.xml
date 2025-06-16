@@ -90,7 +90,7 @@ Contributors:
 					<target>
 						<artifact>
 							<groupId>${project.groupId}</groupId>
-							<artifactId>target-platform</artifactId>
+							<artifactId>org.eclipse.rcptt.cloud.target</artifactId>
 							<version>2.5.5-SNAPSHOT</version>
 						</artifact>
 					</target>
@@ -121,4 +121,20 @@ Contributors:
 			</plugins>
 		</pluginManagement>
 	</build>
+	<profiles>
+		<profile>
+			<id>local</id>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>${tycho-groupid}</groupId>
+							<artifactId>target-platform-configuration</artifactId>
+							<configuration><target><artifact><classifier>local</classifier></artifact></target></configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+	</profiles>
 </project>
