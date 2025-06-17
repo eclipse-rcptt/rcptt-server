@@ -123,7 +123,7 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 		// Projects
 		cmd.createArg().setValue(IMPORT);
 		for(String importProject : getImports()) {
-			if (!new File(importProject).isDirectory()) {
+			if (!new File(importProject).exists()) {
 				throw new MojoFailureException(importProject + " does not exist");
 			}
 		    cmd.createArg().setValue(importProject);
