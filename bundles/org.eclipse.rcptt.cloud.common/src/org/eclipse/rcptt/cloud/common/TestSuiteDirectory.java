@@ -166,10 +166,12 @@ public class TestSuiteDirectory implements ITestStore {
 
 	@Override
 	public Q7Artifact getResource(Q7ArtifactRef ref) throws IOException {
-		if (!resourceExists(ref)) {
-			return null;
+		synchronized (resources) {
+			if (!resourceExists(ref)) {
+				return null;
+			}
+			return EmfResourceUtil.load(getResourceFile(ref), Q7Artifact.class);
 		}
-		return EmfResourceUtil.load(getResourceFile(ref), Q7Artifact.class);
 	}
 
 	/*
@@ -190,9 +192,9 @@ public class TestSuiteDirectory implements ITestStore {
 				throw CommonPlugin.createException(
 						"Attempt to put unreferenced resource", null);
 			}
+			EmfResourceUtil.save(getResourceFile(ref), artifact);
 		}
 
-		EmfResourceUtil.save(getResourceFile(ref), artifact);
 	}
 
 	/**
