@@ -1,0 +1,18 @@
+--- RCPTT testcase ---
+Format-Version: 1.0
+Context-Type: org.eclipse.rcptt.ctx.parameters
+Element-Name: parameters2
+Element-Type: context
+Element-Version: 2.0
+Id: _ghobwFBFEfCaYs7HtpN5BA
+Runtime-Version: 2.6.0.202506230024
+Save-Time: 6/23/25, 7:20 PM
+
+------=_.parameters.context-2e023de5-3294-36a9-ac1d-6701f05a40ee
+Content-Type: text/properties
+Entry-Name: .parameters.context
+
+#Mon Jun 23 19:20:33 GMT+04:00 2025
+param1=param1_value2
+
+------=_.parameters.context-2e023de5-3294-36a9-ac1d-6701f05a40ee--
