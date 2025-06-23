@@ -93,6 +93,8 @@ public class Q7ArtifactLoader {
 
 	public Stream<ElementAndReferences> artifactRefs(String... suites)
 			throws CoreException, InterruptedException {
+		ModelManager.getModelManager().getIndexManager()
+		.waitUntilReady(new NullProgressMonitor());
 		NamedElementCollector collector = null;
 		if (suites.length == 0) {
 			collector = new NamedElementCollector();
