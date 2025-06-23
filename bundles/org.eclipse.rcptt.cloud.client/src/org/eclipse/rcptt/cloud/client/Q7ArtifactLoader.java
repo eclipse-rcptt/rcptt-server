@@ -338,9 +338,7 @@ public class Q7ArtifactLoader {
 					result.getRefs().addAll(new ArrayList<>(refs));
 				}
 				if (namedElement instanceof SuperContext) {
-					EList<String> refs = ((SuperContext) namedElement)
-							.getContextReferences();
-					result.getRefs().addAll(new ArrayList<>(refs));
+					return Stream.empty();
 				}
 				result.setKind(RefKind.CONTEXT);
 				return Stream.of(new ElementAndReferences(base, result));

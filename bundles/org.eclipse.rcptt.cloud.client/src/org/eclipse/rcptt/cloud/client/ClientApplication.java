@@ -705,7 +705,7 @@ public class ClientApplication extends CommandLineApplication {
 				String id = iq7NamedElement.getID();
 				resourceFilesById.remove(id);
 				resourcesById.remove(id);
-				builder.append(String.format("Resource %s has duplicate ID: %s", iq7NamedElement.getPath(), id));
+				builder.append(String.format("Resource %s has duplicate ID: %s\n", iq7NamedElement.getPath(), id));
 			}
 			throw new InvalidCommandLineArgException(builder.toString(), "-import");
 		}
