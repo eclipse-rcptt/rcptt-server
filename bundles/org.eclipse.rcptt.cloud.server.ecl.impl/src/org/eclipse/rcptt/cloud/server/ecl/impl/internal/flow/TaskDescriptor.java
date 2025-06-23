@@ -499,9 +499,10 @@ public class TaskDescriptor {
 			Map<String, Q7ArtifactRef> refs) throws CoreException {
 		for (Q7ArtifactRef ref : artifact.getRefs()) {
 			if (!refs.containsKey(ref.getId())) {
+				String available = Joiner.on('\n').join(refs.keySet());
 				throw new CoreException(ServerPlugin.createErr(String.format(
-						"Resource '%s' referenced from '%s' cannot be found",
-						ref.getId(), artifact.getId())));
+						"Resource '%s' referenced from '%s' cannot be found. Available references:\n%s",
+						ref.getId(), artifact.getId(), available)));
 			}
 		}
 	}

@@ -629,7 +629,7 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 
 			String message = org.eclipse.rcptt.reporting.util.ReportUtils.getFailMessage(report.getRoot());
 			envelope.setMessage(String
-					.format("%s %s. %d (%d) processed, %d failed.%s %s agents:(%s,%s) %s",
+					.format("%s %s. %d (%d) processed, %d failed.%s %s, running tasks: %d, agents: %d, cause: %s",
 							envelope.getFrom(),
 							SimpleSeverity.create(info).name(),
 							getExecutedTestCount(),
@@ -637,11 +637,9 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 							getFailedTestCount(),
 							ReportUtils.calculateRemaining(this),
 							report.getRoot().getName(),
-							suite != null ? suite.getRunningAgents() : "",
-							suite != null ? suite.getAgentCount() : "",
-							((message != null && message.trim().length() > 0) ? " cause: "
-									+ message.trim()
-									: ""))
+							suite != null ? suite.getRunningAgents() : 0,
+							suite != null ? suite.getAgentCount() : 0,
+							((message != null && message.trim().length() > 0) ? message.trim() : ""))
 					+ " arch: " + envelope.getArch());
 			executionsMonitor.log(envelope.getMessage(), null);
 		}
