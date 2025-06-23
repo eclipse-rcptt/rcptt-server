@@ -13,6 +13,7 @@
 package org.eclipse.rcptt.cloud.client;
 
 import static java.lang.String.format;
+import static org.eclipse.core.runtime.Status.error;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -44,6 +45,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -119,6 +121,7 @@ import org.eclipse.rcptt.sherlock.core.streams.SherlockReportOutputStream;
 import org.eclipse.rcptt.util.FileUtil;
 import org.eclipse.rcptt.util.NetworkUtils;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -349,7 +352,8 @@ public class ClientApplication extends CommandLineApplication {
 			if (!artifact.getId().equals(ref.getId())) {
 				throw new AssertionError("Requested: " + ref.getId() + ", received: " + artifact.getId());
 			}
-			System.out.printf("Compressing resource %s, %s (%d of %d)\n", resourceFilesById.get(ref.getId()).getPath(), artifact.getId(), processed, total);
+			
+			System.out.printf("Compressing resource %s, %s, deps: %s, (%d of %d)\n", resourceFilesById.get(ref.getId()).getPath(), artifact.getId(), Joiner.on("; ").join(ref.getRefs()), processed, total);
 				prevTime = System.currentTimeMillis();
 			
 
@@ -712,8 +716,9 @@ public class ClientApplication extends CommandLineApplication {
 	/**
 	 * based on dependants map find missing resources and exclude it's
 	 * dependants
+	 * @throws CoreException 
 	 */
-	private void ensureIntegrity() throws InvalidCommandLineArgException {
+	private void ensureIntegrity() throws InvalidCommandLineArgException, CoreException {
 		Set<String> resourcesToExclude = Sets.newHashSet();
 		boolean found = true;
 		StringBuilder errorMessage = new StringBuilder();
@@ -725,6 +730,14 @@ public class ClientApplication extends CommandLineApplication {
 				if (resourcesToExclude.contains(id)) {
 					continue;
 				}
+				
+				List<String> subRefs = List.copyOf(ref.getRefs());
+				List<String> artifactRefs = getArtifact(ref).getRefs().stream().flatMap(r -> Stream.concat(Stream.of(r.getId()), r.getRefs().stream()) ).toList();
+				
+				if (!subRefs.equals(artifactRefs)) {
+					throw new CoreException(error(format("Inconsistent reference index for %s. Original: %s, current: %s", id, subRefs, artifactRefs)));
+				}
+				
 				for (String refId : ref.getRefs()) {
 					
 					if (Strings.isNullOrEmpty(refId) || "null".equals(refId))
