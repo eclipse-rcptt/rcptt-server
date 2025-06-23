@@ -169,11 +169,29 @@ public class Q7ArtifactLoader {
 				Q7Artifact result = ModelFactory.eINSTANCE.createQ7Artifact();
 				Q7VariantTestCase content = (Q7VariantTestCase) base;
 				result.setId(content.getID());
-				Scenario el = EcoreUtil.copy(content.getNamedElement());
-				result.setContent(el);
-				for (String contextId : el.getContexts()) {
+				Scenario scenario = EcoreUtil.copy(content.getNamedElement());
+				result.setContent(scenario);
+				for (String contextId : scenario.getContexts()) {
 					result.getRefs().add(refs.apply(contextId));
 				}
+				
+				// Handle default verifications
+				int ind = 0;
+				for (String ref : refs.apply(scenario.getId()).getRefs()) {
+					assert ref != null;
+					if (
+						!scenario.getVerifications().contains(ref) &&
+						refs.apply(ref).getKind() == RefKind.VERIFICATION 
+					) {
+						scenario.getVerifications().add(ind, ref);
+						ind++;
+					}
+				}
+				
+				for (String id : scenario.getVerifications()) {
+					result.getRefs().add(refs.apply(id));
+				}
+
 				return result;
 			}
 	
@@ -202,6 +220,7 @@ public class Q7ArtifactLoader {
 				if (el instanceof Scenario) {
 					Scenario scenario = (Scenario) el;
 					int ind = 0;
+					// Handle default contexts
 					for (String contextRef : refs.apply(scenario.getId()).getRefs()) {
 						assert contextRef != null;
 						if (
@@ -212,8 +231,25 @@ public class Q7ArtifactLoader {
 							ind++;
 						}
 					}
+					// Handle default verifications
+					ind = 0;
+					for (String ref : refs.apply(scenario.getId()).getRefs()) {
+						assert ref != null;
+						if (
+							!scenario.getVerifications().contains(ref) &&
+							refs.apply(ref).getKind() == RefKind.VERIFICATION 
+						) {
+							scenario.getVerifications().add(ind, ref);
+							ind++;
+						}
+					}
+					
 					for (String contextId : scenario.getContexts()) {
 						result.getRefs().add(refs.apply(contextId));
+					}
+					
+					for (String id : scenario.getVerifications()) {
+						result.getRefs().add(refs.apply(id));
 					}
 				}
 	

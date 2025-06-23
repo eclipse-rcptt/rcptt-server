@@ -735,7 +735,7 @@ public class ClientApplication extends CommandLineApplication {
 				List<String> artifactRefs = getArtifact(ref).getRefs().stream().flatMap(r -> Stream.concat(Stream.of(r.getId()), r.getRefs().stream()) ).toList();
 				
 				if (!subRefs.equals(artifactRefs)) {
-					throw new CoreException(error(format("Inconsistent reference index for %s. Original: %s, current: %s", id, subRefs, artifactRefs)));
+					throw new CoreException(error(format("Inconsistent reference index for %s:\nOriginal: %s\nCurrent:  %s", id, subRefs, artifactRefs)));
 				}
 				
 				for (String refId : ref.getRefs()) {
