@@ -13,12 +13,14 @@
 package org.eclipse.rcptt.cloud.agent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.System.currentTimeMillis;
 import static org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.createInjectionConfiguration;
 import static org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.getInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +29,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.equinox.p2.metadata.Version;
@@ -39,8 +40,11 @@ import org.eclipse.rcptt.cloud.util.IOUtil.HttpSrc;
 import org.eclipse.rcptt.cloud.util.IOUtil.HttpsSrc;
 import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
 import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
+import org.eclipse.rcptt.internal.launching.aut.BaseAutManager;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.Q7Info;
+import org.eclipse.rcptt.launching.Aut;
+import org.eclipse.rcptt.launching.AutLaunch;
 import org.eclipse.rcptt.launching.IQ7Launch;
 import org.eclipse.rcptt.launching.Q7LaunchUtils;
 import org.eclipse.rcptt.launching.injection.Directory;
@@ -54,6 +58,8 @@ import org.eclipse.rcptt.launching.target.TargetPlatformManager;
 import org.eclipse.rcptt.logging.IQ7Monitor;
 import org.eclipse.rcptt.logging.Q7LoggingManager;
 import org.eclipse.rcptt.util.FileUtil;
+
+import com.google.common.base.Joiner;
 
 /**
  * Manages AUTs.
@@ -127,10 +133,20 @@ public class AutRegistry {
 					IProgressMonitor progressMonitor = new Q7LogProgressMonitor(
 							logMonitor);
 
-					ILaunch[] launches = DebugPlugin.getDefault()
-							.getLaunchManager().getLaunches();
-					for (ILaunch l : launches) {
-						l.terminate();
+					long stop = currentTimeMillis() + 60000;
+					while (!monitor.isCanceled() && stop > currentTimeMillis()) {
+						List<AutLaunch> launches = BaseAutManager.INSTANCE.getLaunches();
+						if (launches.isEmpty()) {
+							break;
+						}
+						for (AutLaunch launch: launches) {
+							launch.shutdown();
+						}
+						
+					}
+					List<String> auts = BaseAutManager.INSTANCE.getLaunches().stream().map(AutLaunch::getAut).map(Aut::getName).toList();
+					if (!auts.isEmpty()) {
+						throw new IllegalStateException("Unable to terminate auts: " + Joiner.on(", ").join(auts));
 					}
 
 					removeTargetPlatforms();

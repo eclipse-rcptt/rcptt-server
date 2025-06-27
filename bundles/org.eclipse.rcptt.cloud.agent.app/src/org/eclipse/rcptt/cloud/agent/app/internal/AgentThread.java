@@ -678,13 +678,8 @@ public class AgentThread implements Runnable {
 				BaseAutLaunch aut = BaseAutManager.INSTANCE.getByLaunch(launch);
 				if (aut != null) {
 					aut.gracefulShutdown(300);
-				} else {
-					try {
-						launch.terminate();
-					} catch (Exception ex) {
-						AgentAppPlugin.error("Error terminating launch.", ex);
-					}
 				}
+				launch.terminate();
 				if (launch.isTerminated()) {
 					oldLaunches.add(launch);
 				}
