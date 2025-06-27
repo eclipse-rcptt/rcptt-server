@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.core.runtime.CoreException;
@@ -408,7 +409,8 @@ public class AgentThread implements Runnable {
 							if ((cause == null || cause.isEmpty())
 									|| Q7TestingHelper.TESTING) {
 								Writer writer = new StringWriter();
-								ex.printStackTrace(new PrintWriter(writer, true));
+								PrintWriter prtintWriter = new PrintWriter(writer, true);
+								ex.printStackTrace(prtintWriter);
 								cause = writer.toString();
 							}
 							cmd.setAgent(getAgentInfo());
@@ -677,7 +679,11 @@ public class AgentThread implements Runnable {
 					.getLaunches()) {
 				BaseAutLaunch aut = BaseAutManager.INSTANCE.getByLaunch(launch);
 				if (aut != null) {
-					aut.gracefulShutdown(300);
+					try {
+						aut.gracefulShutdown(300);
+					} catch (TimeoutException e) {
+						throw new CoreException(Status.error("Can't terminate AUT + " + aut.getAut().getName(), e));
+					}
 				}
 				launch.terminate();
 				if (launch.isTerminated()) {

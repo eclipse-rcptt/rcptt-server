@@ -24,11 +24,10 @@ import java.util.Enumeration;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.model.IProcess;
-import org.eclipse.rcptt.util.NetworkUtils;
-
 import org.eclipse.rcptt.cloud.agent.AgentPlugin;
 import org.eclipse.rcptt.cloud.agent.ITestExecutor;
 import org.eclipse.rcptt.cloud.agent.TestExecutor;
@@ -37,6 +36,9 @@ import org.eclipse.rcptt.cloud.common.EclServerApplication;
 import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.model.TestOptions;
 import org.eclipse.rcptt.cloud.util.RemoteEclClient;
+import org.eclipse.rcptt.cloud.util.RemoteEclClient.ExecResult;
+import org.eclipse.rcptt.ecl.core.Command;
+import org.eclipse.rcptt.util.NetworkUtils;
 
 public class AgentApplication extends EclServerApplication {
 	@Arg
@@ -111,6 +113,7 @@ public class AgentApplication extends EclServerApplication {
 		return new AgentThread(this, index, port);
 	}
 
+	@SuppressWarnings("unused")
 	protected void doInit(AgentThread agentThread) {
 	}
 
@@ -229,11 +232,19 @@ public class AgentApplication extends EclServerApplication {
 
 	private RemoteEclClient server;
 
-	protected RemoteEclClient getQ7Server() throws CoreException {
+	protected class EclClient {
+
+		public ExecResult execCommand(Command command, int timeout, IProgressMonitor progressMonitor) throws CoreException, InterruptedException {
+			return server.execCommand(command, timeout, progressMonitor);
+		}
+
+	}
+	
+	protected EclClient getQ7Server() throws CoreException {
 		if (server == null) {
 			server = new RemoteEclClient(serverHost, serverPort);
 		}
-		return server;
+		return new EclClient();
 	}
 
 	public String getServerHost() {
@@ -313,6 +324,7 @@ public class AgentApplication extends EclServerApplication {
 		return false;
 	}
 
+	@SuppressWarnings("unused")
 	public void onRegistered(String agentID) {
 	}
 
