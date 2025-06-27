@@ -338,7 +338,6 @@ public class ClientApplication extends CommandLineApplication {
 		int processed = 0;
 		Collection<Q7ArtifactRef> values = resourcesById.values();
 		int total = values.size();
-		long prevTime = System.currentTimeMillis();
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
 		for (final Q7ArtifactRef ref : values) {
@@ -354,8 +353,6 @@ public class ClientApplication extends CommandLineApplication {
 			}
 			
 			System.out.printf("Compressing resource %s, %s, deps: %s, (%d of %d)\n", resourceFilesById.get(ref.getId()).getPath(), artifact.getId(), Joiner.on("; ").join(ref.getRefs()), processed, total);
-				prevTime = System.currentTimeMillis();
-			
 
 			ECLBinaryResourceImpl r = new ECLBinaryResourceImpl();
 			r.getContents().add(EcoreUtil.copy(artifact));
@@ -752,8 +749,8 @@ public class ClientApplication extends CommandLineApplication {
 								: refFile.getPath().toPortableString();
 
 						errorMessage.append(String
-								.format("%s '%s' refers to missing resource %s\n",
-										type, location, refId));
+								.format("%s '%s' refers to missing resource %s '%s'\n",
+										type, location, refId, refLocation));
 
 						resourcesToExclude.add(id);
 						found = true;
