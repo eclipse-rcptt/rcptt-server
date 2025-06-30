@@ -13,7 +13,6 @@
 package org.eclipse.rcptt.cloud.agent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.System.currentTimeMillis;
 import static org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.createInjectionConfiguration;
 import static org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.getInfo;
 
@@ -120,6 +119,14 @@ public class AutRegistry {
 						((IAgentMonitor) monitor).logAgentMessage(msg,
 								IAgentMonitor.LogType.LogOnly);
 					}
+					List<String> auts = BaseAutManager.INSTANCE.getLaunches().stream().map(AutLaunch::getAut).map(Aut::getName).toList();
+					if (!auts.isEmpty()) {
+						throw new IllegalStateException("Folowing AUT's are still running: " + Joiner.on(", ").join(auts));
+					}
+					
+					removeTargetPlatforms();
+					tpManager.clear();
+
 					final File autFile = autProvider.download(aut, AgentPlugin.getClassifier(),
 							monitor);
 					long end = System.currentTimeMillis();
@@ -133,24 +140,6 @@ public class AutRegistry {
 					IProgressMonitor progressMonitor = new Q7LogProgressMonitor(
 							logMonitor);
 
-					long stop = currentTimeMillis() + 60000;
-					while (!monitor.isCanceled() && stop > currentTimeMillis()) {
-						List<AutLaunch> launches = BaseAutManager.INSTANCE.getLaunches();
-						if (launches.isEmpty()) {
-							break;
-						}
-						for (AutLaunch launch: launches) {
-							launch.shutdown();
-						}
-						
-					}
-					List<String> auts = BaseAutManager.INSTANCE.getLaunches().stream().map(AutLaunch::getAut).map(Aut::getName).toList();
-					if (!auts.isEmpty()) {
-						throw new IllegalStateException("Unable to terminate auts: " + Joiner.on(", ").join(auts));
-					}
-
-					removeTargetPlatforms();
-					tpManager.clear();
 
 					start = System.currentTimeMillis();
 					target[0] = tpManager.create(autFile.getAbsolutePath(), progressMonitor);
@@ -320,10 +309,10 @@ public class AutRegistry {
 				.getLaunchManager().getLaunchConfigurations();
 		for (ILaunchConfiguration cfg : configurations) {
 			String platform = cfg.getAttribute(IQ7Launch.TARGET_PLATFORM, "");
+			String configLocation = Q7LaunchUtils.getConfigFilesLocation(cfg);
+			cfg.delete();
 			if (platform.length() > 0) {
 				TargetPlatformManager.deleteTargetPlatform(platform);
-				String configLocation = Q7LaunchUtils
-						.getConfigFilesLocation(cfg);
 				final File configFolder = new File(configLocation);
 				if (configFolder.exists()) {
 					FileUtil.deleteFile(configFolder, true);
