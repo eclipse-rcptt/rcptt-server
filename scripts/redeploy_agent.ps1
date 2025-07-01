@@ -11,7 +11,9 @@ function Restart-Agent {
 	)
 	cd C:\Users\Test\Documents
 	& taskkill.exe /F /IM eclipsec.exe
-	& taskkill.exe /F /IM java.exe 
+	& jps -l | Select-String "Worker" | ForEach-Object {
+		& taskkill.exe /F /PID ($_ -Split " ")[0]
+	}
 	Start-Sleep -Seconds 10
 	if (Test-Path agent) {
 		# \\?\ allows referencing a very long path
