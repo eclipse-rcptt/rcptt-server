@@ -152,7 +152,7 @@ public class TaskDescriptor {
 
 	private Q7ArtifactRef scenario;
 
-	private List<String> timeoutAgents = null;
+	private final List<String> agentProblems = new ArrayList<>();
 
 	enum State {
 		UNINITIALIZED, INITIALIZED, EXECUTING, REPORTED
@@ -296,6 +296,7 @@ public class TaskDescriptor {
 			started = System.currentTimeMillis();
 			state = State.INITIALIZED;
 			tmp = getAgent();
+			agentProblem(tmp);
 			agent = null;
 		}
 		try {
@@ -331,14 +332,14 @@ public class TaskDescriptor {
 		}
 	}
 
-	public boolean canExecute(AgentInfo... agents) {
+	public synchronized boolean canExecute(AgentInfo... agents) {
 		List<String> list = null;
 		if (state == State.REPORTED)
 			return false;
 
 		for (AgentInfo agent : agents) {
 			String agentId = AgentRegistry.getAgentID(agent);
-			if (timeoutAgents != null && timeoutAgents.contains(agentId)) {
+			if (agentProblems.contains(agentId)) {
 				// skip this agent, since task is already timeout on
 				// this agent.
 				continue;
@@ -460,26 +461,23 @@ public class TaskDescriptor {
 		return name;
 	}
 
-	public List<String> timeout(AgentInfo agent) {
-		if (timeoutAgents == null) {
-			timeoutAgents = new ArrayList<String>();
-		}
-		timeoutAgents.add(AgentRegistry.getAgentID(agent));
-		return timeoutAgents;
+	public synchronized List<String> agentProblem(AgentInfo agent) {
+		agentProblems.add(AgentRegistry.getAgentID(agent));
+		return List.copyOf(agentProblems);
 	}
 
-	public String getTimeoutAgents() {
-		if (timeoutAgents != null) {
-			return Arrays.toString(timeoutAgents.toArray());
+	public synchronized String getTimeoutAgents() {
+		if (agentProblems.isEmpty()) {
+			return "";
 		}
-		return "";
+		return Arrays.toString(agentProblems.toArray());
 	}
 
-	public boolean hashTimeouts() {
-		if (timeoutAgents == null) {
+	public boolean hasAgentProblems() {
+		if (agentProblems == null) {
 			return false;
 		}
-		return !timeoutAgents.isEmpty();
+		return !agentProblems.isEmpty();
 	}
 
 	private static void checkIntegrity(TestSuite suite, ITestStore store)
@@ -536,7 +534,7 @@ public class TaskDescriptor {
 		final int timeout = (testExecTimeout != null ? Integer.parseInt(testExecTimeout) : 300)*3*1000;
 		long elapsed = System.currentTimeMillis() - started;
 		if (elapsed > timeout) {
-			timeout(agent);
+			agentProblem(agent);
 			cancel(error(format("Task execution %s on agent %s has timed out after %f minutes", getTaskName(), agent != null ? agent.getUri() : "null",  (double)elapsed / 60000)));
 		}
 	}

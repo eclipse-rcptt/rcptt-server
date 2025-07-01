@@ -546,7 +546,7 @@ public class TaskSuiteDescriptor {
 		}
 		list = ImmutableList.copyOf(list);
 		for (TaskDescriptor task : list) {
-			List<String> timeouts = task.timeout(agent);
+			List<String> timeouts = task.agentProblem(agent);
 			if (timeouts != null && timeouts.size() >= maxTimeouts) {
 				// 2 or more timeouts happen, lets fail task with
 				// timeout.

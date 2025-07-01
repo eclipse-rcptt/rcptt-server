@@ -12,9 +12,13 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.tests.execution;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.verifications.log.ErrorLogVerification;
 import org.eclipse.rcptt.verifications.log.LogFactory;
@@ -31,6 +35,7 @@ import org.eclipse.rcptt.cloud.model.Q7TestingHelper;
 import org.eclipse.rcptt.cloud.model.Q7TestingHelper.TestCaseState;
 import org.eclipse.rcptt.cloud.model.RefKind;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
+import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils;
@@ -133,7 +138,6 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 	@Test
 	public void testSheduling05() throws Throwable {
 		AgentRegistry r = setupAgentRegistry(5);
-		List<AgentInfo> agents = r.getAgents();
 		TaskQueue queue = new TaskQueue(r, consoleLog, consoleLog);
 
 		TaskSuiteDescriptor d1 = createTaskSuiteDescriptor("s1", 100);
@@ -183,6 +187,22 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		TaskSuiteDescriptor d1 = createTaskSuiteDescriptor(suite);
 		Assert.assertEquals(1, d1.getTaskCount());
 		Assert.assertEquals(0, d1.getFailedTaskCount());
-	}		
+	}
+	
+	@Test
+	public void doNotRetryTaskOnTheSameAgent() throws CoreException {
+		AgentRegistry r = setupAgentRegistry(5);
+		List<AgentInfo> agents = r.getAgents();
+		TaskQueue subject = new TaskQueue(r, consoleLog, consoleLog);
+		TestsSuite suite = TestUtils.createSuite("Initialization failure", 1,
+				TestCaseState.pass);
+		TaskSuiteDescriptor suiteDescriptor = createTaskSuiteDescriptor(suite);
+		subject.schedule(suiteDescriptor);
+		TaskDescriptor task1 = subject.get(agents.get(0), suiteDescriptor.getSuiteId());
+		subject.reportProblem(agents.get(0), Status.error("Could not start AUT"));
+		assertNull(subject.get(agents.get(0), suiteDescriptor.getSuiteId()));
+		TaskDescriptor task2 = subject.get(agents.get(1), suiteDescriptor.getSuiteId());
+		assertEquals(task1, task2);
+	}
 		
 }

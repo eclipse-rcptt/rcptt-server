@@ -302,7 +302,7 @@ public class TaskQueue {
 				.entrySet()) {
 			for (TaskDescriptor task : e.getValue()) {
 				String cause = "Task has failed, since no compatible agents are left.";
-				if (task.hashTimeouts()) {
+				if (task.hasAgentProblems()) {
 					cause = cause
 							+ " Task has timed out on agents: "
 							+ task.getTimeoutAgents();
