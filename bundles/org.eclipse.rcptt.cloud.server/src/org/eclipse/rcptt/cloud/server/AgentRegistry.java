@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.FutureTask;
 
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.rcptt.logging.IQ7Monitor;
@@ -48,10 +49,11 @@ public class AgentRegistry {
 
 	private final Map<String, AgentInfo> agents = new HashMap<String, AgentInfo>();
 	private final Map<String, AgentInfoDetails> agentPings = new HashMap<String, AgentInfoDetails>();
-	private ListenerList listeners = new ListenerList();
+	private ListenerList<IAgentRegistryListener> listeners = new ListenerList<>();
 
 	private IQ7Monitor agentLog;
-	private Thread agentMonitorThread;
+	
+	private final FutureTask<Void> timeoutMonitor = new FutureTask<>(createMonitorRunnable(), null);
 
 	public interface IAgentRegistryListener {
 		void added(AgentInfo info);
@@ -69,7 +71,8 @@ public class AgentRegistry {
 		super();
 		agentLog = Q7LoggingManager.get("agent.registry");
 		agentLog.log("######################### initialize", null);
-		agentMonitorThread = new Thread(createMonitorRunnable(), "");
+		Thread agentMonitorThread = new Thread(timeoutMonitor, "");
+		agentMonitorThread.setDaemon(true);
 		agentMonitorThread.start();
 
 	}
@@ -118,16 +121,13 @@ public class AgentRegistry {
 						}
 					}
 					if (!timeouts.isEmpty()) {
-						Object[] objects = listeners.getListeners();
-						for (Object object : objects) {
-							((IAgentRegistryListener) object)
-									.agentTimeout(timeouts);
+						for (IAgentRegistryListener object : listeners) {
+							object.agentTimeout(timeouts);
 						}
 					}
 
-					Object[] objects = listeners.getListeners();
-					for (Object object : objects) {
-						((IAgentRegistryListener) object).timeoutCheck();
+					for (IAgentRegistryListener object : listeners) {
+						object.timeoutCheck();
 					}
 
 					for (AgentInfo agentInfo : timeouts) {
@@ -137,7 +137,8 @@ public class AgentRegistry {
 					synchronized (AgentRegistry.class) {
 						try {
 							AgentRegistry.class.wait(monitorTimeout);
-						} catch (Throwable e) {
+						} catch (InterruptedException e) {
+							break;
 						}
 					}
 				}
@@ -146,7 +147,7 @@ public class AgentRegistry {
 		};
 	}
 
-	public boolean isTimeout(AgentInfo info) {
+	private boolean isTimeout(AgentInfo info) {
 		synchronized (agents) {
 			AgentInfoDetails details = agentPings.get(getAgentID(info));
 			if (details != null) {
@@ -214,11 +215,15 @@ public class AgentRegistry {
 
 	public List<AgentInfo> getAgents() {
 		synchronized (agents) {
+			if (timeoutMonitor.isDone()) {
+				throw new IllegalStateException("Agent timeout monitor has failed", timeoutMonitor.exceptionNow());
+			}
 			return new ArrayList<AgentInfo>(this.agents.values());
 		}
 	}
 
 	public void dispose() {
+		timeoutMonitor.cancel(true);
 		agentLog.log("terminate", null);
 	}
 
