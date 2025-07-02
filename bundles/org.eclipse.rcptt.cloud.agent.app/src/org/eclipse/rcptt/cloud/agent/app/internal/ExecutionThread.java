@@ -148,13 +148,11 @@ final class ExecutionThread extends Thread {
 	private void tryStartAUT(String suiteID, final ITestExecutor executor,
 			AgentMonitor monitor) throws CoreException, InterruptedException {
 		boolean wasStarted = executor.isStarted();
-		boolean needShutdown = false;
 		try {
 			executor.startAut(monitor);
 		} catch (CoreException e) {
 			agentThread
 					.reportError("Failed to start AUT: " + e.getMessage(), e);
-			needShutdown = true;
 			throw e;
 		} finally {
 			if (!wasStarted) {
@@ -163,9 +161,6 @@ final class ExecutionThread extends Thread {
 						.obtainConfigurationFiles(new NullProgressMonitor()),
 						executor.isStarted() ? AutStartupStatus.STARTED
 								: AutStartupStatus.FAILED_TO_START);
-			}
-			if (needShutdown) {
-				executor.exceptionShutdown();
 			}
 		}
 		try {

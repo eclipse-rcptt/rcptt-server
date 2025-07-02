@@ -316,7 +316,7 @@ public class AgentApplication extends EclServerApplication {
 		}
 	}
 
-	protected ITestExecutor createExecutor(AutInfo aut) throws CoreException {
+	protected ITestExecutor.Closeable createExecutor(AutInfo aut) throws CoreException {
 		return new TestExecutor(aut);
 	}
 

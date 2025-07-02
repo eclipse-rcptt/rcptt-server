@@ -23,6 +23,10 @@ import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.TestOptions;
 
 public interface ITestExecutor {
+	
+	interface Closeable extends ITestExecutor, java.io.Closeable {
+		
+	}
 
 	public void deployAut(IProgressMonitor monitor) throws CoreException;
 
@@ -49,13 +53,8 @@ public interface ITestExecutor {
 
 	public String getWorkspaceLog(long limit);
 
-	public boolean isTestTimeout();
-
 	public Map<String, String> obtainConfigurationFiles(IProgressMonitor monitor);
 
 	public void ping() throws CoreException, InterruptedException;
 
-	public boolean needShutdownAUT();
-
-	public void exceptionShutdown();
 }

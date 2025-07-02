@@ -12,8 +12,10 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent.app.internal;
 
+import static org.eclipse.core.runtime.Status.error;
 import static org.eclipse.rcptt.cloud.agent.AgentPlugin.PLUGIN_ID;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -102,7 +104,7 @@ public class AgentThread implements Runnable {
 	private TestSuiteRegistry registry;
 	int id;
 	private int agentPort = 0;
-	private ITestExecutor started = null;
+	private ITestExecutor.Closeable started = null;
 
 	EObjectKey<AutInfo> startedAutInfo = null;
 
@@ -643,6 +645,12 @@ public class AgentThread implements Runnable {
 			return started;
 		}
 		shutdownAuts(null, false, true);
+		try (Closeable c = started) {
+
+		} catch (IOException e) {
+			throw new CoreException(error("Failed to dispose previous AUT", e));
+		}
+		started = null;
 		try {
 			started = agentApplication.createExecutor(aut);
 			started.clearConfigurations();
@@ -668,9 +676,9 @@ public class AgentThread implements Runnable {
 		if (started != null) {
 			agentMonitor.log("Shutdown AUTs", null);
 			try {
-				started.shutdown();
-			} catch (Exception ex) {
-				AgentAppPlugin.error("Error of aut shutdown", ex);
+				started.close();
+			} catch (IOException e) {
+				throw new CoreException(error("Can't dispose previous AUT", e));
 			}
 		}
 		List<ILaunch> oldLaunches = new ArrayList<ILaunch>();

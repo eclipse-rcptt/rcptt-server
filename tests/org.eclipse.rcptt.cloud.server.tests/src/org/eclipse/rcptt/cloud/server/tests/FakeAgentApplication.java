@@ -12,11 +12,13 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.tests;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.rcptt.core.scenario.Scenario;
 import org.eclipse.rcptt.internal.core.RcpttPlugin;
 import org.eclipse.rcptt.reporting.ItemKind;
@@ -96,8 +98,8 @@ public class FakeAgentApplication extends AgentApplication {
 	}
 
 	@Override
-	protected ITestExecutor createExecutor(AutInfo aut) throws CoreException {
-		return new ITestExecutor() {
+	protected ITestExecutor.Closeable createExecutor(AutInfo aut) throws CoreException {
+		return new ITestExecutor.Closeable() {
 
 			private Scenario scenario;
 			private boolean isStarted = false;
@@ -130,8 +132,8 @@ public class FakeAgentApplication extends AgentApplication {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						Thread.currentThread().interrupt();
+						throw new CoreException(Status.CANCEL_STATUS);
 					}
 				}
 				// Wait from 0 to 2 seconds per test
@@ -261,19 +263,16 @@ public class FakeAgentApplication extends AgentApplication {
 
 			@Override
 			public String getOutStreamFile(long limit) {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public String getErrStreamFile(long limit) {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public String getWorkspaceLog(long limit) {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
@@ -285,26 +284,17 @@ public class FakeAgentApplication extends AgentApplication {
 			@Override
 			public Map<String, String> obtainConfigurationFiles(
 					IProgressMonitor monitor) {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public void ping() throws CoreException {
-				// TODO Auto-generated method stub
 
 			}
 
 			@Override
-			public boolean needShutdownAUT() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public void exceptionShutdown() {
-				// TODO Auto-generated method stub
-
+			public void close() throws IOException {
+				
 			}
 		};
 	}

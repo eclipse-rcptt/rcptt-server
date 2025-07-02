@@ -21,6 +21,7 @@ import static org.eclipse.rcptt.launching.IQ7Launch.ATTR_HEADLESS_LAUNCH;
 import static org.eclipse.rcptt.launching.ext.Q7LaunchingUtil.createQ7LaunchConfiguration;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -89,7 +90,7 @@ import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 import org.eclipse.rcptt.util.FileUtil;
 
 @SuppressWarnings("restriction")
-public class TestExecutor implements ITestExecutor {
+public class TestExecutor implements ITestExecutor.Closeable {
 	private AutInfo aut;
 	private AutRegistry auts = AgentPlugin.getDefault().getAutRegistry();
 	private AutFileUtil autFiles = AgentPlugin.getDefault().getAutFiles();
@@ -175,7 +176,6 @@ public class TestExecutor implements ITestExecutor {
 			logProcesses(launch.getProcesses());
 		}
 	};
-	private boolean needShutDown = false;
 
 	private void addLaunchListener() {
 		DebugPlugin.getDefault().getLaunchManager().addLaunchListener(listener);
@@ -197,9 +197,14 @@ public class TestExecutor implements ITestExecutor {
 	@Override
 	public void startAut(IProgressMonitor monitor) throws CoreException {
 		if (isStarted()) {
-			return;
+			try {
+				ping();
+				return;
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new CoreException(Status.CANCEL_STATUS);
+			}
 		}
-		needShutDown = false;
 		log(monitor, "Launch AUT: " + aut.getUri(), LogType.Both);
 
 		addLaunchListener();
@@ -263,7 +268,7 @@ public class TestExecutor implements ITestExecutor {
 
 			log(monitor, "AUT is launched time: " + Long.toString(end - start),
 					LogType.Both);
-		} catch (Throwable ex) {
+		} catch (RuntimeException ex) {
 			log(monitor, "exception during launch: " + ex.getMessage(),
 					LogType.Both);
 			logMonitor.log("exception during launching:" + ex.getMessage(), ex);
@@ -649,11 +654,10 @@ public class TestExecutor implements ITestExecutor {
 		outStreamListener = null;
 
 		removeLaunchListener();
-		needShutDown = true;
 	}
 
 	@Override
-	public synchronized void exceptionShutdown() {
+	public synchronized void close() {
 		shutdown();
 		if (helper != null) {
 			helper.delete();
@@ -694,7 +698,6 @@ public class TestExecutor implements ITestExecutor {
 	private File outStreamFile;
 	private File errStreamFile;
 	private File workspaceFile;
-	private boolean testTimeout;
 	private ILaunchConfiguration savedConfig;
 	private boolean restartAUTOnFailures;
 
@@ -801,11 +804,6 @@ public class TestExecutor implements ITestExecutor {
 		}
 	}
 
-	@Override
-	public boolean needShutdownAUT() {
-		return needShutDown;
-	}
-	
 	private Optional<VmInstallMetaData> findVm() throws CoreException {
 		String ee = aut.getExecutionEnvironment();
 		if (ee != null) {
