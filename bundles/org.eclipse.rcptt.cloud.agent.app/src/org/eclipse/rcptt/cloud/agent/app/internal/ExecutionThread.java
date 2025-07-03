@@ -15,9 +15,12 @@ package org.eclipse.rcptt.cloud.agent.app.internal;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 
@@ -30,6 +33,7 @@ import org.eclipse.rcptt.cloud.model.ModelUtil;
 import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.TestOptions;
 import org.eclipse.rcptt.cloud.model.TestSuite;
+import org.eclipse.rcptt.cloud.server.serverCommands.AgentLogEntryType;
 import org.eclipse.rcptt.cloud.server.serverCommands.AutStartupStatus;
 import org.eclipse.rcptt.cloud.server.serverCommands.Task;
 import org.eclipse.rcptt.cloud.server.serverCommands.TaskStatus;
@@ -48,6 +52,15 @@ final class ExecutionThread extends Thread {
 
 	@Override
 	public void run() {
+		AgentMonitor monitor = this.agentThread.getMonitor();
+		
+		ILogListener logListener = new ILogListener() {
+			@Override
+			public void logging(IStatus status, String plugin) {
+				 agentThread.reportMessage(agentThread.lastSuite, status, AgentLogEntryType.LOGONLY);
+			}
+		};
+		Platform.addLogListener(logListener);
 		try {
 			while (this.agentThread.agentApplication.isAlive()
 					&& !this.agentThread.stopped) {
@@ -76,7 +89,6 @@ final class ExecutionThread extends Thread {
 					ITestStore dir = agentTask.dir;
 					executor.prepare(dir, suiteRef);
 
-					AgentMonitor monitor = this.agentThread.getMonitor();
 					monitor.setCanceled(false);
 					monitor.setSuiteID(task.getSuiteId());
 					// System.out.println("Begin AUT prepare:" + aut.getUri());
@@ -129,6 +141,8 @@ final class ExecutionThread extends Thread {
 		} catch (Throwable e) {
 			AgentAppPlugin.error("Execution failure ", e);
 			agentThread.reportError("Execution failure: " + e.getMessage(), e);
+		} finally {
+			Platform.removeLogListener(logListener);
 		}
 	}
 
