@@ -83,16 +83,31 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 					autData), null);
 			return autExecDir;
 		}
-		// Remove all old AUTs. We already need to cache one AUT (due to agent pinning) and that will be redownloaded now
-		deleteChildren(baseDirectory); 
-		
 		File autFile = helper.getAutFile(aut);
 		File autHashFile = helper.getAutHashFile(aut);
 		File autBaseDir = helper.getAutBaseDir(aut);
 
-		autHashFile.delete();
-		autFile.delete();
-		FileUtil.deleteFile(autBaseDir);
+		int i = 0;
+		for (;;) {
+			if (monitor.isCanceled()) {
+				throw new CoreException(Status.CANCEL_STATUS);
+			}
+			// Remove all old AUTs. We already need to cache one AUT (due to agent pinning) and that will be redownloaded now
+			deleteChildren(baseDirectory); 
+			autHashFile.delete();
+			autFile.delete();
+			FileUtil.deleteFile(autBaseDir);
+			if (!autBaseDir.exists()) {
+				break;
+			}
+			log.log("Can not delete directory " + autBaseDir + ". Attempt " + i++);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new CoreException(Status.CANCEL_STATUS);
+			}
+		}
 		if (autBaseDir.exists()) {
 			throw new CoreException(Status.error("Can not delete directory " + autBaseDir));
 		}
