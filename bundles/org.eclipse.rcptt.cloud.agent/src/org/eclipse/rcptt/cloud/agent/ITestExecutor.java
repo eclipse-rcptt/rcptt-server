@@ -13,6 +13,7 @@
 package org.eclipse.rcptt.cloud.agent;
 
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -39,7 +40,7 @@ public interface ITestExecutor {
 	public void clearConfigurations();
 
 	public Report runTest(int agentID, ITestStore dir, Q7ArtifactRef suite,
-			IProgressMonitor monitor) throws CoreException;
+			IProgressMonitor monitor) throws CoreException, TimeoutException;
 
 	public void shutdown();
 

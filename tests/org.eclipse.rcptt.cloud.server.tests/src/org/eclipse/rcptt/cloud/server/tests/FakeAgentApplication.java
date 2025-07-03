@@ -277,11 +277,6 @@ public class FakeAgentApplication extends AgentApplication {
 			}
 
 			@Override
-			public boolean isTestTimeout() {
-				return false;
-			}
-
-			@Override
 			public Map<String, String> obtainConfigurationFiles(
 					IProgressMonitor monitor) {
 				return null;

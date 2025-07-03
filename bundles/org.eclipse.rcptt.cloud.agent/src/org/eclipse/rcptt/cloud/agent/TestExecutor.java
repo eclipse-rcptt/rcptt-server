@@ -21,7 +21,6 @@ import static org.eclipse.rcptt.launching.IQ7Launch.ATTR_HEADLESS_LAUNCH;
 import static org.eclipse.rcptt.launching.ext.Q7LaunchingUtil.createQ7LaunchConfiguration;
 
 import java.io.BufferedInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,8 +28,10 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -89,12 +90,16 @@ import org.eclipse.rcptt.logging.Q7LoggingManager;
 import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 import org.eclipse.rcptt.util.FileUtil;
 
+import com.google.common.io.Closer;
+
 @SuppressWarnings("restriction")
 public class TestExecutor implements ITestExecutor.Closeable {
 	private AutInfo aut;
 	private AutRegistry auts = AgentPlugin.getDefault().getAutRegistry();
 	private AutFileUtil autFiles = AgentPlugin.getDefault().getAutFiles();
 	private IQ7Monitor logMonitor;
+	private static final ILaunchManager LAUNCH_MANAGER = DebugPlugin.getDefault().getLaunchManager();
+
 
 	public TestExecutor(AutInfo aut) throws CoreException {
 		this.aut = aut;
@@ -200,6 +205,8 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			try {
 				ping();
 				return;
+			} catch (CoreException e) {
+				shutdown();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				throw new CoreException(Status.CANCEL_STATUS);
@@ -450,7 +457,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 
 	@Override
 	public Report runTest(int agentID, ITestStore dir, Q7ArtifactRef suite,
-			IProgressMonitor monitor) throws CoreException {
+			IProgressMonitor monitor) throws CoreException, TimeoutException {
 		long start = System.currentTimeMillis();
 		if (monitor instanceof IAgentMonitor) {
 			((IAgentMonitor) monitor).logAgentMessage("Begin test",
@@ -459,13 +466,13 @@ public class TestExecutor implements ITestExecutor.Closeable {
 		IWorkspaceFinder cxFinder = new TestDirContextFinder(dir);
 
 		try {
-			for (Q7ArtifactRef scenarioRef : ModelUtil.scenarioList(dir
-					.getTestSuite())) {
-				if (monitor.isCanceled()) {
-					return null;
-				}
-				return runScenario(dir, scenarioRef, cxFinder, monitor);
+			List<Q7ArtifactRef> scenarioList = ModelUtil.scenarioList(dir
+					.getTestSuite());
+			assert scenarioList.size() == 1 : "Scenario size should be 1, but was " + scenarioList.size();
+			if (monitor.isCanceled()) {
+				throw new CoreException(Status.CANCEL_STATUS);
 			}
+			return runScenario(dir, scenarioList.get(0), cxFinder, monitor);
 		} finally {
 			long end = System.currentTimeMillis();
 			if (monitor instanceof IAgentMonitor) {
@@ -475,12 +482,11 @@ public class TestExecutor implements ITestExecutor.Closeable {
 						IAgentMonitor.LogType.LogOnly);
 			}
 		}
-		return null;
 	}
 
 	protected Report runScenario(ITestStore dir, Q7ArtifactRef scenarioRef,
 			IWorkspaceFinder cxFinder, IProgressMonitor monitor)
-			throws CoreException {
+			throws CoreException, TimeoutException {
 		Scenario scenario;
 		try {
 			scenario = extractScenario(dir, scenarioRef);
@@ -496,7 +502,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 		}
 
 		if (monitor.isCanceled()) {
-			return null;
+			throw new CoreException(Status.CANCEL_STATUS);
 		}
 
 		final Q7Launcher launcher = Q7Launcher.getInstance();
@@ -522,7 +528,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 
 			String state = "";
 			boolean isFailed = false;
-			testTimeout = false;
+			boolean testTimeout = false;
 			if (execTimedOut(startTime)) {
 				testTimeout = true;
 				isFailed = true;
@@ -557,21 +563,22 @@ public class TestExecutor implements ITestExecutor.Closeable {
 						+ " is timed out: " + testTimeout,
 						IAgentMonitor.LogType.LogOnly);
 			}
+			String message = String.format(
+					"%s has timed out, AUT will be shutdown", scenarioName);
 			if (testTimeout) {
 				// Restart AUT since timeout is detected, and return appropriate
 				// report
-				IStatus status = AgentPlugin.createStatus(String.format(
-						"%s timed out, AUT will be shutdown", scenarioName),
+				IStatus status = AgentPlugin.createStatus(message,
 						IStatus.ERROR, null);
 				AgentPlugin.log(status);
 
 				shutdown();
+				throw new TimeoutException(message);
 			}
 
 			if (!testTimeout && execTimedOut(startTime)) {
 				testTimeout = true;
-				IStatus status = AgentPlugin.createStatus(String.format(
-						"%s timed out, AUT will be shutdown", scenarioName),
+				IStatus status = AgentPlugin.createStatus(message,
 						IStatus.INFO, null);
 				AgentPlugin.log(status);
 				shutdown();
@@ -592,11 +599,6 @@ public class TestExecutor implements ITestExecutor.Closeable {
 					.removeLaunch(testLaunch);
 			launcher.removeExecutionSession(execSession);
 		}
-	}
-
-	@Override
-	public boolean isTestTimeout() {
-		return testTimeout;
 	}
 
 	private boolean execTimedOut(long startTime) {
@@ -637,23 +639,32 @@ public class TestExecutor implements ITestExecutor.Closeable {
 	 * @see com.xored.q7.cloud.agent.ITestExecutor#shutdown()
 	 */
 
+	@SuppressWarnings("resource")
 	@Override
-	public synchronized void shutdown() {
-		if (sutOut != null) {
-			sutOut.flush();
-			sutOut.close();
-			sutOut = null;
+	public void shutdown() {
+		try (Closer c = Closer.create()) {
+			synchronized (this) {
+				if (sutErr != null) {
+					c.register(sutErr);
+					sutErr = null;
+				}
+				if (sutOut != null) {
+					c.register(sutOut);
+					sutOut = null;
+				}
+				if (launch != null) {
+					ILaunch launch2 = launch.getLaunch();
+					c.register(() -> LAUNCH_MANAGER.removeLaunch(launch2));
+					c.register(launch::shutdown);
+					launch = null;
+				}
+				errStreamListener = null;
+				outStreamListener = null;
+				removeLaunchListener();
+			}
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
 		}
-		if (sutErr != null) {
-			sutErr.flush();
-			sutErr.close();
-			sutErr = null;
-		}
-
-		errStreamListener = null;
-		outStreamListener = null;
-
-		removeLaunchListener();
 	}
 
 	@Override

@@ -31,19 +31,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.rcptt.ecl.core.ProcessStatus;
-import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.logging.Q7LoggingManager;
-import org.eclipse.rcptt.reporting.Q7Info;
-import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
-import org.eclipse.rcptt.reporting.core.SimpleSeverity;
-import org.eclipse.rcptt.reporting.util.ReportUtils;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-import org.eclipse.rcptt.util.FileUtil;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Sets;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.ModelFactory;
@@ -59,6 +46,17 @@ import org.eclipse.rcptt.cloud.server.ism.stats.AgentStats;
 import org.eclipse.rcptt.cloud.server.serverCommands.AgentLogEntryType;
 import org.eclipse.rcptt.cloud.server.serverCommands.AutStartupStatus;
 import org.eclipse.rcptt.cloud.server.serverCommands.Task;
+import org.eclipse.rcptt.ecl.core.ProcessStatus;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.logging.Q7LoggingManager;
+import org.eclipse.rcptt.reporting.Q7Info;
+import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
+import org.eclipse.rcptt.reporting.core.SimpleSeverity;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
+import org.eclipse.rcptt.util.FileUtil;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Sets;
 
 public class TaskQueue {
 	public interface ITaskListener {
@@ -152,11 +150,9 @@ public class TaskQueue {
 					List<TaskDescriptor> timeout = suite.agentTimeout(agent,
 							AGENT_TIMEOUT_COUNT);
 					for (TaskDescriptor task : timeout) {
-						String cause = "Task is marked as filed, since "
-								+ AGENT_TIMEOUT_COUNT
-								+ " agents are timeout at execution of task: "
-								+ task.getTaskName() + " agents: "
-								+ task.getTimeoutAgents();
+						String cause = "Task "+task.getTaskName()+"is marked as failed, since "
+								+  task.getTimeoutAgents()
+								+ " agents have timed during its execution";
 						problemLog.log(cause, null);
 
 						Report report = ReportUtil.generateFailedReport(

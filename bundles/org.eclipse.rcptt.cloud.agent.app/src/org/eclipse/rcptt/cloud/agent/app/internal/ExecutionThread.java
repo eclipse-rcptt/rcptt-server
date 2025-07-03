@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent.app.internal;
 
+import java.util.concurrent.TimeoutException;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -78,52 +80,39 @@ final class ExecutionThread extends Thread {
 					monitor.setCanceled(false);
 					monitor.setSuiteID(task.getSuiteId());
 					// System.out.println("Begin AUT prepare:" + aut.getUri());
-					executor.deployAut(monitor);
-
-					// try to start aut for at least 2 times, before return
-					// error message
-					tryStartAUT(task.getSuiteId(), executor, monitor);
-
-					final IProgressMonitor taskMonitor = monitor
-							.createSubMonitor("Run tests", -1);
-					Report report = executor.runTest(id, dir, suiteRef,
-							taskMonitor);
-
-					if (report != null) {
-						if (!monitor.isCanceled()) {
-							this.agentThread.completeTask(agentTask, report);
-						}
-					} else {
+					try {
+						executor.deployAut(monitor);
+						tryStartAUT(task.getSuiteId(), executor, monitor);
+					} catch (CoreException e) {
 						agentThread
-								.reportError(
-										"Failed to execute test on AUT because of AUT problem.",
-										null);
+						.reportError(
+								"Failed to execute test on AUT because of AUT problem.",
+								e);
 						this.agentThread.returnTask(agentTask, new Exception(
 								"Failed to start AUT."),
 								TaskStatus.FAILED_TO_START_AUT);
 					}
-					if (executor.needShutdownAUT()) {
-						AutStartupStatus state = AutStartupStatus.SHUTDOWN_ON_OPTION;
-						if (executor.isTestTimeout()) {
-							state = AutStartupStatus.SHUTDOWN_ON_TIMEOUT;
-						}
+					final IProgressMonitor taskMonitor = monitor
+							.createSubMonitor("Run tests", -1);
+					try {
+						Report report = executor.runTest(id, dir, suiteRef,
+								taskMonitor);
 						if (report == null) {
-							state = AutStartupStatus.FAILED_TO_START;
+							throw new NullPointerException("Report should not be null");
 						}
-						this.agentThread.shutdownAuts(task.getSuiteId(), true,
-								false);
-						this.agentThread
-								.reportAUTStatus(
-										task.getSuiteId(),
-										executor.obtainConfigurationFiles(new NullProgressMonitor()),
-										state);
+						if (monitor.isCanceled()) {
+							throw new OperationCanceledException();
+						}
+						this.agentThread.completeTask(agentTask, report);
+					} catch (TimeoutException e) {
+						this.agentThread.err("Timeout during test execution:", e);
+						this.agentThread.returnTask(agentTask, e, TaskStatus.TIMEOUT);
+						this.agentThread.shutdownAuts(agentTask.task.getSuiteId(), true, true);// Restart
 					}
 				} catch (OperationCanceledException canceled) {
 					this.agentThread.err("Execution is canceled", null);
 					// Do not return task since it is canceled.
-					this.agentThread.shutdownAuts(agentTask.task.getSuiteId(),
-							true, true);// Restart
-					// AUT
+					this.agentThread.shutdownAuts(agentTask.task.getSuiteId(), true, true);// Restart AUT
 					continue;
 				} catch (Throwable e) {
 					this.agentThread.err("Exception during test execution:", e);
@@ -131,9 +120,7 @@ final class ExecutionThread extends Thread {
 							.isStarted()) ? TaskStatus.FAILED_TO_START_AUT
 							: TaskStatus.UNKNOWN;
 					this.agentThread.returnTask(agentTask, e, returnCause);
-					this.agentThread.shutdownAuts(agentTask.task.getSuiteId(),
-							true, true);// Restart
-					// AUT
+					this.agentThread.shutdownAuts(agentTask.task.getSuiteId(), true, true); // Restart AUT
 					continue;
 				} finally {
 					this.agentThread.complete();
