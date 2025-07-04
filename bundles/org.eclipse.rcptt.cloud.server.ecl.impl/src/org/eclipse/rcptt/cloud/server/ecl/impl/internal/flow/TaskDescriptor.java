@@ -529,9 +529,14 @@ public class TaskDescriptor {
 		task.setSuiteId(suiteId);
 	}
 
-	public void timeoutCheck() {
+	private int largestPrefetch = 1;
+	public void timeoutCheck(int prefetchSize) {
+		if (prefetchSize < 1) {
+			throw new IllegalArgumentException(""+prefetchSize);
+		}
+		largestPrefetch = Math.max(largestPrefetch, prefetchSize);
 		final String testExecTimeout = task.getTestOptions().getValues().get("testExecTimeout");
-		final int timeout = (testExecTimeout != null ? Integer.parseInt(testExecTimeout) : 300)*3*1000;
+		final int timeout = ((testExecTimeout != null ? Integer.parseInt(testExecTimeout) : 300)*3*1000)*largestPrefetch;
 		long elapsed = System.currentTimeMillis() - started;
 		if (elapsed > timeout) {
 			agentProblem(agent);

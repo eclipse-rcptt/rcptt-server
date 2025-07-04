@@ -745,4 +745,10 @@ public class TaskSuiteDescriptor {
 		return getSuiteId() + "_" + getClassifier();
 	}
 
+	public synchronized final void checkTimeout() {
+		runningTasks.values().forEach(tasks -> {
+			tasks.forEach(t -> t.timeoutCheck(tasks.size()) );
+		});
+	}
+
 }

@@ -173,9 +173,7 @@ public class TaskQueue {
 	protected void processTimeoutCheck() {
 		synchronized (suites) {
 			for (TaskSuiteDescriptor suit : suites.values()) {
-				for (TaskDescriptor task : suit.getRunningTasks()) {
-					task.timeoutCheck();
-				}
+				suit.checkTimeout();
 			}
 		}
 	}
