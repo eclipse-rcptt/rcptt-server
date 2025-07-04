@@ -536,7 +536,8 @@ public class TaskDescriptor {
 		}
 		largestPrefetch = Math.max(largestPrefetch, prefetchSize);
 		final String testExecTimeout = task.getTestOptions().getValues().get("testExecTimeout");
-		final int timeout = ((testExecTimeout != null ? Integer.parseInt(testExecTimeout) : 300)*3*1000)*largestPrefetch;
+		int secondsPerTest = testExecTimeout != null ? Integer.parseInt(testExecTimeout) : 300;
+		final long timeout = secondsPerTest * largestPrefetch * 1000;
 		long elapsed = System.currentTimeMillis() - started;
 		if (elapsed > timeout) {
 			agentProblem(agent);
