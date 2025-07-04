@@ -1,0 +1,106 @@
+/********************************************************************************
+ * Copyright (c) 2025 Xored Software Inc and others
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Xored Software Inc - initial API and implementation
+ ********************************************************************************/
+.failure th, .failure td {
+	border-color: red;
+}
+
+.skipped th, .skipped td {
+	border-color: grey;
+}
+
+.passed th, .passed td {
+	border-color: green;
+}
+
+hr {
+	margin-bottom: 50px;
+}
+
+h1.failure, h2.failure, h3.failure, h4.failure, h5.failure {
+	color: red;
+}
+
+h1.passed, h2.passed, h3.passed, h4.passed, h5.passed {
+	color: green;
+}
+
+h1.skipped, h2.skipped, h3.skipped, h4.skipped, h5.skipped {
+	color: grey;
+}
+
+table.failure th,
+table.passed th,
+table#summary th
+{
+	vertical-align: top;
+	text-align: right;
+	width: 150px;
+}
+
+/*To keep header on details icon level */
+summary h1,
+summary h2,
+summary h3,
+summary h4,
+summary h5,
+summary h6
+{
+	display: inline-block;
+}
+
+.childNode {
+	padding-left: 10px;
+}
+
+table {
+	border-collapse:collapse;
+	width: 100%;
+}
+
+table td, table th {
+	border:1px solid;
+	padding: 2px;
+}
+
+summary {
+	cursor:pointer;
+	display: block;
+}
+
+/* Imitation of details element
+ * http://www.w3.org/wiki/HTML/Elements/details
+ */   
+
+.notwebkit details.closed .detailsContent {
+  display:none;
+}
+
+.notwebkit details.closed summary h1:before,
+.notwebkit details.closed summary h2:before,
+.notwebkit details.closed summary h3:before,
+.notwebkit details.closed summary h4:before,
+.notwebkit details.closed summary h5:before,
+.notwebkit details.closed summary h6:before
+{
+  content: "+ ";
+}
+
+.notwebkit details summary h1:before,
+.notwebkit details summary h2:before,
+.notwebkit details summary h3:before,
+.notwebkit details summary h4:before,
+.notwebkit details summary h5:before,
+.notwebkit details summary h6:before
+{
+  content: "- ";
+}
