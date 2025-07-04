@@ -160,11 +160,17 @@ public class AgentThread implements Runnable {
 						}
 					}
 					ping();
-					synchronized (this.runnables) {
-						while (!this.runnables.isEmpty()) {
-							Runnable r = this.runnables.remove(0);
-							r.run();
+					for (;;) {
+						Runnable r = null;
+						synchronized (this.runnables) {
+							if (!this.runnables.isEmpty()) {
+								r = this.runnables.remove(0);
+							}
 						}
+						if (r == null) {
+							break;
+						}
+						r.run();
 					}
 					waitTicks(agentApplication.getWaitTicks());
 				} catch (CoreException e) {

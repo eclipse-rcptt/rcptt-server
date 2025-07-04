@@ -1028,7 +1028,6 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 			AgentLogEntryType type) {
 		Preconditions.checkNotNull(status);
 		IStatus iStatus = ProcessStatusConverter.toIStatus(status);
-		EclServerImplPlugin.getDefault().getLog().log(iStatus);
 		synchronized (this) {
 			String agentId = FileUtil.getID(AgentRegistry.getAgentID(agent));
 			StatusListener monitor = handle.getMonitor(agentId + ".log");
