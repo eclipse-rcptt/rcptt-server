@@ -102,7 +102,7 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 			}
 			log.log("Can not delete directory " + autBaseDir + ". Attempt " + i++);
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100000);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				throw new CoreException(Status.CANCEL_STATUS);
