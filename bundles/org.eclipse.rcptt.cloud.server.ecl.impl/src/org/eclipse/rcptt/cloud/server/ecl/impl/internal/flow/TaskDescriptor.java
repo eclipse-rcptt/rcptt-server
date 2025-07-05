@@ -474,9 +474,6 @@ public class TaskDescriptor {
 	}
 
 	public boolean hasAgentProblems() {
-		if (agentProblems == null) {
-			return false;
-		}
 		return !agentProblems.isEmpty();
 	}
 

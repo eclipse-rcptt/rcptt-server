@@ -19,14 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.FutureTask;
 
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.ListenerList;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.logging.Q7LoggingManager;
-
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.server.serverCommands.AgentInfoDetails;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.logging.Q7LoggingManager;
 
 /**
  * Manages Q7 cloud agents
@@ -35,6 +36,7 @@ import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
  * 
  */
 public class AgentRegistry {
+	private static final ILog LOG = Platform.getLog(AgentRegistry.class);
 
 	/**
 	 * check each 30 seconds
@@ -97,6 +99,7 @@ public class AgentRegistry {
 
 			@Override
 			public void run() {
+				try {
 				while (true) {
 					List<AgentInfo> timeouts = new ArrayList<AgentInfo>();
 					synchronized (agents) {
@@ -142,8 +145,11 @@ public class AgentRegistry {
 						}
 					}
 				}
+			} catch (Throwable e) {
+				LOG.error("Error in agent monitoring thread", e);
+				throw e;
 			}
-
+		}
 		};
 	}
 
