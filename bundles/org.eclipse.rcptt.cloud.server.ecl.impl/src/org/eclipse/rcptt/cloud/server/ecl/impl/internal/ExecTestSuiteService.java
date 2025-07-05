@@ -60,10 +60,8 @@ public class ExecTestSuiteService implements ICommandService {
 
 		try {
 			IExecutionProfiler profiler = new ExecutionProfiler(
-					cmd.getSuiteId(), handle.getTestStore(), auts,
-					cmd.getOptions(), cmd.getMetadata(), handle);
-			handle.setProfiler(profiler);
-			profiler.start();
+					cmd.getSuiteId(), auts,
+					cmd.getOptions(), cmd.getMetadata());
 			File reportFile = profiler.getReportFile();
 
 			URI location = ExecutionRegistry.getInstance().makeRelativePath(

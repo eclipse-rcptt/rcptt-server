@@ -77,6 +77,15 @@ public class TestUtils {
 	private static ServerApplication server = null;
 
 	public interface WaitListener {
+		public class Adapter implements WaitListener {
+			@Override
+			public void executed(ProcessStatus resultStatus, String string) {
+			}
+			@Override
+			public void done() {
+			}
+		}
+
 		void executed(ProcessStatus resultStatus, String string);
 
 		void done();

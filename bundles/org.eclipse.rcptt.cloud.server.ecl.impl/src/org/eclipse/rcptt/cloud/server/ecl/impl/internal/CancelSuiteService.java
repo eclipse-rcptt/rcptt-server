@@ -42,7 +42,7 @@ public class CancelSuiteService implements ICommandService {
 					.getProfiler();
 			if (profiler != null) {
 				try {
-					count = profiler.getTotalTestCount() - profiler.getExecutedTestCount();
+					count = profiler.testsLeftCount();
 				} catch (IllegalStateException e) {
 					//Suite is uninitialized
 				}

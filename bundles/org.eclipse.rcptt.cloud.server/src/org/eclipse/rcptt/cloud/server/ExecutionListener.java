@@ -18,10 +18,4 @@ import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 public interface ExecutionListener {
 	void created(ISMHandle<Execution> execution);
 
-	void started(ISMHandle<Execution> execution);
-
-	void updated(ISMHandle<Execution> execution);
-
-	void completed(ISMHandle<Execution> execution);
-
 }

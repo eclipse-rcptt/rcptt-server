@@ -78,6 +78,7 @@ public class ExecutionRegistry {
 									input.setSuiteId(suiteStats.getSuiteName());
 								}
 								input.setState(ExecutionState.PENDING);
+								input.setId(execHandle.getFileName());
 								return null;
 							}
 						});

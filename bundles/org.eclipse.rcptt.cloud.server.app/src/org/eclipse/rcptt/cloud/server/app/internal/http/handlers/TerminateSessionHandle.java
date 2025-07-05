@@ -44,7 +44,7 @@ public class TerminateSessionHandle extends Handler.Abstract {
 				IExecutionProfiler profiler = (IExecutionProfiler) suiteHandle
 						.getProfiler();
 				if (profiler != null) {
-					cancel = profiler.getTotalTestCount() - profiler.getExecutedTestCount();
+					cancel = profiler.testsLeftCount();
 					profiler.cancel(new Status(IStatus.CANCEL, PLUGIN_ID, "Cancelled on web client request from "
 							+ Request.getRemoteAddr(request)));
 				}

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
@@ -66,7 +67,7 @@ public class TaskQueue {
 	private static final int AGENT_TIMEOUT_COUNT = 2;
 	private Map<String, TaskSuiteDescriptor> suites = Collections
 			.synchronizedMap(new HashMap<String, TaskSuiteDescriptor>());
-	private IAgentRegistryListener agentListener = new IAgentRegistryListener() {
+	private final IAgentRegistryListener agentListener = new IAgentRegistryListener() {
 
 		@Override
 		public void removed(AgentInfo info) {
@@ -107,17 +108,14 @@ public class TaskQueue {
 	};
 
 
-	private List<ITaskListener> listeners = new ArrayList<ITaskListener>();
+	private final ListenerList<ITaskListener> listeners = new ListenerList<>();
 
-	private IQ7Monitor taskLog;
-	private IQ7Monitor problemLog;
-	private AgentRegistry agentRegistry;
+	private final IQ7Monitor taskLog;
+	private final IQ7Monitor problemLog;
+	private final AgentRegistry agentRegistry;
 
 	public TaskQueue(AgentRegistry registry) {
-		this.agentRegistry = registry;
-		this.agentRegistry.addListener(agentListener);
-		taskLog = Q7LoggingManager.get("task.queue");
-		problemLog = Q7LoggingManager.get("problem.log", "", "errors");
+		this(registry, Q7LoggingManager.get("task.queue"), Q7LoggingManager.get("problem.log", "", "errors"));
 		notificationThread.start();
 	}
 
@@ -170,7 +168,7 @@ public class TaskQueue {
 		cleanIncompatibleTests();
 	}
 	
-	protected void processTimeoutCheck() {
+	private void processTimeoutCheck() {
 		synchronized (suites) {
 			for (TaskSuiteDescriptor suit : suites.values()) {
 				suit.checkTimeout();
@@ -362,7 +360,7 @@ public class TaskQueue {
 
 	private List<Runnable> runnables = new ArrayList<Runnable>();
 
-	private Thread notificationThread = new Thread(new Runnable() {
+	private final Thread notificationThread = new Thread(new Runnable() {
 		@Override
 		public void run() {
 			while (true) {

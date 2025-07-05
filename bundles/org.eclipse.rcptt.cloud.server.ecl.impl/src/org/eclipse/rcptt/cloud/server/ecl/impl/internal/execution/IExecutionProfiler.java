@@ -26,31 +26,15 @@ import org.eclipse.rcptt.cloud.server.serverCommands.AutStartupStatus;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
 
 public interface IExecutionProfiler {
-	public String getSuiteID();
-
-	public void start();
-
 	public Report generateSkippedReport(TaskDescriptor ref, String cause);
-
-	public void processReport(TaskDescriptor task, Report report);
 
 	public Reporter getReporter();
 
 	public ExecutionState getExecutionState();
 
-	public TaskDescriptor.Listener getMonitor();
-
 	public void cancel(IStatus status);
 
 	public void reportProblem(AgentInfo agent, String cause);
-
-	public int getTotalTestCount();
-
-	public int getExecutedTestCount();
-
-	public int getFailedTestCount();
-
-	public int getSkippedTestCount();
 
 	public String getTestcaseName(TaskDescriptor task);
 
@@ -61,13 +45,9 @@ public interface IExecutionProfiler {
 	 */
 	public void markComplete();
 
-	public void reportAUTLogs(AgentInfo agent, Map<String, String> files,
-			AutStartupStatus status);
-
-	public void reportAgentLog(AgentInfo agent, ProcessStatus status,
-			AgentLogEntryType agentLogEntryType);
-
 	public File getReportFile();
 
 	public void sendClientMessage(String msg);
+
+	int testsLeftCount();
 }

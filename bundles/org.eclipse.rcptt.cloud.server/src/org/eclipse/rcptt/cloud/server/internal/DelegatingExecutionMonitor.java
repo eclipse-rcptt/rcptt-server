@@ -32,29 +32,6 @@ IExecutionService {
 	}
 
 
-	@Override
-	public void started(ISMHandle<Execution> execution) {
-		for (ExecutionListener listener : listeners) {
-			listener.started(execution);
-		}
-	}
-
-
-	@Override
-	public void updated(ISMHandle<Execution> execution) {
-		for (ExecutionListener listener : listeners) {
-			listener.updated(execution);
-		}
-	}
-
-
-	@Override
-	public void completed(ISMHandle<Execution> execution) {
-		for (ExecutionListener listener : listeners) {
-			listener.completed(execution);
-		}
-	}
-
 	private List<ExecutionListener> listeners = new CopyOnWriteArrayList<ExecutionListener>();
 
 

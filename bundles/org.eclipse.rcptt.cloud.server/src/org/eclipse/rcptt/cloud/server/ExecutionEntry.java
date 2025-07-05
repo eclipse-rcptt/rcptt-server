@@ -23,6 +23,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -79,6 +81,7 @@ public class ExecutionEntry {
 	private final TestSuiteDirectory suiteDir;
 	private Map<ExecutionEntry.MonitorMetaInfo, IQ7Monitor> monitors = new HashMap<ExecutionEntry.MonitorMetaInfo, IQ7Monitor>();
 	private final String suiteId;
+	public final Instant created = Instant.now();
 	private final ISMHandle<Execution> handle;
 
 	private Object profiler;
@@ -158,10 +161,6 @@ public class ExecutionEntry {
 
 	public String getSuiteId() {
 		return suiteId + "-" + handle.getFileName();
-	}
-
-	public ISMHandle<Execution> getHandle() {
-		return handle;
 	}
 
 	public static File getArtifactByName(ISMHandle<Execution> handle,
@@ -600,5 +599,13 @@ public class ExecutionEntry {
 		synchronized (messages) {
 			return List.copyOf(messages);
 		}
+	}
+
+	public void updateStatistics(Consumer<Execution> update) {
+		handle.commit(execution -> {
+			update.accept(execution);
+			return null;
+		});
+		
 	}
 }

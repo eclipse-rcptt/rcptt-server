@@ -15,6 +15,9 @@ package org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.Math.min;
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.CANCELED;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.FINISHED;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.RUNNING;
@@ -26,6 +29,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +42,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -50,32 +55,6 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.EMap;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.rcptt.core.scenario.Scenario;
-import org.eclipse.rcptt.ecl.core.ProcessStatus;
-import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
-import org.eclipse.rcptt.ecl.runtime.BoxedValues;
-import org.eclipse.rcptt.internal.core.RcpttPlugin;
-import org.eclipse.rcptt.launching.injection.Directory;
-import org.eclipse.rcptt.launching.injection.Entry;
-import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
-import org.eclipse.rcptt.launching.injection.UpdateSite;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.logging.StatusListener;
-import org.eclipse.rcptt.reporting.Q7Info;
-import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
-import org.eclipse.rcptt.reporting.core.SimpleSeverity;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Node;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-import org.eclipse.rcptt.sherlock.core.streams.SherlockReportOutputStream;
-import org.eclipse.rcptt.util.FileUtil;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import org.eclipse.rcptt.cloud.common.ITestStore;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
@@ -107,8 +86,35 @@ import org.eclipse.rcptt.cloud.server.serverCommands.AgentLogEntryType;
 import org.eclipse.rcptt.cloud.server.serverCommands.AutStartupStatus;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
+import org.eclipse.rcptt.core.scenario.Scenario;
+import org.eclipse.rcptt.ecl.core.ProcessStatus;
+import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
+import org.eclipse.rcptt.ecl.runtime.BoxedValues;
+import org.eclipse.rcptt.internal.core.RcpttPlugin;
+import org.eclipse.rcptt.launching.injection.Directory;
+import org.eclipse.rcptt.launching.injection.Entry;
+import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
+import org.eclipse.rcptt.launching.injection.UpdateSite;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.logging.StatusListener;
+import org.eclipse.rcptt.reporting.Q7Info;
+import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
+import org.eclipse.rcptt.reporting.core.SimpleSeverity;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Node;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
+import org.eclipse.rcptt.sherlock.core.streams.SherlockReportOutputStream;
+import org.eclipse.rcptt.util.FileUtil;
 
-public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescriptor.Listener {
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.io.Closer;
+import com.google.common.io.Files;
+
+public class ExecutionProfiler implements IExecutionProfiler {
 
 	/**
 	 * Use 7 agent failure, or specified amount of agents
@@ -120,7 +126,6 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 	private int totalTestCount = -1;
 	private final Reporter reporter;
 
-	private long started;
 	private ProfilerThread thread;
 	private int failedTestCount;
 	private int executedTestCount;
@@ -135,6 +140,8 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 	private final Collection<AutInfo> infos;
 
 	private List<TaskSuiteDescriptor> suites;
+	private final Closer closer = Closer.create();
+	private Instant firstTestStart = Instant.EPOCH;
 	
 	private Listener executionMonitor = new Listener() {
 
@@ -180,49 +187,62 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		}
 	};
 
-	public ExecutionProfiler(String suiteID, ITestStore suiteDir,
-			AutInfo[] auts, TestOptions options, EMap<String, String> metadata,
-			ExecutionEntry executionHandle) throws CoreException, IOException {
-		this.suiteDir = suiteDir;
+	private final Instant stop;
 
-		// this.auts = auts;
-		this.options = new Options(options);
-		infos = EcoreUtil.copyAll(Arrays.asList(auts));
-		handle = ExecutionRegistry.getInstance().getSuiteHandle(suiteID);
-		reportFile = handle.getMetadataName("q7.report");
-		reportOut = new SherlockReportOutputStream(
-				new BufferedOutputStream(new FileOutputStream(reportFile)));
+	public ExecutionProfiler(String suiteID, AutInfo[] auts, TestOptions options, EMap<String, String> metadata) throws CoreException, FileNotFoundException {
+		try {
+			ExecutionRegistry executions = ExecutionRegistry.getInstance();
+			this.handle = Objects.requireNonNull(executions.getSuiteHandle(suiteID));
+			closer.register(() -> executions.removeSuiteHandle(suiteID));
+			this.options = new Options(options);
+			long timeout = this.options.getValue(Options.KEY_EXEC_TIMEOUT, Options.DEFAULT_EXEC_TIMEOUT);
+			this.stop = handle.created.plusSeconds(timeout);
 
-		Properties testOptions = new Properties();
-		EMap<String, String> values = options.getValues();
-		for (java.util.Map.Entry<String, String> entry : values.entrySet()) {
-			testOptions.put(entry.getKey(), entry.getValue());
+			this.suiteDir = handle.getTestStore();
+			infos = EcoreUtil.copyAll(Arrays.asList(auts));
+			reportFile = handle.getMetadataName("q7.report");
+			reportOut = closer.register(new SherlockReportOutputStream(
+					new BufferedOutputStream(new FileOutputStream(reportFile))));
+	
+			Properties testOptions = new Properties();
+			EMap<String, String> values = options.getValues();
+			for (java.util.Map.Entry<String, String> entry : values.entrySet()) {
+				testOptions.put(entry.getKey(), entry.getValue());
+			}
+	
+			storePropertiesTo(handle.getMetadataName("test.options.properties"),
+					testOptions);
+	
+			// Store metadata
+			storeExecMetadata(metadata);
+	
+			int index = 0;
+			for (AutInfo autInfo : auts) {
+				storeAUTInfo(autInfo,
+						handle.getMetadataName("aut" + index + ".properties"));
+				index++;
+			}
+	
+			reporter = new Reporter();
+			executionsMonitor = handle
+					.getMonitor(ExecutionEntry.CLIENT_EXECUTION_MONITOR);
+			monitor = handle.getMonitor(ExecutionEntry.EXECUTION_MONITOR);
+			monitor.log("#################### Initialize execution session", null);
+			errorMonitor = handle.getMonitor(ExecutionEntry.ERROR_MONITOR);
+			errorMonitor.log("#################### Initialize execution session",
+					null);
+			ismHandle = handle.getSuite();
+			handle.setProfiler(this);
+			closer.register(() -> handle.setProfiler(null));
+			start();
+		} catch (Throwable e) {
+			try {
+				closer.close();
+			} catch (Exception e1) {
+				e.addSuppressed(e1);
+			}
+			throw e;
 		}
-
-		storePropertiesTo(handle.getMetadataName("test.options.properties"),
-				testOptions);
-
-		// Store metadata
-		storeExecMetadata(metadata, handle.getHandle());
-
-		int index = 0;
-		for (AutInfo autInfo : auts) {
-			storeAUTInfo(autInfo,
-					handle.getMetadataName("aut" + index + ".properties"));
-			index++;
-		}
-
-		reporter = new Reporter();
-		executionsMonitor = handle
-				.getMonitor(ExecutionEntry.CLIENT_EXECUTION_MONITOR);
-		monitor = handle.getMonitor(ExecutionEntry.EXECUTION_MONITOR);
-		monitor.log("#################### Initialize execution session", null);
-		errorMonitor = handle.getMonitor(ExecutionEntry.ERROR_MONITOR);
-		errorMonitor.log("#################### Initialize execution session",
-				null);
-		ismHandle = handle.getSuite();
-		this.executionHandle = handle.getHandle();
-
 	}
 
 	// Populates suites with uninitialized objects.
@@ -242,13 +262,7 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		}
 		suites = ImmutableList.copyOf(temp);
 		totalTestCount = taskCount;
-		executionHandle.commit(new Function<Execution, Void>() {
-			@Override
-			public Void apply(Execution execStat) {
-				execStat.setTotalCount(totalTestCount);
-				return null;
-			}
-		});
+		handle.updateStatistics(execStat -> execStat.setTotalCount(totalTestCount));
 	}
 
 	private TaskSuiteDescriptor createSuite(List<Q7ArtifactRef> scenarios, AutInfo aut) throws IOException {
@@ -262,8 +276,8 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		}
 		TaskSuiteDescriptor descr = new TaskSuiteDescriptor(getSuiteID(), aut, errorMonitor, tasksPerAgent, maxAgents,
 				tasks);
-		descr.addTaskListener(getMonitor());
-		descr.addSuiteListener(this);
+		descr.addTaskListener(executionMonitor);
+		descr.addSuiteListener(suiteListener);
 		return descr;
 	}
 
@@ -286,24 +300,19 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		return content.getName();
 	}
 
-	private void storeExecMetadata(final EMap<String, String> metadata,
-			final ISMHandle<Execution> handle) {
-		handle.commit(new Function<Execution, Void>() {
-			@Override
-			public Void apply(Execution input) {
-				EMap<String, String> map = input.getMetadata();
-				for (java.util.Map.Entry<String, String> entry : metadata
-						.entrySet()) {
-					map.put(entry.getKey(), entry.getValue());
-				}
+	private void storeExecMetadata(final EMap<String, String> metadata) {
+		handle.updateStatistics(input -> {
+			EMap<String, String> map = input.getMetadata();
+			for (java.util.Map.Entry<String, String> entry : metadata
+					.entrySet()) {
+				map.put(entry.getKey(), entry.getValue());
+			}
 
-				if (!map.containsKey("suiteName")) {
-					map.put("suiteName", getSuiteID());
-				}
-				if (!map.containsKey("buildID")) {
-					map.put("buildID", handle.getFileName());
-				}
-				return null;
+			if (!map.containsKey("suiteName")) {
+				map.put("suiteName", getSuiteID());
+			}
+			if (!map.containsKey("buildID")) {
+				map.put("buildID", input.getId());
 			}
 		});
 	}
@@ -355,13 +364,11 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		return "";
 	}
 
-	@Override
-	public String getSuiteID() {
+	private String getSuiteID() {
 		return handle.getSuiteId();
 	}
 
-	@Override
-	public void start() {
+	private void start() {
 		ismHandle.commit(new Function<SuiteStats, Void>() {
 			@Override
 			public Void apply(SuiteStats suiteStats) {
@@ -372,25 +379,15 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 			}
 		});
 
-		executionHandle.commit(new Function<Execution, Void>() {
-			@Override
-			public Void apply(Execution execStat) {
-				execStat.setStartTime(System.currentTimeMillis());
-				execStat.setId(executionHandle.getFileName());
-				execStat.setState(RUNNING);
-				execStat.setTotalCount(totalTestCount);
-				return null;
-			}
+		handle.updateStatistics(execStat -> {
+			execStat.setStartTime(System.currentTimeMillis());
+			execStat.setState(RUNNING);
+			execStat.setTotalCount(totalTestCount);
 		});
-		executionHandle.commit(new Function<Execution, Void>() {
-			@Override
-			public Void apply(Execution execStat) {
-				execStat.setReportFile(reportFile.getName());
-				return null;
-			}
+		handle.updateStatistics(execStat -> {
+			execStat.setReportFile(reportFile.getName());
 		});
 
-		started = System.currentTimeMillis();
 		thread = new ProfilerThread();
 		thread.start();
 	}
@@ -400,7 +397,7 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		return reportFile;
 	}
 
-	public void finish(final IStatus result) {
+	private void finish(final IStatus result) {
 		try {
 			// Perform finalization
 			monitor.log("Wait for finalization", null);
@@ -430,20 +427,15 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 			}
 		} finally {
 
-			executionHandle.commit(new Function<Execution, Void>() {
-				@Override
-				public Void apply(Execution execStat) {
-					execStat.setFailedCount(failedTestCount);
-					execStat.setExecutedCount(executedTestCount);
-					execStat.setCanceledCount(canceledTestCount);
-					execStat.setPassedCount(passedTestCount);
-					execStat.setEndTime(System.currentTimeMillis());
-					execStat.setState(result.isOK() ? FINISHED : CANCELED);
-					execStat.setTotalCount(totalTestCount);
-					return null;
-				}
+			handle.updateStatistics(execStat -> {
+				execStat.setFailedCount(failedTestCount);
+				execStat.setExecutedCount(executedTestCount);
+				execStat.setCanceledCount(canceledTestCount);
+				execStat.setPassedCount(passedTestCount);
+				execStat.setEndTime(System.currentTimeMillis());
+				execStat.setState(result.isOK() ? FINISHED : CANCELED);
+				execStat.setTotalCount(totalTestCount);
 			});
-
 			handle.applyMonitorFiles();
 		}
 	}
@@ -482,8 +474,7 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 	 * org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report)
 	 */
 
-	@Override
-	public void processReport(TaskDescriptor descr, Report report) {
+	private void processReport(TaskDescriptor descr, Report report) {
 		if (report == null) {
 			report = generateSkippedReport(descr, "Agent error. No report.");
 		}
@@ -560,43 +551,35 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 			}
 		}
 		// Save report into ism folder for further usage
-		executionHandle.commit(new Function<Execution, Void>() {
-			@Override
-			public Void apply(Execution execStat) {
-				if (execStat.getFirstReportTime() == 0) {
-					execStat.setFirstReportTime(System.currentTimeMillis());
-				}
-				EList<ExecutionAgentStats> agentStats = execStat
-						.getAgentStats();
-				ExecutionAgentStats agentStat = null;
-				for (ExecutionAgentStats executionAgentStats : agentStats) {
-					if (executionAgentStats.getAgentID().equals(agentId)) {
-						agentStat = executionAgentStats;
-						break;
-					}
-				}
-				if (agentStat == null) {
-					agentStat = StatsFactory.eINSTANCE
-							.createExecutionAgentStats();
-					agentStats.add(agentStat);
-					agentStat.setAgentID(agentId);
-				}
-				agentStat.getTests().add(test);
-				execStat.setFailedCount(failedTestCount);
-				execStat.setEndTime(System.currentTimeMillis());
-
-				execStat.setTotalCount(totalTestCount);
-				execStat.setCanceledCount(canceledTestCount);
-				execStat.setPassedCount(passedTestCount);
-				execStat.setExecutedCount(executedTestCount);
-				return null;
+		handle.updateStatistics(execStat -> {
+			if (execStat.getFirstReportTime() == 0) {
+				execStat.setFirstReportTime(System.currentTimeMillis());
 			}
+			EList<ExecutionAgentStats> agentStats = execStat
+					.getAgentStats();
+			ExecutionAgentStats agentStat = null;
+			for (ExecutionAgentStats executionAgentStats : agentStats) {
+				if (executionAgentStats.getAgentID().equals(agentId)) {
+					agentStat = executionAgentStats;
+					break;
+				}
+			}
+			if (agentStat == null) {
+				agentStat = StatsFactory.eINSTANCE
+						.createExecutionAgentStats();
+				agentStats.add(agentStat);
+				agentStat.setAgentID(agentId);
+			}
+			agentStat.getTests().add(test);
+			execStat.setFailedCount(failedTestCount);
+			execStat.setEndTime(System.currentTimeMillis());
+
+			execStat.setTotalCount(totalTestCount);
+			execStat.setCanceledCount(canceledTestCount);
+			execStat.setPassedCount(passedTestCount);
+			execStat.setExecutedCount(executedTestCount);
 		});
-		ServerPlugin.getDefault().getExecListener().updated(executionHandle);
-
 	}
-
-	private final ISMHandle<Execution> executionHandle;
 
 	private final ISMHandle<SuiteStats> ismHandle;
 
@@ -629,13 +612,13 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 
 			String message = org.eclipse.rcptt.reporting.util.ReportUtils.getFailMessage(report.getRoot());
 			envelope.setMessage(String
-					.format("%s %s. %d (%d) processed, %d failed.%s %s, running tasks: %d, agents: %d, cause: %s",
+					.format("%s %s. %d (%d) processed, %d failed. %s %s, running tasks: %d, agents: %d, cause: %s",
 							envelope.getFrom(),
 							SimpleSeverity.create(info).name(),
 							getExecutedTestCount(),
 							getTotalTestCount(),
 							getFailedTestCount(),
-							ReportUtils.calculateRemaining(this),
+							calculateRemaining(),
 							report.getRoot().getName(),
 							suite != null ? suite.getRunningAgents() : 0,
 							suite != null ? suite.getAgentCount() : 0,
@@ -669,36 +652,28 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		state.setExecutedTestCount(getExecutedTestCount());
 		state.setFailedTestCount(getFailedTestCount());
 		state.setSkippedTestCount(getSkippedTestCount());
-		state.setExecutionTime(System.currentTimeMillis() - getStarted());
+		state.setExecutionTime(handle.created.until(Instant.now(), ChronoUnit.MILLIS));
 
 		return state;
 	}
 
-	@Override
-	public int getTotalTestCount() {
+	private synchronized int getTotalTestCount() {
 		if (totalTestCount < 0) {
 			throw new IllegalStateException("Uninitialized");
 		}
 		return totalTestCount;
 	}
 
-	@Override
-	public int getFailedTestCount() {
+	private synchronized int getFailedTestCount() {
 		return failedTestCount;
 	}
 
-	@Override
-	public int getExecutedTestCount() {
+	private synchronized int getExecutedTestCount() {
 		return executedTestCount;
 	}
 
-	@Override
-	public int getSkippedTestCount() {
+	private synchronized int getSkippedTestCount() {
 		return canceledTestCount;
-	}
-
-	protected long getStarted() {
-		return started;
 	}
 
 	private static TaskQueue getTaskQueue() {
@@ -715,10 +690,12 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		reporter.sendReport(envelope, ExecutionProfiler.this);
 	}
 
-	private int getTestsLeftCount() {
+	@Override
+	public int testsLeftCount() {
 		Preconditions.checkNotNull(suites);
 		int rv = 0;
 		for (TaskSuiteDescriptor suite : suites) {
+			suite.checkTimeout();
 			rv += suite.getTaskCount();
 		}
 		return rv;
@@ -751,6 +728,7 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 	}
 
 	private class ProfilerThread extends Thread {
+
 		{
 			setName(getSuiteID() + " profiler thread");
 		}
@@ -766,12 +744,12 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 			};
 			monitor.log("Prepare tasks...", null);
 			try {
+
 				createSuites();
 				Preconditions.checkNotNull(suites);
 				if (totalTestCount < 0)
 					throw new IllegalStateException();
 				monitor.log("Schedule per aut suites: " + suites.size(), null);
-				ServerPlugin.getDefault().getExecListener().started(executionHandle);
 
 				Map<String, Q7ArtifactRef> contexts = ModelUtil
 						.dependenciesMap(suiteDir.getTestSuite());
@@ -804,43 +782,46 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 						throw new CoreException(tempRes); 
 				}
 
-				// String suiteId = suiteDir.testSuite.getId();
-				long timeout = options.getValue(Options.KEY_EXEC_TIMEOUT,
-						Options.DEFAULT_EXEC_TIMEOUT);
-				monitor.log("waiting for completion, timeout:" + timeout, null);
-				long startTime = System.currentTimeMillis();
+				monitor.log("waiting for completion, " + Instant.now().until(stop, ChronoUnit.SECONDS) + " seconds left", null);
+				firstTestStart = Instant.now();
 				int emptyFor = 0;
 				int previousCount = 0;
-				long lastExecutionTime = System.currentTimeMillis();
+				long lastLogTime = System.currentTimeMillis();
 				while (true) {
 					if (result.get() != null)
 						break;
+					int printInterval = 60000;
 					synchronized (ExecutionProfiler.this) {
-						ExecutionProfiler.this.wait(1000);
+						long delay = min(printInterval, stop.toEpochMilli() - currentTimeMillis());
+						if (delay > 0) {
+							ExecutionProfiler.this.wait(delay);
+						}
 						assert executedTestCount <= totalTestCount;
 						if (executedTestCount == totalTestCount) {
 							// No tasks left for execution
 							break;
 						}
 						if (executedTestCount != previousCount) {
-							lastExecutionTime = System.currentTimeMillis();
+							lastLogTime = System.currentTimeMillis();
 							previousCount = executedTestCount;
 						}
 					}
-					if (System.currentTimeMillis() > lastExecutionTime + 60000) {
-						lastExecutionTime = System.currentTimeMillis();
+					if (currentTimeMillis() > lastLogTime + printInterval) {
+						lastLogTime = currentTimeMillis();
 						dumpRunning();
 					}
-					if (getTestsLeftCount() <= 0) {
+					if (testsLeftCount() <= 0) {
 						emptyFor++;
 						if (emptyFor > 100)
 							throw new IllegalStateException(
 									"No tests left, but not all tests are reported. Executed: "
 											+ executedTestCount + ", total: "
 											+ totalTestCount);
+					} else {
+						emptyFor = 0;
 					}
-					if (!timeout(startTime, timeout))
-						throw new RuntimeException("Timeout during waiting for execution complete.");
+					if (Instant.now().isAfter(stop))
+						throw new RuntimeException("Timeout waiting for execution to complete.");
 				}
 				monitor.log("stop waiting for results", null);
 				result.compareAndSet(null, Status.OK_STATUS);
@@ -855,46 +836,50 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 							+ e.getMessage(), e);
 				}
 			} finally {
-				IStatus tempRes = result.get();
-				if (tempRes == null)
-					throw new NullPointerException();
-				finish(tempRes);
-				waitReporterAndCleanup();
+				try {
+					IStatus tempRes = result.get();
+					if (tempRes == null) {
+						tempRes = Status.error("Result is not set due to an internal server error");
+					}
+					finish(tempRes);
+					waitReporter();
+				} finally {
+					try {
+						cleanup();
+					} catch (IOException e) {
+						errorMonitor.log("Failed to shutdown suite " + getSuiteID(), e);
+						throw new IllegalStateException(e);
+					}
+				}
 			}
 		}
 
-		private void waitReporterAndCleanup() {
-			long start = System.currentTimeMillis();
-
+		private void waitReporter() {
 			// While is not terminated, wait for client to do a termination.
-			// No more 5 minutes to wait for client to get all report files.
+			// No more 5 minutes to wait for client to get next report file.
 			try {
+				long stop = currentTimeMillis() + (5 * 60 * 1000);				
 				while (!clientComplete && reporter.getQueueLength() > 0
-						&& timeout(start, 5 * 60)) {
+						&& currentTimeMillis() < stop) {
 					IStatus result = ExecutionProfiler.this.result.get();
 					if (result != null && result.matches(IStatus.CANCEL))
 						return;
 					Thread.sleep(500);
 				}
 			} catch (InterruptedException e) {
-			} finally {
-				ExecutionRegistry.getInstance().removeSuiteHandle(getSuiteID());
-				ServerPlugin.getDefault().getExecListener()
-						.completed(executionHandle);
-				handle.setProfiler(null);
 			}
 		}
-	}
-
-	private boolean timeout(long starttime, long time) {
-		return (System.currentTimeMillis() - starttime) < time * 1000;
+		
+		private void cleanup() throws IOException {
+			closer.close();
+		}
 	}
 
 	private void dumpRunning() {
 		Collection<TaskDescriptor> data = getTasks(getSuiteRunningTasks);
 		Joiner j = Joiner.on("; ");
 		if (data.size() > 0) {
-			monitor.log("Running tasks: " + j.join(transform(data, taskToString)));
+			monitor.log("Tests left: " + testsLeftCount() + ". Running tasks: " + j.join(transform(data, taskToString)));
 			return;
 		}
 		data = getTasks(getSuitePendingTasks);
@@ -905,21 +890,8 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		monitor.log("No pending tasks");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.xored.q7.cloud.server.ecl.impl.internal.execution.IExecutionProfiler
-	 * #getMonitor()
-	 */
-
 	@Override
-	public Listener getMonitor() {
-		return executionMonitor;
-	}
-
-	@Override
-	public synchronized void cancel(IStatus status) {
+	public final synchronized void cancel(IStatus status) {
 		sendClientMessage("Cancelling suite " + getSuiteID() + ":  " + status.getMessage());
 		errorMonitor.log("Cancelled", new CoreException(status));
 		result.compareAndSet(null, status);
@@ -962,54 +934,6 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		.get();
 	}
 
-	@Override
-	public synchronized void reportAUTLogs(AgentInfo agent, Map<String, String> files,
-			AutStartupStatus status) {
-		synchronized (this) {
-			String agentId = FileUtil.getID(AgentRegistry.getAgentID(agent));
-			Integer index = autStartLogIndex.get(agentId);
-			if (index == null) {
-				index = Integer.valueOf(0);
-			} else {
-				index = Integer.valueOf(index.intValue() + 1);
-			}
-			autStartLogIndex.put(agentId, index);
-
-			if (AutStartupStatus.SHUTDOWN_ON_TIMEOUT.equals(status)) {
-				saveAutFiles(files, agentId, index, "timeout_");
-			} else if (AutStartupStatus.SHUTDOWN_ON_OPTION.equals(status)) {
-				saveAutFiles(files, agentId, index, "shutdown_");
-			} else if (AutStartupStatus.FAILED_TO_PING.equals(status)) {
-				saveAutFiles(files, agentId, index, "ping_");
-			}
-			// Else this is startup, not a timeout issue
-			else if (AutStartupStatus.STARTED.equals(status)) {
-				sendClientMessage("AUT is started on: " + agentId);
-				saveAutFiles(files, agentId, index, "");
-				autNotStarted.clear();
-			} else {
-				saveAutFiles(files, agentId, index, "failed_");
-				autNotStarted.add(agentId);
-
-				int totalAgents = 0;
-				for (TaskSuiteDescriptor d : suites) {
-					totalAgents += d.getAgentCount();
-				}
-				int max = CANCEL_AUT_FAILURES_LIMIT;
-				if (totalAgents > max) {
-					max = totalAgents;
-				}
-				if (autNotStarted.size() >= max) {
-					String message = "Cancelling execution, since AUT could not be started: "
-							+ autNotStarted.size()
-							+ " times one by one.";
-					reportProblem(agent,message);
-					cancel(RcpttPlugin.createStatus(message));
-					notifyAll();
-				}
-			}
-		}
-	}
 
 	private void saveAutFiles(Map<String, String> files, String agentId,
 			Integer index, String prefix) {
@@ -1021,30 +945,6 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 						file.getValue());
 			}
 		}
-	}
-
-	@Override
-	public void reportAgentLog(AgentInfo agent, ProcessStatus status,
-			AgentLogEntryType type) {
-		Preconditions.checkNotNull(status);
-		IStatus iStatus = ProcessStatusConverter.toIStatus(status);
-		synchronized (this) {
-			String agentId = FileUtil.getID(AgentRegistry.getAgentID(agent));
-			StatusListener monitor = handle.getMonitor(agentId + ".log");
-			switch (type) {
-			case BOTH:
-				monitor.log(iStatus);
-				sendClientMessage(AgentRegistry.getAgentID(agent) + ": " + status.getMessage());
-				break;
-			case CLIENT:
-				sendClientMessage(AgentRegistry.getAgentID(agent) + ": " + status.getMessage());
-				break;
-			case LOGONLY:
-				monitor.log(iStatus);
-				break;
-			}
-		}
-
 	}
 
 	private void writeFile(File file, String content) {
@@ -1065,18 +965,108 @@ public class ExecutionProfiler implements IExecutionProfiler, TaskSuiteDescripto
 		}
 	}
 
-	@Override
-	public void onCancel(TaskSuiteDescriptor suite, Throwable reason, int tasksLeft) {
-		if (tasksLeft > 0)
-			cancel(RcpttPlugin.createStatus(reason));
-	}
+	private final org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor.Listener suiteListener = new TaskSuiteDescriptor.Listener () {
 
-	@Override
-	public void onClientMessage(String string) {
-		sendClientMessage(string);
-	}
+		@Override
+		public void onCancel(TaskSuiteDescriptor suite, Throwable reason, int tasksLeft) {
+			if (tasksLeft > 0)
+				cancel(RcpttPlugin.createStatus(reason));
+		}
+	
+		@Override
+		public void onClientMessage(String string) {
+			sendClientMessage(string);
+		}
+
+		@Override
+		public void reportAgentLog(AgentInfo agent, ProcessStatus status,
+				AgentLogEntryType type) {
+			Preconditions.checkNotNull(status);
+			IStatus iStatus = ProcessStatusConverter.toIStatus(status);
+			synchronized (this) {
+				String agentId = FileUtil.getID(AgentRegistry.getAgentID(agent));
+				StatusListener monitor = handle.getMonitor(agentId + ".log");
+				switch (type) {
+				case BOTH:
+					monitor.log(iStatus);
+					sendClientMessage(AgentRegistry.getAgentID(agent) + ": " + status.getMessage());
+					break;
+				case CLIENT:
+					sendClientMessage(AgentRegistry.getAgentID(agent) + ": " + status.getMessage());
+					break;
+				case LOGONLY:
+					monitor.log(iStatus);
+					break;
+				}
+			}
+
+		}
+
+
+		@Override
+		public synchronized void reportAUTLogs(AgentInfo agent, Map<String, String> files,
+				AutStartupStatus status) {
+			synchronized (this) {
+				String agentId = FileUtil.getID(AgentRegistry.getAgentID(agent));
+				Integer index = autStartLogIndex.get(agentId);
+				if (index == null) {
+					index = Integer.valueOf(0);
+				} else {
+					index = Integer.valueOf(index.intValue() + 1);
+				}
+				autStartLogIndex.put(agentId, index);
+
+				if (AutStartupStatus.SHUTDOWN_ON_TIMEOUT.equals(status)) {
+					saveAutFiles(files, agentId, index, "timeout_");
+				} else if (AutStartupStatus.SHUTDOWN_ON_OPTION.equals(status)) {
+					saveAutFiles(files, agentId, index, "shutdown_");
+				} else if (AutStartupStatus.FAILED_TO_PING.equals(status)) {
+					saveAutFiles(files, agentId, index, "ping_");
+				}
+				// Else this is startup, not a timeout issue
+				else if (AutStartupStatus.STARTED.equals(status)) {
+					sendClientMessage("AUT is started on: " + agentId);
+					saveAutFiles(files, agentId, index, "");
+					autNotStarted.clear();
+				} else {
+					saveAutFiles(files, agentId, index, "failed_");
+					autNotStarted.add(agentId);
+
+					int totalAgents = 0;
+					for (TaskSuiteDescriptor d : suites) {
+						totalAgents += d.getAgentCount();
+					}
+					int max = CANCEL_AUT_FAILURES_LIMIT;
+					if (totalAgents > max) {
+						max = totalAgents;
+					}
+					if (autNotStarted.size() >= max) {
+						String message = "Cancelling execution, since AUT could not be started: "
+								+ autNotStarted.size()
+								+ " times one by one.";
+						reportProblem(agent,message);
+						cancel(RcpttPlugin.createStatus(message));
+					}
+				}
+			}
+		}
+
+	};
 	
 	private IStatus getResult() {
 		return result.get();
+	}
+	
+	private String calculateRemaining() {
+		int processed = getExecutedTestCount();
+		int total = getTotalTestCount();
+		Instant now = Instant.now();
+		Duration perTest = Duration.between(firstTestStart, now).dividedBy(processed + 1);
+		Duration remaining =  perTest.multipliedBy(total - processed);
+		Duration untilTimeout = Duration.between(now, stop);
+		if (remaining.compareTo(untilTimeout) > 0) {
+			return format("timeout in %d minutes", untilTimeout.toMinutes());
+		}
+		return format("completion in %d minutes", remaining.toMinutes());
 	}
 }

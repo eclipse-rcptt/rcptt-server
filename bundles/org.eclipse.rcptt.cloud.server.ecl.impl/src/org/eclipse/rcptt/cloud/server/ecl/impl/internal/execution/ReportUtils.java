@@ -18,15 +18,6 @@ public class ReportUtils {
 		int est = (int) (time) / 1000;
 		return String.format(" %d:%02d mins", est / 60, est % 60);
 	}
-
-	public static String calculateRemaining(ExecutionProfiler profiler) {
-		int processed = profiler.getExecutedTestCount();
-		int total = profiler.getTotalTestCount();
-		int time = (int) (System.currentTimeMillis() - profiler.getStarted())
-				/ (processed + 1);
-		int est = time * (total - processed) / 1000;
-		return String.format(" %d:%02d mins remaining.", est / 60, est % 60);
-	}
 	
 	
 }
