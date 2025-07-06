@@ -15,21 +15,21 @@ package org.eclipse.rcptt.cloud.agent;
 import java.io.File;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer;
+import org.eclipse.rcptt.cloud.agent.AutRegistry.ITargetPlatformManager;
+import org.eclipse.rcptt.cloud.agent.autManager.AutProviderManager;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformManager;
 import org.eclipse.rcptt.launching.target.ITargetPlatformHelper;
 import org.eclipse.rcptt.launching.target.TargetPlatformManager;
 import org.osgi.framework.BundleContext;
 
-import org.eclipse.rcptt.cloud.agent.AutRegistry.ITargetPlatformManager;
-import org.eclipse.rcptt.cloud.agent.autManager.AutProviderManager;
-
 public class AgentPlugin extends Plugin {
-	public static final String PLUGIN_ID = "com.xored.q7.cloud.agent";
+	public static final ILog LOG = Platform.getLog(AgentPlugin.class);
 
 	private static AgentPlugin plugin;
 
@@ -111,15 +111,15 @@ public class AgentPlugin extends Plugin {
 
 	public static IStatus createStatus(String message, int severity,
 			Throwable cause) {
-		return new Status(severity, PLUGIN_ID, message, cause);
+		return new Status(severity, LOG.getBundle().getSymbolicName(), message, cause);
 	}
 
 	public static void error(String message, Throwable cause) {
-		getDefault().getLog().log(createStatus(message, IStatus.ERROR, cause));
+		LOG.log(createStatus(message, IStatus.ERROR, cause));
 	}
 
 	public static void log(IStatus status) {
-		getDefault().getLog().log(status);
+		LOG.log(status);
 	}
 
 	public static void logInfo(String message) {
