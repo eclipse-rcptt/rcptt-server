@@ -536,7 +536,7 @@ public class TaskDescriptor {
 		int secondsPerTest = testExecTimeout != null ? Integer.parseInt(testExecTimeout) : 300;
 		final long timeout = secondsPerTest * largestPrefetch * 1000;
 		long elapsed = System.currentTimeMillis() - started;
-		if (elapsed > timeout) {
+		if (elapsed >= timeout) {
 			agentProblem(agent);
 			cancel(error(format("Task execution %s on agent %s has timed out after %f minutes", getTaskName(), agent != null ? agent.getUri() : "null",  (double)elapsed / 60000)));
 		}
