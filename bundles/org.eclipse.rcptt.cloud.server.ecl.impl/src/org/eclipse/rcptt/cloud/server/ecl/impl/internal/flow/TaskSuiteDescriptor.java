@@ -14,6 +14,7 @@ package org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,22 +30,6 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.rcptt.ecl.core.ProcessStatus;
-import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
-import org.eclipse.rcptt.internal.core.RcpttPlugin;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.reporting.ItemKind;
-import org.eclipse.rcptt.reporting.Q7Info;
-import org.eclipse.rcptt.reporting.ReportingFactory;
-import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
-import org.eclipse.rcptt.reporting.core.SimpleSeverity;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Node;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.ReportFactory;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
@@ -53,6 +38,17 @@ import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.serverCommands.AgentLogEntryType;
 import org.eclipse.rcptt.cloud.server.serverCommands.AutStartupStatus;
+import org.eclipse.rcptt.ecl.core.ProcessStatus;
+import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
+import org.eclipse.rcptt.internal.core.RcpttPlugin;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.reporting.core.SimpleSeverity;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.Closer;
 
 /**
  * Per classifier suite.
@@ -405,22 +401,6 @@ public class TaskSuiteDescriptor {
 		return associatedAgents.size();
 	}
 
-	public synchronized void reduceAssociation(AgentInfo agent) {
-		String agentId = AgentRegistry.getAgentID(agent);
-		int d = 1;
-		if (!associatedAgents.contains(agentId)) {
-			agentId = null;
-			d = 0;
-		}
-		while (associatedAgents.size() > agentCount - d) {
-			associatedAgents.remove(0);
-		}
-		if (agentId != null) {
-			associatedAgents.add(agentId);
-		}
-
-	}
-
 	public synchronized TaskDescriptor get(AgentInfo agent) {
 		ensureInvariants();
 		synchronized (this) {
@@ -745,10 +725,22 @@ public class TaskSuiteDescriptor {
 		return getSuiteId() + "_" + getClassifier();
 	}
 
-	public synchronized final void checkTimeout() {
-		runningTasks.values().forEach(tasks -> {
-			tasks.forEach(t -> t.timeoutCheck(tasks.size()) );
-		});
+	@SuppressWarnings("resource")
+	public final void checkTimeout() {
+		try (Closer closer = Closer.create()) {
+			synchronized (this) {
+				runningTasks.values().forEach(agentTasks -> {
+					agentTasks.forEach(t -> {
+						int prefetched = agentTasks.size();
+						closer.register(() -> { // avoid concurrent modification
+							t.timeoutCheck(prefetched);
+						});
+					});
+				});
+			}
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 }

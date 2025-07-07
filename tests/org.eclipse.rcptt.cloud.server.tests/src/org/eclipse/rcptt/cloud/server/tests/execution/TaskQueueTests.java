@@ -15,31 +15,37 @@ package org.eclipse.rcptt.cloud.server.tests.execution;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.rcptt.cloud.model.AgentInfo;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
+import org.eclipse.rcptt.cloud.model.ModelUtil;
+import org.eclipse.rcptt.cloud.model.Q7Artifact;
+import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
+import org.eclipse.rcptt.cloud.model.Q7TestingHelper;
+import org.eclipse.rcptt.cloud.model.Q7TestingHelper.TestCaseState;
+import org.eclipse.rcptt.cloud.model.RefKind;
+import org.eclipse.rcptt.cloud.model.TestOptions;
+import org.eclipse.rcptt.cloud.server.AgentRegistry;
+import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor;
+import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
+import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor;
+import org.eclipse.rcptt.cloud.server.tests.FakeTestStore;
+import org.eclipse.rcptt.cloud.server.tests.TestUtils;
+import org.eclipse.rcptt.cloud.server.tests.TestUtils.TestsSuite;
 import org.eclipse.rcptt.verifications.log.ErrorLogVerification;
 import org.eclipse.rcptt.verifications.log.LogFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import org.eclipse.rcptt.cloud.model.AgentInfo;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
-import org.eclipse.rcptt.cloud.model.Q7Artifact;
-import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
-import org.eclipse.rcptt.cloud.model.Q7TestingHelper;
-import org.eclipse.rcptt.cloud.model.Q7TestingHelper.TestCaseState;
-import org.eclipse.rcptt.cloud.model.RefKind;
-import org.eclipse.rcptt.cloud.server.AgentRegistry;
-import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor;
-import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
-import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor;
-import org.eclipse.rcptt.cloud.server.tests.TestUtils;
-import org.eclipse.rcptt.cloud.server.tests.TestUtils.TestsSuite;
 
 public class TaskQueueTests extends BaseTaskQueueTests {
 	@BeforeClass
@@ -203,6 +209,28 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		assertNull(subject.get(agents.get(0), suiteDescriptor.getSuiteId()));
 		TaskDescriptor task2 = subject.get(agents.get(1), suiteDescriptor.getSuiteId());
 		assertEquals(task1, task2);
+	}
+	
+	@Test
+	public void noExceptionsWhenRemovingTimedoutTasks() throws CoreException, IOException, InterruptedException {
+		AgentRegistry r = setupAgentRegistry(1);
+		List<AgentInfo> agents = r.getAgents();
+		TaskQueue subject = new TaskQueue(r, consoleLog, consoleLog);
+		TestsSuite suite = TestUtils.createSuite("Initialization failure", 1,
+				TestCaseState.wait20sec);
+		FakeTestStore dir = new FakeTestStore(suite);
+		TestOptions testOptions = ModelFactory.eINSTANCE.createTestOptions();
+		testOptions.getValues().put("testExecTimeout", "0");
+		TaskDescriptor task = new TaskDescriptor(dir, aut, testOptions, suite.refs.get(0), "taskName");
+		Collection<TaskDescriptor> tasks = Collections.singletonList(task);
+		TaskSuiteDescriptor suiteDescriptor = new TaskSuiteDescriptor(suite.testSuiteName, aut, consoleLog, 1, 1, tasks);
+		Map<String, Q7ArtifactRef> contexts = ModelUtil.dependenciesMap(dir.getTestSuite());
+		suiteDescriptor.initialize(contexts, null);
+		subject.schedule(suiteDescriptor);
+		subject.get(agents.get(0), suiteDescriptor.getSuiteId());
+		Assert.assertEquals(1, suiteDescriptor.getRunningTasksCount());
+		suiteDescriptor.checkTimeout();
+		Assert.assertEquals(0, suiteDescriptor.getRunningTasksCount());
 	}
 		
 }
