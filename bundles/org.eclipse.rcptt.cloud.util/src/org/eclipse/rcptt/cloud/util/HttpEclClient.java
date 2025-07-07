@@ -23,6 +23,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
@@ -90,6 +91,10 @@ public class HttpEclClient {
 			throw e1;
 		} catch (ConnectException e) {
 			throw e;
+		} catch (ConnectTimeoutException e) {
+			ConnectException e1 = new ConnectException(e.getLocalizedMessage());
+			e1.initCause(e);
+			throw e1;
 		} catch (Exception e) {
 			throw new IllegalStateException("Response from: " + url
 					+ "command: " + command.getClass().getName()
