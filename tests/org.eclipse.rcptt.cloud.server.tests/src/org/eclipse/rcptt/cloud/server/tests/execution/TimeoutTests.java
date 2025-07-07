@@ -86,6 +86,7 @@ public class TimeoutTests {
 					suite.execute(listener, testOptions, WIN_PL);
 					long elapsed = currentTimeMillis() - start;
 					Assert.assertTrue("Elapsed: " + elapsed + " milliseconds", elapsed < (timeoutSeconds + 1) * 1000);
+					Assert.assertTrue("Elapsed: " + elapsed + " milliseconds", elapsed > (timeoutSeconds - 1) * 1000);
 					results.stream().map(ProcessStatus::getMessage).forEach(m -> assertEquals("Cancelled", m));
 					results.stream().mapToInt(ProcessStatus::getSeverity).forEach(severity -> assertEquals(IStatus.CANCEL, severity));
 					assertEquals(2, results.size());
