@@ -521,7 +521,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 
 			while (execSession.isRunning() && !execTimedOut(startTime)) {
 				if (monitor.isCanceled()) {
-					execSession.stop(new Status(IStatus.ERROR, AgentPlugin.PLUGIN_ID, "Execution timed out"));
+					execSession.stop(Status.error("Execution timed out"));
 				}
 				sleep(WAIT_TIME);
 			}

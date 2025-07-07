@@ -13,7 +13,6 @@
 package org.eclipse.rcptt.cloud.agent.app.internal;
 
 import static org.eclipse.core.runtime.Status.error;
-import static org.eclipse.rcptt.cloud.agent.AgentPlugin.PLUGIN_ID;
 
 import java.io.Closeable;
 import java.io.File;
@@ -90,6 +89,7 @@ public class AgentThread implements Runnable {
 	private static final int GET_TASK_TIMEOUT = AGENT_ECL_TIMEOUT;
 	private static final int PING_TIMEOUT = 10000;
 	AgentApplication agentApplication;
+	
 
 	// Currently executed task
 	static class AgentTask {
@@ -454,7 +454,7 @@ public class AgentThread implements Runnable {
 				public void run() {
 					agentMonitor.log("report error to server msg: " + msg
 							+ (ex != null ? ex.getMessage() : ""), ex);
-					MultiStatus failure = new MultiStatus(PLUGIN_ID, 0, "Agent error", null);
+					MultiStatus failure = new MultiStatus(getClass(), 0, "Agent error", null);
 					File dir = getSuiteRegistry().getBaseDir();
 					long freeSpace = dir.getFreeSpace();
 
@@ -462,7 +462,7 @@ public class AgentThread implements Runnable {
 						failure.merge(coreEx.getStatus());
 					}
 					failure.add(RcpttPlugin.createStatus(ex));
-					failure.add(new Status(IStatus.INFO, PLUGIN_ID, "Free disk space at: " + dir.getAbsolutePath()
+					failure.add(Status.info("Free disk space at: " + dir.getAbsolutePath()
 							+ " is " + (freeSpace / 1024 * 1024) + " mb"));
 					ReportProblem cmd = ServerCommandsFactory.eINSTANCE.createReportProblem();
 					cmd.setCause(ProcessStatusConverter.toProcessStatus(failure));
