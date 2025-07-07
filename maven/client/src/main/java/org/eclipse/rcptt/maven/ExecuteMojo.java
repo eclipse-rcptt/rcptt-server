@@ -280,11 +280,16 @@ public class ExecuteMojo extends AbstractQ7Mojo {
 				if (code == 64) {
 					throw new MojoExecutionException("Configuration is invalid");
 				}
-				if (code == 56) {
-					throw new MojoFailureException("There are test failures");
-				}
 				if (code != 0) {
-					throw new MojoExecutionException(format("Q7 client exited with code %d", code));
+					if (code == 56) {
+						if (testFailureIgnore) {
+							getLog().error("There are test failures");
+						} else {
+							throw new MojoFailureException("There are test failures");
+						}
+					} else {
+						throw new MojoExecutionException(format("Q7 client exited with code %d", code));
+					}
 				}
 			} finally {
 				ShutdownHook.start();
