@@ -461,7 +461,9 @@ public class AgentThread implements Runnable {
 					if (ex instanceof CoreException coreEx) {
 						failure.merge(coreEx.getStatus());
 					}
-					failure.add(RcpttPlugin.createStatus(ex));
+					if (ex != null) {
+						failure.add(RcpttPlugin.createStatus(ex));
+					}
 					failure.add(Status.info("Free disk space at: " + dir.getAbsolutePath()
 							+ " is " + (freeSpace / 1024 * 1024) + " mb"));
 					ReportProblem cmd = ServerCommandsFactory.eINSTANCE.createReportProblem();

@@ -23,6 +23,7 @@ import org.eclipse.rcptt.util.NetworkUtils;
 
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
+import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
 
 public class EclServerApplication extends CommandLineApplication {
 	private static List<Integer> usedPorts = new LinkedList<Integer>();
@@ -36,6 +37,7 @@ public class EclServerApplication extends CommandLineApplication {
 		if (port == 0) {
 			port = findFreePort();
 		}
+		validateArguments();
 		for (int i = 0; i < 10; i++) {
 			try {
 				EclTcpServerManager.Instance.startServer(port, false, false);
@@ -50,6 +52,8 @@ public class EclServerApplication extends CommandLineApplication {
 		}
 		return waitForCompletion();
 	}
+
+	protected void validateArguments() throws InvalidCommandLineArgException {}
 
 	public static int findFreePort() {
 		for (int port = 4000; port < 30000; port++) {

@@ -59,8 +59,4 @@ public class AgentAppPlugin extends Plugin {
 		return createException(message, null);
 	}
 
-	public static void error(String message, Throwable cause) {
-		getDefault().getLog().log(createErrorStatus(message, cause));
-	}
-
 }

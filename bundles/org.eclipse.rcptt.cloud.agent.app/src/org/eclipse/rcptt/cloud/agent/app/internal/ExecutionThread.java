@@ -15,6 +15,7 @@ package org.eclipse.rcptt.cloud.agent.app.internal;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -39,6 +40,7 @@ import org.eclipse.rcptt.cloud.server.serverCommands.Task;
 import org.eclipse.rcptt.cloud.server.serverCommands.TaskStatus;
 
 final class ExecutionThread extends Thread {
+	private static final ILog LOG = Platform.getLog(ExecutionThread.class);
 	private final AgentThread agentThread;
 	private int id;
 
@@ -139,8 +141,9 @@ final class ExecutionThread extends Thread {
 				}
 			}
 		} catch (Throwable e) {
-			AgentAppPlugin.error("Execution failure ", e);
+			LOG.error("Execution failure ", e);
 			agentThread.reportError("Execution failure: " + e.getMessage(), e);
+			throw new AssertionError(e);
 		} finally {
 			Platform.removeLogListener(logListener);
 		}

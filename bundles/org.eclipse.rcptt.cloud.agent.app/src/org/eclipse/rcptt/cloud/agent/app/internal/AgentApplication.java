@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent.app.internal;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -32,6 +34,7 @@ import org.eclipse.rcptt.cloud.agent.AgentPlugin;
 import org.eclipse.rcptt.cloud.agent.ITestExecutor;
 import org.eclipse.rcptt.cloud.agent.TestExecutor;
 import org.eclipse.rcptt.cloud.commandline.Arg;
+import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
 import org.eclipse.rcptt.cloud.common.EclServerApplication;
 import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.model.TestOptions;
@@ -102,11 +105,10 @@ public class AgentApplication extends EclServerApplication {
 			threads[i].start();
 		}
 		try {
-			joinEclServer();
+			return super.waitForCompletion();
 		} finally {
 			doCleanupPDE();
 		}
-		return 0;
 	}
 
 	protected AgentThread newAgentThread(int index, int port) {
@@ -251,6 +253,20 @@ public class AgentApplication extends EclServerApplication {
 		return serverHost;
 	}
 
+	
+	@Override
+	protected void validateArguments() throws InvalidCommandLineArgException {
+		super.validateArguments();
+		for (String optionString : testOptions) {
+			int eqIndex = optionString.indexOf('=');
+			if (eqIndex == -1) {
+				throw new InvalidCommandLineArgException(format("Invalid test option %s, format should be 'key = value'",
+						optionString), "-testOptions");
+			}
+		}
+		
+	}
+	
 	synchronized String getThisHost() {
 		if (thisHost.isEmpty() || thisHost.equals("localhost")) {
 			try {
@@ -305,12 +321,8 @@ public class AgentApplication extends EclServerApplication {
 		for (String optionString : testOptions) {
 			int eqIndex = optionString.indexOf('=');
 			if (eqIndex == -1) {
-				AgentAppPlugin
-						.error(String
-								.format("Invalid test option %s, format should be 'key = value'",
-										optionString), null);
+				throw new IllegalStateException("Options has changed since validateArguments(): " + optionString);
 			}
-
 			options.getValues().put(optionString.substring(0, eqIndex).trim(),
 					optionString.substring(eqIndex + 1).trim());
 		}
