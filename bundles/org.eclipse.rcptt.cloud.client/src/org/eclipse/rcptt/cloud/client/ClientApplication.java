@@ -1327,7 +1327,6 @@ public class ClientApplication extends CommandLineApplication {
 					e.printStackTrace();
 				}
 				System.out.println("ClientApplication terminated.");
-				Runtime.getRuntime().exit(0);
 			}
 		};
 		ShutdownListenerThread.setDaemon(true);
