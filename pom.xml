@@ -34,9 +34,6 @@ Contributors:
 	<properties>
 		<tycho-version>4.0.12</tycho-version>
 		<tycho-groupid>org.eclipse.tycho</tycho-groupid>
-		<platformRepository>
-			https://download.eclipse.org/rcptt/nightly/2.6.0/latest/repository/</platformRepository>
-		<!--platformRepository>https://download.eclipse.org/rcptt/release/2.5.5/repository/</platformRepository-->
 	</properties>
 
 	<modules>
