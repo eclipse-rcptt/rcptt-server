@@ -13,10 +13,12 @@
 package org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -316,7 +318,7 @@ public class TaskSuiteDescriptor {
 		associatedAgents.add(AgentRegistry.getAgentID(agent));
 	}
 
-	public synchronized void deAssociate(AgentInfo agent) {
+	private synchronized void deAssociate(AgentInfo agent) {
 		associatedAgents.remove(AgentRegistry.getAgentID(agent));
 	}
 
@@ -366,22 +368,27 @@ public class TaskSuiteDescriptor {
 		}
 	}
 
-	public synchronized void reduceExtraAgents() {
-		if (runningTasks.size() > agentCount) {
+	public void reduceExtraAgents() {
+		IStatus status = RcpttPlugin.createStatus("Agents were assigned to another suite");
+		List<TaskDescriptor> list = new ArrayList<>();
+		synchronized (this) {
+			runningTasks.values().removeIf(l -> l.isEmpty());
+			associatedAgents.removeIf(agent -> !runningTasks.containsKey(agent));
 			int toCancel = runningTasks.size() - agentCount;
-
-			for (Iterator<String> i = new HashSet<String>(runningTasks.keySet())
-					.iterator(); i.hasNext() && toCancel > 0;) {
-				String agentID = i.next();
-				List<TaskDescriptor> list = runningTasks.get(agentID);
-				if (list != null)
-					list = ImmutableList.copyOf(list);
-				for (TaskDescriptor task : list) {
-					task.cancel(RcpttPlugin.createStatus("Agents were assigned to another suite"));
+			for (Map.Entry<String, List <TaskDescriptor>> entry : runningTasks.entrySet()) {
+				if (toCancel <= 0) {
+					break;
 				}
+				list.addAll(entry.getValue());
 				toCancel--;
-				associatedAgents.remove(agentID);
 			}
+		}
+		for (TaskDescriptor task: list) {
+			task.temporaryProblem(status);
+		}
+		synchronized (this) {
+			runningTasks.values().removeIf(l -> l.isEmpty());
+			associatedAgents.removeIf(agent -> !runningTasks.containsKey(agent));
 		}
 	}
 
@@ -508,37 +515,27 @@ public class TaskSuiteDescriptor {
 			associatedAgents.remove(agentID);
 		}
 		for (TaskDescriptor running : list) {
-			running.cancel(RcpttPlugin.createStatus("Agent " + agent.getUri()
+			running.temporaryProblem(RcpttPlugin.createStatus("Agent " + agent.getUri()
 					+ " disconnected. Cancelling " + running));
 		}
 		ensureInvariants();
 	}
 
-	public synchronized List<TaskDescriptor> agentTimeout(AgentInfo agent,
-			int maxTimeouts) {
-		ensureInvariants();
+	public void agentTimeout(AgentInfo agent) {
+		IStatus status = RcpttPlugin.createStatus("Agent " + agent.getUri() + " has timed out");
 		String agentID = AgentRegistry.getAgentID(agent);
-		List<TaskDescriptor> list = runningTasks.get(agentID);
-		List<TaskDescriptor> toFail = new ArrayList<TaskDescriptor>();
-		if (list == null || list.isEmpty()) {
-			// Nothing to do.
-			return toFail;
-		}
-		list = ImmutableList.copyOf(list);
-		for (TaskDescriptor task : list) {
-			List<String> timeouts = task.agentProblem(agent);
-			if (timeouts != null && timeouts.size() >= maxTimeouts) {
-				// 2 or more timeouts happen, lets fail task with
-				// timeout.
-				toFail.add(task);
-			} else {
-				// Move task to not scheduled one.
-				task.cancel(RcpttPlugin.createStatus("Agent " + agent.getUri()
-						+ " timed out " + timeouts.size() + " times"));
+		try (Closer closer = Closer.create() ) {
+			synchronized (this) {
+				ensureInvariants();
+				List<TaskDescriptor> list = runningTasks.getOrDefault(agentID, emptyList());
+				for (TaskDescriptor task : list) {
+					closer.register(() -> task.temporaryProblem(status));
+				}
 			}
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
 		}
 		ensureInvariants();
-		return toFail;
 	}
 
 	public synchronized boolean checkCancel(AgentInfo agent) {
@@ -550,13 +547,15 @@ public class TaskSuiteDescriptor {
 		return false;
 	}
 
-	public synchronized void reportAgentProblem(AgentInfo agent, IStatus iStatus) {
+	public  void reportAgentProblem(AgentInfo agent, IStatus iStatus) {
 		String agentID = AgentRegistry.getAgentID(agent);
-		List<TaskDescriptor> list = runningTasks.get(agentID);
-		if (list != null)
-			for (TaskDescriptor task : ImmutableList.copyOf(list)) {
-				task.cancel(iStatus);
-			}
+		List<TaskDescriptor> list;
+		synchronized (this) {
+			list = runningTasks.getOrDefault(agentID, Collections.emptyList());
+		}
+		for (TaskDescriptor task : ImmutableList.copyOf(list)) {
+			task.temporaryProblem(iStatus);
+		}
 	}
 
 	public void reportAUTLogs(AgentInfo agent, Map<String, String> files,

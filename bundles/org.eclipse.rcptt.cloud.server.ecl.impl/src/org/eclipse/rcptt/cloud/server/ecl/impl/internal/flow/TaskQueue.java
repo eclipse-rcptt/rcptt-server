@@ -65,7 +65,7 @@ public class TaskQueue {
 	}
 
 	private static final int AGENT_TIMEOUT_COUNT = 2;
-	private Map<String, TaskSuiteDescriptor> suites = Collections
+	private final Map<String, TaskSuiteDescriptor> suites = Collections
 			.synchronizedMap(new HashMap<String, TaskSuiteDescriptor>());
 	private final IAgentRegistryListener agentListener = new IAgentRegistryListener() {
 
@@ -145,8 +145,7 @@ public class TaskQueue {
 			for (AgentInfo agent : timeouts) {
 				// Check for all tasks assigned to agent.
 				for (TaskSuiteDescriptor suite : suites.values()) {
-					List<TaskDescriptor> timeout = suite.agentTimeout(agent,
-							AGENT_TIMEOUT_COUNT);
+					suite.agentTimeout(agent);
 					for (TaskDescriptor task : timeout) {
 						String cause = "Task "+task.getTaskName()+"is marked as failed, since "
 								+  task.getTimeoutAgents()
@@ -196,13 +195,12 @@ public class TaskQueue {
 	protected void agentRemoved(AgentInfo info) {
 		cancelSendingTask(info);
 		cleanIncompatibleTests();
-		synchronized (this.suites) {
-			// Mark all running on agent task as not running.
-			for (TaskSuiteDescriptor d : this.suites.values()) {
-				d.agentRemoved(info);
-			}
-			reschedule(false);
+		
+		// Mark all running on agent task as not running.
+		for (TaskSuiteDescriptor d : this.suites.values().toArray(TaskSuiteDescriptor[]::new)) {
+			d.agentRemoved(info);
 		}
+		reschedule(false);
 	}
 
 	public Collection<String> getSuites() {
@@ -347,7 +345,7 @@ public class TaskQueue {
 			}
 			ProcessStatus failMessage = getStatus(report.getRoot());
 			if (failedToStart) {
-				task.cancel(new MultiStatus(TaskQueue.class,0, new IStatus[] {toIStatus(failMessage)}, "Failed to start AUT: " + getFailMessage (report.getRoot()), null));
+				task.temporaryProblem(new MultiStatus(TaskQueue.class,0, new IStatus[] {toIStatus(failMessage)}, "Failed to start AUT: " + getFailMessage (report.getRoot()), null));
 			} else {
 				problemLog.log("Task failure: " + failMessage + " " + task.getTaskName());
 				notifyISMTaskComplete(agent, task, report);

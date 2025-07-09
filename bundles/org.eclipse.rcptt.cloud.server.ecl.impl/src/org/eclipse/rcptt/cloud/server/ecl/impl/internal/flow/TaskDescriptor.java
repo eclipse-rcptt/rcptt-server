@@ -21,7 +21,6 @@ import static org.eclipse.core.runtime.Status.error;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -30,20 +29,10 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.rcptt.core.scenario.NamedElement;
-import org.eclipse.rcptt.core.utils.TagsUtil;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.eclipse.rcptt.cloud.common.AutUtil;
 import org.eclipse.rcptt.cloud.common.Functions;
 import org.eclipse.rcptt.cloud.common.ITestStore;
@@ -60,6 +49,17 @@ import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
 import org.eclipse.rcptt.cloud.server.serverCommands.Task;
+import org.eclipse.rcptt.core.scenario.NamedElement;
+import org.eclipse.rcptt.core.utils.TagsUtil;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 /**
  * Test representation.
@@ -152,7 +152,8 @@ public class TaskDescriptor {
 
 	private Q7ArtifactRef scenario;
 
-	private final List<String> agentProblems = new ArrayList<>();
+	private final List<IStatus> temporaryProblems = new ArrayList<>();
+	private final Set<String> problematicAgentIds = new HashSet<>();
 
 	enum State {
 		UNINITIALIZED, INITIALIZED, EXECUTING, REPORTED
@@ -219,6 +220,7 @@ public class TaskDescriptor {
 			return input.getId();
 		}
 	};
+	private static final int TEMPORARY_PROBLEM_LIMIT = 3;
 
 	private static void verifyScenarioReference(Task task) {
 		String id = task.getId();
@@ -283,27 +285,38 @@ public class TaskDescriptor {
 	}
 
 	/** Should be called when task is rejected by agent */
-	public void cancel(IStatus iStatus) {
+	public void temporaryProblem(IStatus iStatus) {
 		AgentInfo tmp = null;
-		synchronized (this) {
-			if (state == State.REPORTED)
-				return;
-			if (state == State.INITIALIZED)
-				return;
-			if (state != State.EXECUTING)
-				throw new IllegalStateException("Task " + getTaskName()
-						+ " can't be cancelled in " + state + " state", new CoreException(iStatus));
-			started = System.currentTimeMillis();
-			state = State.INITIALIZED;
-			tmp = getAgent();
-			agentProblem(tmp);
-			agent = null;
-		}
 		try {
-			assert tmp != null;
-			listeners.onCancel(this, tmp, iStatus);
-		} catch (Throwable e1) {
-			reportError(e1);
+			synchronized (this) {
+				if (state == State.REPORTED)
+					return;
+				if (state == State.INITIALIZED)
+					return;
+				if (state != State.EXECUTING)
+					throw new IllegalStateException("Task " + getTaskName()
+							+ " can't be cancelled in " + state + " state", new CoreException(iStatus));
+				started = System.currentTimeMillis();
+				state = State.INITIALIZED;
+				tmp = getAgent();
+				if (tmp != null) {
+					problematicAgentIds.add(AgentRegistry.getAgentID(tmp));
+					iStatus = new MultiStatus(getClass(), 0, new IStatus[] {iStatus},  "Task has failed on agent " + tmp.getUri(), null);
+				}
+				temporaryProblems.add(iStatus);
+				agent = null;
+				if (temporaryProblems.size() > TEMPORARY_PROBLEM_LIMIT) {
+					throw new CoreException(new MultiStatus(getClass(), 0, temporaryProblems.toArray(IStatus[]::new),  "Too many temporary problems", null));
+				}
+			}
+			try {
+				assert tmp != null;
+				listeners.onCancel(this, tmp, iStatus);
+			} catch (Throwable e1) {
+				reportError(e1);
+			}
+		} catch (CoreException e) {
+			reportError(e);
 		}
 	}
 
@@ -339,7 +352,7 @@ public class TaskDescriptor {
 
 		for (AgentInfo agent : agents) {
 			String agentId = AgentRegistry.getAgentID(agent);
-			if (agentProblems.contains(agentId)) {
+			if (problematicAgentIds.contains(agentId)) {
 				// skip this agent, since task is already timeout on
 				// this agent.
 				continue;
@@ -461,22 +474,6 @@ public class TaskDescriptor {
 		return name;
 	}
 
-	public synchronized List<String> agentProblem(AgentInfo agent) {
-		agentProblems.add(AgentRegistry.getAgentID(agent));
-		return List.copyOf(agentProblems);
-	}
-
-	public synchronized String getTimeoutAgents() {
-		if (agentProblems.isEmpty()) {
-			return "";
-		}
-		return Arrays.toString(agentProblems.toArray());
-	}
-
-	public boolean hasAgentProblems() {
-		return !agentProblems.isEmpty();
-	}
-
 	private static void checkIntegrity(TestSuite suite, ITestStore store)
 			throws CoreException, IOException {
 		Map<String, Q7ArtifactRef> map = ModelUtil.refMap(suite);
@@ -537,8 +534,7 @@ public class TaskDescriptor {
 		final long timeout = secondsPerTest * largestPrefetch * 1000;
 		long elapsed = System.currentTimeMillis() - started;
 		if (elapsed >= timeout) {
-			agentProblem(agent);
-			cancel(error(format("Task execution %s on agent %s has timed out after %f minutes", getTaskName(), agent != null ? agent.getUri() : "null",  (double)elapsed / 60000)));
+			temporaryProblem(error(format("Task execution %s on agent %s has timed out after %f minutes", getTaskName(), agent != null ? agent.getUri() : "null",  (double)elapsed / 60000)));
 		}
 	}
 }
