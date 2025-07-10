@@ -58,6 +58,14 @@ Contributors:
 	</modules>
 
 	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>false</skip>
+				</configuration>
+			</plugin>
+		</plugins>
 	</build>
 
 	<repositories>
@@ -70,5 +78,5 @@ Contributors:
 			<url>https://repo.eclipse.org/content/repositories/rcptt-snapshots/</url>
 		</repository>
 	</repositories>
-
+	
 </project>

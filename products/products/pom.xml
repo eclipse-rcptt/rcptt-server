@@ -30,6 +30,13 @@ Contributors:
 
 	<build>
 		<plugins>
+		      <plugin>
+		        <artifactId>maven-deploy-plugin</artifactId>
+		        <configuration>
+		          <skip>false</skip>
+		        </configuration>
+		      </plugin>
+
 			<plugin>
 				<groupId>${tycho-groupid}</groupId>
 				<artifactId>tycho-p2-director-plugin</artifactId>
