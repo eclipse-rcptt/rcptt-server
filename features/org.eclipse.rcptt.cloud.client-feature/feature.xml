@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.rcptt.cloud.client-feature"
       label="RCPTT client"
-      version="2.5.5.qualifier"
+      version="2.6.0.qualifier"
       provider-name="Eclipse RCP Testing Tool Project">
 
    <description url="epl-2.0.html">
