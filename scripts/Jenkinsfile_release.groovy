@@ -36,7 +36,7 @@ pipeline {
       post {
         always {
           junit "tests/*/target/*-reports/*.xml"
-          archiveArtifacts allowEmptyArchive: false, artifacts: 'products/products/target/products/*.zip,  products/org.eclipse.rcptt.cloud.client-product/target/products/*.zip, **/*.hrpof, **/*.log'
+          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log'
         }
       }
     }
