@@ -11,6 +11,9 @@ function Restart-Agent {
 	)
 	cd C:\Users\Test\Documents
 	& taskkill.exe /F /IM eclipsec.exe
+	& jps -l | Select-String "org.eclipse.equinox.launcher" | ForEach-Object {
+		& taskkill.exe /F /PID ($_ -Split " ")[0]
+	}
 	& jps -l | Select-String "Worker" | ForEach-Object {
 		& taskkill.exe /F /PID ($_ -Split " ")[0]
 	}
