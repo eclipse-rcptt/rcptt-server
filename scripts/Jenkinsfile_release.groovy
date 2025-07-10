@@ -13,13 +13,25 @@
 
 
 pipeline {
-  agent any
+   agent {
+      // Remove implicit -V Maven argument. See https://gitlab.eclipse.org/eclipsefdn/helpdesk/-/issues/6398
+      kubernetes {
+        inheritFrom 'basic'
+        yaml '''
+            spec:
+                volumes:
+                - emptyDir:
+                    medium: ""
+                  name: "m2-dir"
+            '''
+      }
+   }
 
   options {
      timestamps()
      buildDiscarder(logRotator(numToKeepStr: '30', daysToKeepStr: '30', artifactNumToKeepStr: '1'))
      disableConcurrentBuilds()
-     timeout(time: 10, unit: 'HOURS')
+     timeout(time: 1, unit: 'HOURS')
   }
   
 	tools {
@@ -31,7 +43,7 @@ pipeline {
     stage('Maven') {
       steps {
 		sh 'scripts/remove-snapshot.sh'
-        sh 'mvn clean deploy'
+        sh 'echo do not release yet mvn clean deploy'
       }
       post {
         always {
