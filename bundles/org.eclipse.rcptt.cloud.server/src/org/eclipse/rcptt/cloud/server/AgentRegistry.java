@@ -51,7 +51,7 @@ public class AgentRegistry {
 
 	private final Map<String, AgentInfo> agents = new HashMap<String, AgentInfo>();
 	private final Map<String, AgentInfoDetails> agentPings = new HashMap<String, AgentInfoDetails>();
-	private ListenerList<IAgentRegistryListener> listeners = new ListenerList<>();
+	private final ListenerList<IAgentRegistryListener> listeners = new ListenerList<>();
 
 	private IQ7Monitor agentLog;
 	

@@ -14,12 +14,15 @@ package org.eclipse.rcptt.cloud.server.tests.execution;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
@@ -40,6 +43,10 @@ import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor
 import org.eclipse.rcptt.cloud.server.tests.FakeTestStore;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils.TestsSuite;
+import org.eclipse.rcptt.ecl.core.ProcessStatus;
+import org.eclipse.rcptt.reporting.util.RcpttReportGenerator;
+import org.eclipse.rcptt.reporting.util.ReportUtils;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 import org.eclipse.rcptt.verifications.log.ErrorLogVerification;
 import org.eclipse.rcptt.verifications.log.LogFactory;
 import org.junit.AfterClass;
@@ -222,6 +229,14 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		TestOptions testOptions = ModelFactory.eINSTANCE.createTestOptions();
 		testOptions.getValues().put("testExecTimeout", "0");
 		TaskDescriptor task = new TaskDescriptor(dir, aut, testOptions, suite.refs.get(0), "taskName");
+		AtomicReference<Report> report = new AtomicReference<>();
+		task.addListener(new TaskDescriptor.Listener.Adapter() {
+			@Override
+			public void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report r) {
+				super.onComplete(taskDescriptor, agent, r);
+				report.compareAndSet(null, r);
+			}
+		});
 		Collection<TaskDescriptor> tasks = Collections.singletonList(task);
 		TaskSuiteDescriptor suiteDescriptor = new TaskSuiteDescriptor(suite.testSuiteName, aut, consoleLog, 1, 1, tasks);
 		Map<String, Q7ArtifactRef> contexts = ModelUtil.dependenciesMap(dir.getTestSuite());
@@ -230,7 +245,15 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		subject.get(agents.get(0), suiteDescriptor.getSuiteId());
 		Assert.assertEquals(1, suiteDescriptor.getRunningTasksCount());
 		suiteDescriptor.checkTimeout();
-		Assert.assertEquals(0, suiteDescriptor.getRunningTasksCount());
+		 Assert.assertEquals(0, suiteDescriptor.getRunningTasksCount());
+		 while (report.get() == null) {
+			 Thread.yield();
+		 }
+		ProcessStatus status = ReportUtils.getStatus(report.get());
+		StringWriter writer = new StringWriter();
+		RcpttReportGenerator.writeResult(writer, 0, status);
+		assertTrue(writer.toString(), writer.toString().contains("No compatible agents"));
+		assertTrue(writer.toString(), writer.toString().contains("has timed out"));
 	}
 		
 }

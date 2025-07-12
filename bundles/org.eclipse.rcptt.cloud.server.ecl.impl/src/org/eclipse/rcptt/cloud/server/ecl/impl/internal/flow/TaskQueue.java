@@ -118,6 +118,7 @@ public class TaskQueue {
 
 		@Override
 		public void onCancel(TaskDescriptor taskDescriptor, AgentInfo agent, IStatus iStatus) {
+			cleanIncompatibleTests();
 		}
 
 		@Override

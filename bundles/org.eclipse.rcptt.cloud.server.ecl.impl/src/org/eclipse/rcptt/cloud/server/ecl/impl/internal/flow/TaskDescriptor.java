@@ -84,6 +84,25 @@ public final class TaskDescriptor {
 	private Long started = null;
 
 	public interface Listener {
+		public class Adapter implements Listener {
+
+			@Override
+			public void onExecute(TaskDescriptor taskDescriptor) {
+			}
+
+			@Override
+			public void onError(TaskDescriptor taskDescriptor, Throwable reason, boolean fatal) {
+			}
+
+			@Override
+			public void onCancel(TaskDescriptor taskDescriptor, AgentInfo agent, IStatus iStatus) {
+			}
+
+			@Override
+			public void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report) {
+			}
+		}
+
 		/** Is called when agent is assigned */
 		void onExecute(TaskDescriptor taskDescriptor);
 
@@ -113,7 +132,7 @@ public final class TaskDescriptor {
 		 */
 		void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report);
 
-		static class Composite implements Listener {
+		static final class Composite implements Listener {
 
 			private ListenerList<Listener> listeners = new ListenerList<>();
 
