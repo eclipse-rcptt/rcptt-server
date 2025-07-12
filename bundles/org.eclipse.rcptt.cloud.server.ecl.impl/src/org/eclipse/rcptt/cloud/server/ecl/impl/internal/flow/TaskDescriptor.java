@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
@@ -74,7 +75,7 @@ import com.google.common.collect.Lists;
  * @author vasili
  * 
  */
-public class TaskDescriptor {
+public final class TaskDescriptor {
 	private final ITestStore dir;
 	private final Task task;
 	private final String name;
@@ -108,12 +109,13 @@ public class TaskDescriptor {
 		/**
 		 * Is called when task is completely handled and won't be processed
 		 * anymore
+		 * @param agent TODO
 		 */
-		void onComplete(TaskDescriptor taskDescriptor, Report report);
+		void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report);
 
 		static class Composite implements Listener {
 
-			private List<Listener> listeners = Lists.newArrayList();
+			private ListenerList<Listener> listeners = new ListenerList<>();
 
 			public void addListener(Listener listener) {
 				listeners.add(listener);
@@ -134,9 +136,9 @@ public class TaskDescriptor {
 			}
 
 			@Override
-			public void onComplete(TaskDescriptor taskDescriptor, Report report) {
+			public void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report) {
 				for (Listener listener : listeners) {
-					listener.onComplete(taskDescriptor, report);
+					listener.onComplete(taskDescriptor, agent, report);
 				}
 			}
 
@@ -331,20 +333,22 @@ public class TaskDescriptor {
 	/** Completes execution of the task */
 	public void complete(Report report) {
 		Preconditions.checkNotNull(report);
+		AgentInfo tmp; 
 		synchronized (this) {
 			if (state == State.REPORTED)
 				return;
 			state = State.REPORTED;
+			tmp = agent;
 		}
 		try {
-			listeners.onComplete(this, report);
+			listeners.onComplete(this, tmp, report);
 		} catch (RuntimeException e) {
 			// Inability to report a state of a task should cause suite failure
 			listeners.onError(this, new RuntimeException(
 					"Unable to send report for " + this, e), true);
 		}
 	}
-
+	
 	public synchronized boolean canExecute(AgentInfo... agents) {
 		List<String> list = null;
 		if (state == State.REPORTED)
@@ -536,5 +540,27 @@ public class TaskDescriptor {
 		if (elapsed >= timeout) {
 			temporaryProblem(error(format("Task execution %s on agent %s has timed out after %f minutes", getTaskName(), agent != null ? agent.getUri() : "null",  (double)elapsed / 60000)));
 		}
+	}
+
+	public void ensureCompatible(Collection<AgentInfo> presentAgents) {
+		AgentInfo[] array = presentAgents.toArray(AgentInfo[]::new);
+		IStatus[] temporaryProblemsCopy;
+		synchronized (this) {
+			if (!isReady()) {
+				return;
+			}
+			if (canExecute(array)) {
+				return;
+			}
+			temporaryProblemsCopy = temporaryProblems.toArray(IStatus[]::new);
+		}
+		
+		MultiStatus result = new MultiStatus(getClass(), 0, temporaryProblemsCopy,  "No compatible agents left", null);
+		Report report = ReportUtil.generateReport(getId(), getTaskName(), result);
+		AgentInfo server = ModelFactory.eINSTANCE.createAgentInfo();
+		server.setUri("no_agent");
+
+		server.setClassifier(task.getAut().getClassifier());
+		complete(report);
 	}
 }

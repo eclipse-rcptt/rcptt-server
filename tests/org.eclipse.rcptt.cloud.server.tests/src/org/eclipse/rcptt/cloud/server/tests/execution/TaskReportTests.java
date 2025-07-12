@@ -52,7 +52,7 @@ public class TaskReportTests {
 						System.out.println("duplicate test:" + id);
 					}
 					System.out.println("executed:" + executed.size()
-							+ " from: " + suite.artifacts.size());
+							+ " out of: " + suite.artifacts.size());
 				}
 			}
 

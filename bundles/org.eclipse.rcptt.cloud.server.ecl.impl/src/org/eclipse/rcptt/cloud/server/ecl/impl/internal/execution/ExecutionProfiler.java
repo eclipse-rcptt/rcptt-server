@@ -163,8 +163,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		}
 
 		@Override
-		public void onComplete(TaskDescriptor taskDescriptor, Report report) {
-			AgentInfo agent = taskDescriptor.getAgent();
+		public void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report) {
 			if (agent != null) {
 				monitor.log("#-> complete task: " + taskDescriptor + " from:"
 						+ agent.getUri(),

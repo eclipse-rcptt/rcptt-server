@@ -120,16 +120,6 @@ public class TimeoutTests {
 			suite.addTestcase(TestCaseState.pass, TestCaseState.timeout);
 			suite.addTestcase(TestCaseState.pass, TestCaseState.waitonCounter);
 
-			EclServerImplPlugin.getDefault().getTaskQueue()
-			.addTeskListener(new ITaskListener() {
-
-				public void timeoutHappen(
-						org.eclipse.rcptt.cloud.model.AgentInfo agent) {
-					for (FakeAgentApplication fakeAgentApplication : agents) {
-						fakeAgentApplication.setWaitOnCounter(false);
-					}
-				}
-			});
 			suite.send(server);
 
 			suite.execute(WIN_PL);

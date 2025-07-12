@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +34,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
 import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
@@ -74,7 +74,6 @@ public class TaskSuiteDescriptor {
 	private Map<String, List<TaskDescriptor>> runningTasks = new HashMap<String, List<TaskDescriptor>>();
 	private AutInfo aut;
 	private Set<String> associatedAgents = new HashSet<String>();
-	private Set<String> ignoredAgents = new HashSet<String>();
 	private Map<TaskDescriptor, FailedToStartEntry> failedToStart = new HashMap<TaskDescriptor, TaskSuiteDescriptor.FailedToStartEntry>();
 	private final Map<String, TaskDescriptor> tasksById = Maps.newHashMap();
 
@@ -116,7 +115,7 @@ public class TaskSuiteDescriptor {
 
 		}
 		public static class Composite implements Listener {
-			private List<Listener> listeners = new ArrayList<Listener>();
+			private final List<Listener> listeners = new ArrayList<Listener>();
 
 			@Override
 			public void onCancel(TaskSuiteDescriptor suite, Throwable reason, int tasksLeft) {
@@ -416,10 +415,6 @@ public class TaskSuiteDescriptor {
 		}
 
 
-		if (isIgnored(agent)) {
-			return null;
-		}
-
 		int associatedAgents = getAssociationCount();
 		int agentCount = getAgentCount();
 		// Count of tasks could be executed by this agent.
@@ -451,10 +446,6 @@ public class TaskSuiteDescriptor {
 		return null;
 	}
 
-	private boolean isIgnored(AgentInfo agent) {
-		return ignoredAgents.contains(AgentRegistry.getAgentID(agent));
-	}
-
 	public synchronized int getRunningTasksCount() {
 		int count = 0;
 		for (List<TaskDescriptor> l : runningTasks.values()) {
@@ -474,34 +465,16 @@ public class TaskSuiteDescriptor {
 	public synchronized Collection<TaskDescriptor> getPendingTasks() {
 		return ImmutableList.copyOf(tasks);
 	}
-
-	public synchronized List<TaskDescriptor> findIncompatibleTasks(
-			List<AgentInfo> agents) {
+	
+	public void cleanIncompatible(List<AgentInfo> presentAgents) {
 		ensureInvariants();
-
-		List<TaskDescriptor> result = new ArrayList<TaskDescriptor>();
-
-		List<AgentInfo> actualAgents = new ArrayList<AgentInfo>();
-		// Filter out ignored agents from list.
-		for (AgentInfo agentInfo : agents) {
-			String aid = AgentRegistry.getAgentID(agentInfo);
-			if (!this.ignoredAgents.contains(aid)) {
-				actualAgents.add(agentInfo);
-			}
+		List<TaskDescriptor> copy;
+		synchronized (this) {
+			copy = List.copyOf(tasks);
 		}
-
-		AgentInfo[] agents_array = actualAgents
-				.toArray(new AgentInfo[actualAgents.size()]);
-		for (TaskDescriptor taskDescriptor : tasks) {
-			if (!taskDescriptor.isReady())
-				continue;
-			if (!taskDescriptor.canExecute(agents_array)) {
-				result.add(taskDescriptor);
-			}
-		}
-
+		
+		copy.forEach(t -> t.ensureCompatible(presentAgents));
 		ensureInvariants();
-		return result;
 	}
 
 	public void agentRemoved(AgentInfo agent) {
@@ -619,11 +592,10 @@ public class TaskSuiteDescriptor {
 		}
 
 		@Override
-		public void onComplete(TaskDescriptor taskDescriptor, Report report) {
+		public void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report) {
 			synchronized (TaskSuiteDescriptor.this) {
 				ensureInvariants();
 				try {
-					AgentInfo agent = taskDescriptor.getAgent();
 					if (agent != null) {
 						List<TaskDescriptor> list = runningTasks.get(agent.getUri());
 						if (list == null) {

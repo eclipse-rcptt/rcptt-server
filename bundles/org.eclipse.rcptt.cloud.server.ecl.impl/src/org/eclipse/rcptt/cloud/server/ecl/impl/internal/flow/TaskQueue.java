@@ -26,15 +26,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.AgentRegistry.IAgentRegistryListener;
 import org.eclipse.rcptt.cloud.server.AgentUtils;
@@ -64,7 +64,6 @@ public class TaskQueue {
 		void timeoutHappen(AgentInfo agent);
 	}
 
-	private static final int AGENT_TIMEOUT_COUNT = 2;
 	private final Map<String, TaskSuiteDescriptor> suites = Collections
 			.synchronizedMap(new HashMap<String, TaskSuiteDescriptor>());
 	private final IAgentRegistryListener agentListener = new IAgentRegistryListener() {
@@ -107,8 +106,27 @@ public class TaskQueue {
 		}
 	};
 
+	private final TaskDescriptor.Listener taskListener = new TaskDescriptor.Listener() {
 
-	private final ListenerList<ITaskListener> listeners = new ListenerList<>();
+		@Override
+		public void onExecute(TaskDescriptor taskDescriptor) {
+		}
+
+		@Override
+		public void onError(TaskDescriptor taskDescriptor, Throwable reason, boolean fatal) {
+		}
+
+		@Override
+		public void onCancel(TaskDescriptor taskDescriptor, AgentInfo agent, IStatus iStatus) {
+		}
+
+		@Override
+		public void onComplete(TaskDescriptor taskDescriptor, AgentInfo agent, Report report) {
+			notifyISMTaskComplete(agent, report);
+		}
+	};
+
+
 
 	private final IQ7Monitor taskLog;
 	private final IQ7Monitor problemLog;
@@ -116,7 +134,6 @@ public class TaskQueue {
 
 	public TaskQueue(AgentRegistry registry) {
 		this(registry, Q7LoggingManager.get("task.queue"), Q7LoggingManager.get("problem.log", "", "errors"));
-		notificationThread.start();
 	}
 
 	protected boolean doCheckCancel(AgentInfo agent) {
@@ -132,34 +149,12 @@ public class TaskQueue {
 		}
 	}
 
-	public void addTeskListener(ITaskListener listener) {
-		this.listeners.add(listener);
-	}
-
-	public void removeTeskListener(ITaskListener listener) {
-		this.listeners.remove(listener);
-	}
-
-	protected void processTimeout(List<AgentInfo> timeouts) {
+	private void processTimeout(List<AgentInfo> timeouts) {
 		synchronized (suites) {
 			for (AgentInfo agent : timeouts) {
 				// Check for all tasks assigned to agent.
 				for (TaskSuiteDescriptor suite : suites.values()) {
-					suite.agentTimeout(agent);
-					for (TaskDescriptor task : timeout) {
-						String cause = "Task "+task.getTaskName()+"is marked as failed, since "
-								+  task.getTimeoutAgents()
-								+ " agents have timed during its execution";
-						problemLog.log(cause, null);
-
-						Report report = ReportUtil.generateFailedReport(
-								task.getId(), task.getTaskName(), cause);
-						notifyISMTaskComplete(agent, task, report);
-						task.complete(report);
-					}
-					for (ITaskListener listener : listeners) {
-						listener.timeoutHappen(agent);
-					}
+					notificationThread.submit(() -> suite.agentTimeout(agent));
 				}
 			}
 			// Remove out incompatible tests.
@@ -267,46 +262,13 @@ public class TaskQueue {
 	}
 
 	private void cleanIncompatibleTests() {
-		Map<TaskSuiteDescriptor, List<TaskDescriptor>> toClean = new HashMap<TaskSuiteDescriptor, List<TaskDescriptor>>();
-
-		Map<TaskSuiteDescriptor, Throwable> toCancel = new HashMap<TaskSuiteDescriptor, Throwable>();
+		List<AgentInfo> agents;
+		List<TaskSuiteDescriptor> suites;
 		synchronized (this.suites) {
-			List<AgentInfo> agents = agentRegistry.getAgents();
-			for (TaskSuiteDescriptor s : this.suites.values()) {
-				try {
-					List<TaskDescriptor> tests = s
-							.findIncompatibleTasks(agents);
-					if (tests != null && tests.size() > 0) {
-						toClean.put(s, tests);
-					}
-				} catch (Throwable e) {
-					toCancel.put(s, e);
-				}
-			}
+			agents = agentRegistry.getAgents();
+			suites = List.copyOf(this.suites.values());
 		}
-		for (Map.Entry<TaskSuiteDescriptor, Throwable> entry : toCancel.entrySet()) {
-			// We call cancel outside of synchronization block to prevent various listener deadlocks.
-			entry.getKey().cancel(entry.getValue());
-		}
-		for (Map.Entry<TaskSuiteDescriptor, List<TaskDescriptor>> e : toClean
-				.entrySet()) {
-			for (TaskDescriptor task : e.getValue()) {
-				String cause = "Task has failed, since no compatible agents are left.";
-				if (task.hasAgentProblems()) {
-					cause = cause
-							+ " Task has timed out on agents: "
-							+ task.getTimeoutAgents();
-				}
-				Report report = ReportUtil.generateFailedReport(task.getId(), task.getTaskName(), cause);
-				if (report != null) {
-					AgentInfo server = ModelFactory.eINSTANCE.createAgentInfo();
-					server.setUri("no_agent");
-
-					server.setClassifier(task.getAut().getClassifier());
-					task.complete(report);
-				}
-			}
-		}
+		suites.forEach(s -> s.cleanIncompatible(agents));
 	}
 
 	private TaskSuiteDescriptor getSuite(AgentInfo agent, String suiteID) {
@@ -348,7 +310,7 @@ public class TaskQueue {
 				task.temporaryProblem(new MultiStatus(TaskQueue.class,0, new IStatus[] {toIStatus(failMessage)}, "Failed to start AUT: " + getFailMessage (report.getRoot()), null));
 			} else {
 				problemLog.log("Task failure: " + failMessage + " " + task.getTaskName());
-				notifyISMTaskComplete(agent, task, report);
+				notifyISMTaskComplete(agent, report);
 				task.complete(report);
 			}
 		} catch (RuntimeException e1) {
@@ -356,65 +318,35 @@ public class TaskQueue {
 		}
 	}
 
-	private List<Runnable> runnables = new ArrayList<Runnable>();
+	private final ExecutorService notificationThread = Executors.newFixedThreadPool(1);
 
-	private final Thread notificationThread = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			while (true) {
-				synchronized (runnables) {
-					for (Runnable r : runnables) {
-						r.run();
-					}
-					runnables.clear();
-					try {
-						runnables.wait(100);
-					} catch (InterruptedException e) {
-						// Ignore
-					}
+	private void notifyISMTaskComplete(final AgentInfo agent, final Report report) {
+		notificationThread.submit(() -> {
+			ISMHandle<AgentStats> handle = getAgentInfoStats(agent);
+			if (handle != null) {
+				synchronized (handle) {
+					handle.commit(increaseFailedForAgent(report));
 				}
 			}
-		}
-	});
-
-	private void notifyISMTaskComplete(final AgentInfo agent,
-			TaskDescriptor task, final Report report) {
-		synchronized (runnables) {
-			runnables.add(new Runnable() {
-				@Override
-				public void run() {
-					ISMHandle<AgentStats> handle = getAgentInfoStats(agent);
-					if (handle != null) {
-						synchronized (handle) {
-							handle.commit(increaseFailedForAgent(report));
-						}
-					}
-				}
-			});
-		}
+		});
 	}
 
 	private void notifyISMTaskTaken(final AgentInfo agent) {
-		synchronized (runnables) {
-			runnables.add(new Runnable() {
-				@Override
-				public void run() {
-					ISMHandle<AgentStats> handle = getAgentInfoStats(agent);
-					if (handle != null) {
-						synchronized (handle) {
-							handle.commit(new Function<AgentStats, Void>() {
-								@Override
-								public Void apply(AgentStats agentStats) {
-									agentStats.setTakenTasks(agentStats
-											.getTakenTasks() + 1);
-									return null;
-								}
-							});
+		notificationThread.submit(() -> {
+			ISMHandle<AgentStats> handle = getAgentInfoStats(agent);
+			if (handle != null) {
+				synchronized (handle) {
+					handle.commit(new Function<AgentStats, Void>() {
+						@Override
+						public Void apply(AgentStats agentStats) {
+							agentStats.setTakenTasks(agentStats
+									.getTakenTasks() + 1);
+							return null;
 						}
-					}
+					});
 				}
-			});
-		}
+			}
+		});
 	}
 
 	private static Function<AgentStats, Void> increaseFailedForAgent(
@@ -521,6 +453,7 @@ public class TaskQueue {
 						getSuiteId(suite.getSuiteId(), suite.getClassifier()),
 						suite);
 				suite.addSuiteListener(suiteListener);
+				suite.addTaskListener(taskListener);
 			}
 			reschedule(true);
 		}
@@ -675,7 +608,7 @@ public class TaskQueue {
 
 	public void remove(TaskSuiteDescriptor taskSuiteDescriptor) {
 		synchronized (this.suites) {
-			suites.remove(taskSuiteDescriptor);
+			suites.values().remove(taskSuiteDescriptor);
 		}
 	}
 
@@ -763,8 +696,9 @@ public class TaskQueue {
 			// Lets mark already recieved task as not running.
 			TaskDescriptor taskDescr = getTaskDescriptor(task.getSuiteId(),
 					agent.getClassifier(), task.getId());
-			if (taskDescr != null)
-				taskDescr.cancel(new Status(IStatus.ERROR, PLUGIN_ID, "Another task is started on agent"));
+			if (taskDescr != null) {
+				taskDescr.temporaryProblem(new Status(IStatus.ERROR, PLUGIN_ID, "Another task is started on agent"));
+			}
 		}
 	}
 
