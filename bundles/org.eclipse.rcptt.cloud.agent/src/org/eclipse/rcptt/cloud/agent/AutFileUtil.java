@@ -16,14 +16,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.Date;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.rcptt.util.FileUtil;
-
 import org.eclipse.rcptt.cloud.common.AutUtil;
+import org.eclipse.rcptt.cloud.common.UriUtil;
 import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.util.FileUtil;
 
 /**
  * Manages things like workspaces, console logs and stuff like that
@@ -155,7 +155,7 @@ public class AutFileUtil {
 	}
 
 	private static String getExtension(AutInfo aut) {
-		return new Path(aut.getUri()).getFileExtension();
+		return UriUtil.getFilenameExtension(URI.create(aut.getUri()).getPath());
 	}
 	protected static String getAutFileName(AutInfo aut) {
 		

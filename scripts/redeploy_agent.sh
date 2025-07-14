@@ -4,6 +4,7 @@ set -ex
 
 cd ~
 jps -vm | grep org.eclipse.equinox.launcher | grep /agent/eclipse | cut -d ' ' -f 1 | xargs --no-run-if-empty kill
+killall eclipse || true
 sleep 1
 rm -r agent 2>/dev/null|| true
 unzip -d agent /tmp/org.eclipse.rcptt.cloud.agent.product-linux.gtk.x86_64.zip

@@ -18,7 +18,7 @@ Contributors:
 	<artifactId>rcpttTests2</artifactId>
 	<!-- Set group id based on application under test name -->
 	<groupId>org.eclipse.rcptt.cloud</groupId>
-	<version>2.5.5-SNAPSHOT</version>
+	<version>2.6.0-SNAPSHOT</version>
 	<!-- RCPTT Maven Plugin provides this packaging type -->
 	<packaging>rcpttTest</packaging>
 
@@ -43,7 +43,7 @@ Contributors:
 	</pluginRepositories>
 
 	<properties>
-		<rcptt-maven-version>2.5.5-SNAPSHOT</rcptt-maven-version>
+		<rcptt-maven-version>2.6.0-SNAPSHOT</rcptt-maven-version>
 		<autName>eclipse-java-2024-03-R-linux-gtk-x86_64.tar.gz</autName>
 		<autClassifier>linux.gtk.x86_64</autClassifier>
 		<autHash>973c94a0a029c29d717823a53c3a65f99fa53d51f605872c5dd854620e16cd4cb2c2ff8a5892cd550a70ab19e1a0a0d2e792661e936bd3d2bef4532bc533048b</autHash>

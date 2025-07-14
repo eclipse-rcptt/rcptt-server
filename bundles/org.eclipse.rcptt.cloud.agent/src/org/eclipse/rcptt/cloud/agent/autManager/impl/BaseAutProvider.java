@@ -13,6 +13,7 @@
 package org.eclipse.rcptt.cloud.agent.autManager.impl;
 
 import static java.lang.String.format;
+import static java.nio.file.Files.isDirectory;
 import static org.eclipse.rcptt.cloud.agent.AgentPlugin.createException;
 
 import java.io.BufferedOutputStream;
@@ -21,11 +22,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -45,6 +54,7 @@ import org.eclipse.rcptt.util.FileUtil;
 
 public abstract class BaseAutProvider implements IAutProvider, Closeable {
 	
+	private static final int MIN_AUT_SIZE = 1024*1024;
 	private final File baseDirectory;
 
 	public BaseAutProvider() {
@@ -150,7 +160,7 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 					+ "kb/sec time: " + Long.toString(end - start),
 					IAgentMonitor.LogType.Both);
 			
-			if (length < 1024*1024) {
+			if (length < MIN_AUT_SIZE) {
 				throw createException(format("AUT download failed, file %s is too short: %d bytes", autFile.getName(), length));
 			}
 
@@ -220,22 +230,72 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 	}
 
 	public static void unarchive(File autFile, File autBaseDir) throws IOException, InterruptedException {
-		String fileExtension = Path.fromOSString(autFile.toString()).getFileExtension();
-		if (fileExtension == null) {
-			throw new IOException("Aut file name does not have an extension: " + autFile.toString());
-		}
-		fileExtension = fileExtension.toLowerCase();
-		if ("zip".equals(fileExtension)) { 
+		String name = autFile.getName();
+		if (name.endsWith(".zip")) { 
 			int files =   FileUtil.unzip(autFile, autBaseDir);
 			if (files == 0) {
 				// Seems no files are unzipped
 				throw new IOException("AUT download failed: There are no files in zip file " + autFile);
 			}
-		} else if ("dmg".equals(fileExtension)) {
+		} else if (name.endsWith(".dmg")) {
 			DmgExtract.extract(autFile.toPath(), autBaseDir.toPath());
+		} else if (name.endsWith(".tgz") || name.endsWith(".tar.gz")) {
+			extractTarGz(autFile.toPath(), autBaseDir.toPath());
 		} else {
 			throw new IOException("Aut file name has unknown extension: " + autFile.toString());
 		}
+	}
+	
+
+	private static void extractTarGz(java.nio.file.Path tarGzFile, java.nio.file.Path outputDir) throws IOException {
+		try (
+				GZIPInputStream gis = new GZIPInputStream(Files.newInputStream(tarGzFile));
+				TarArchiveInputStream tarInput = new TarArchiveInputStream(gis)) {
+			TarArchiveEntry entry;
+
+			while ((entry = tarInput.getNextEntry()) != null) {
+				java.nio.file.Path outputFile = outputDir.resolve(entry.getName());
+				if (entry.isDirectory()) {
+					if (!isDirectory(outputFile)) {
+						Files.createDirectories(outputFile);
+						applyUnixPermissions(entry, outputFile);
+					}
+				} else {
+					// Missing directory entries protection
+					Files.createDirectories(outputFile.getParent());
+					try (OutputStream out = Files.newOutputStream(outputFile)) {
+						Files.copy(tarInput, outputFile, StandardCopyOption.REPLACE_EXISTING);
+					}
+					applyUnixPermissions(entry, outputFile);
+				}
+			}
+		}
+	}
+	
+	private static void applyUnixPermissions(TarArchiveEntry entry, java.nio.file.Path path) throws IOException {
+	    int mode = entry.getMode();
+	    Set<PosixFilePermission> perms = EnumSet.noneOf(PosixFilePermission.class);
+
+	    // Owner
+	    if ((mode & 0400) != 0) perms.add(PosixFilePermission.OWNER_READ);
+	    if ((mode & 0200) != 0) perms.add(PosixFilePermission.OWNER_WRITE);
+	    if ((mode & 0100) != 0) perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+	    // Group
+	    if ((mode & 0040) != 0) perms.add(PosixFilePermission.GROUP_READ);
+	    if ((mode & 0020) != 0) perms.add(PosixFilePermission.GROUP_WRITE);
+	    if ((mode & 0010) != 0) perms.add(PosixFilePermission.GROUP_EXECUTE);
+
+	    // Others
+	    if ((mode & 0004) != 0) perms.add(PosixFilePermission.OTHERS_READ);
+	    if ((mode & 0002) != 0) perms.add(PosixFilePermission.OTHERS_WRITE);
+	    if ((mode & 0001) != 0) perms.add(PosixFilePermission.OTHERS_EXECUTE);
+
+	    try {
+	        Files.setPosixFilePermissions(path, perms);
+	    } catch (UnsupportedOperationException e) {
+	        // File system doesn’t support POSIX — silently skip
+	    }
 	}
 
 	private long calculateRate(long start, long end, long length) {

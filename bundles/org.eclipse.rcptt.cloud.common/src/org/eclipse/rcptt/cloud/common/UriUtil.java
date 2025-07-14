@@ -12,7 +12,9 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.common;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,12 +39,11 @@ public class UriUtil {
 	 * @return
 	 */
 	public static String[] nameAndExt(String fullName) {
-		int lastDotIndex = fullName.lastIndexOf(".");
-		if (lastDotIndex == -1) {
-			return new String[] { fullName, "" };
-		}
-		return new String[] { fullName.substring(0, lastDotIndex),
-				fullName.substring(lastDotIndex) };
+		String extension = getFilenameExtension(fullName);
+		int lastDotIndex = fullName.length() - extension.length();
+		String baseName = fullName.substring(0, lastDotIndex);
+		assert fullName.equals(baseName + extension) : fullName;
+		return new String[] { baseName, extension };
 	}
 
 	private static String md5(String baseName) {
@@ -105,6 +106,21 @@ public class UriUtil {
 		}
 
 		return result.toString();
+	}
+
+	private static final Collection<String> INCOMPLETE_EXTENSIONS = List.of(".gz");
+
+	public static String getFilenameExtension(String name) {
+		for (String known: INCOMPLETE_EXTENSIONS) {
+			if (name.endsWith(known)) {
+				return getFilenameExtension(name.substring(0, name.length() - known.length())) + known;
+			}
+		}
+		int index = name.lastIndexOf('.');
+		if (index < 0) {
+			return "";
+		}
+		return name.substring(index);
 	}
 
 }

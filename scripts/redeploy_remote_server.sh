@@ -12,5 +12,4 @@ local_sum=`shasum -b -a 512  "$DIST" | cut -d ' ' -f 1`
 if [[ $remote_sum != $local_sum ]] ; then
 	scp "$DIST" "$HOST":/tmp
 fi  
-ssh "$HOST" "/tmp/redeploy_server.sh" &
-sleep 10000
+ssh "$HOST" "/tmp/redeploy_server.sh"

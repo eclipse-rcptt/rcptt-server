@@ -19,10 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -51,12 +47,13 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.rcptt.cloud.common.UriUtil;
+import org.eclipse.rcptt.cloud.util.HttpEclClient;
+import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 import org.eclipse.rcptt.ecl.core.Command;
 import org.eclipse.rcptt.util.FileUtil;
 
 import com.google.common.base.Preconditions;
-import org.eclipse.rcptt.cloud.util.HttpEclClient;
-import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 
 public class Q7ServerApi {
 
@@ -143,7 +140,7 @@ public class Q7ServerApi {
 				DEFAULT_TIMEOUT);
 
 		Path path = new Path(artifactName);
-		String fileName = FileUtil.getID(path.lastSegment()) + "." + path.getFileExtension();
+		String fileName = FileUtil.getID(path.lastSegment()) + UriUtil.getFilenameExtension(path.lastSegment());
 
 		try {
 			HttpPost post = makePost("upload");

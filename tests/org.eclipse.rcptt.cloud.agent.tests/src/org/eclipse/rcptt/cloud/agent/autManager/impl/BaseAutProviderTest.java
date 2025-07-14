@@ -12,16 +12,22 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent.autManager.impl;
 
+import static java.nio.file.Files.exists;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.Random;
@@ -67,6 +73,26 @@ public class BaseAutProviderTest {
 		}
 	}
 	
+	@Test
+	public void untar() throws IOException, CoreException {
+		try (BaseAutProvider subject = new Subject()) {
+			AutInfo autInfo = createAutInfo();
+			File file;
+			try (InputStream is = getClass().getResourceAsStream("/resources/example.tar.gz")) {
+				file = temporaryFolder.newFile("example-linux.gtk.x86_64.tar.gz");
+				Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			}
+			try (OutputStream os = Files.newOutputStream(file.toPath(), StandardOpenOption.APPEND)) {
+				os.write(new byte[1024*1024]);
+			}
+			autInfo.setUri(stripClassifier(file.toURI().toASCIIString()));
+			File result = subject.download(autInfo, "linux.gtk.x86_64", new NullProgressMonitor());
+			
+			assertTrue(result.toPath().endsWith("test.txt"));
+			assertTrue(exists(result.toPath()));
+		}
+	}
+	
 	private Path archiveResource(String resource, String name) throws IOException {
 		Bundle bundle = FrameworkUtil.getBundle(getClass());
 		Path path;
@@ -101,7 +127,7 @@ public class BaseAutProviderTest {
 	}
 	
 	private static String stripClassifier(String input) {
-		return input.replaceAll("-win32.win32.x86_64.zip", ".zip");
+		return input.replaceAll("-win32.win32.x86_64.zip", ".zip").replaceAll("-linux.gtk.x86_64.tar.gz", ".tar.gz");
 	}
 	
 	private AutInfo createAutInfo() {
