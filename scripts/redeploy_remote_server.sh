@@ -13,3 +13,4 @@ if [[ $remote_sum != $local_sum ]] ; then
 	scp "$DIST" "$HOST":/tmp
 fi  
 ssh "$HOST" "/tmp/redeploy_server.sh" &
+sleep 10000
