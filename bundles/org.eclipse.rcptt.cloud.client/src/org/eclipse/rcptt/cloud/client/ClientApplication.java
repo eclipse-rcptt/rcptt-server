@@ -862,8 +862,6 @@ public class ClientApplication extends CommandLineApplication {
 			}
 		} catch (ConnectException e) {
 			throw new InvalidCommandLineArgException("Can't connect to server " + serverUri, "-server");
-		} catch (Exception e) {
-			logInfo("Failed to begin test suite execution: " + e.getMessage());
 		}
 		return false;
 	}
