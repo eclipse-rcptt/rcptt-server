@@ -42,7 +42,7 @@ public class ISMCore {
 		initialize();
 	}
 
-	private void initialize() {
+	private synchronized void initialize() {
 		if (agentStore == null || suiteStore == null) {
 			agentStore = new ISMHandleStore<AgentStats>(new File(
 					this.statsRoot, "agents"),

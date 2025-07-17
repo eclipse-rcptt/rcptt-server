@@ -15,6 +15,7 @@ package org.eclipse.rcptt.cloud.server.app.internal.http.handlers;
 import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils.getStatsCopy;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -22,7 +23,6 @@ import java.util.List;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.stats.SuiteHandler;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
@@ -34,8 +34,8 @@ public class TestSuitesHandler extends Q7AbstractHandler {
 
 	@Override
 	public boolean handle(Request request, Response response, Callback callback) throws IOException {
-		List<ISMHandle<SuiteStats>> handles = ISMCore.getInstance()
-				.getSuiteStore().getHandles();
+		List<ISMHandle<SuiteStats>> handles = new ArrayList<>(ISMCore.getInstance()
+				.getSuiteStore().getHandles());
 
 		String responseContent = Q7HttpUtils
 				.getResource("/webroot/templates/testsuites.xml");

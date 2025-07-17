@@ -27,11 +27,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,14 +68,12 @@ import org.eclipse.rcptt.cloud.model.TestOptions;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
-import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.EclServerImplPlugin;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor.Listener;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
-import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentStats;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentTest;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentTestStatus;
@@ -188,6 +185,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 
 	private final Instant stop;
 
+	@SuppressWarnings("resource")
 	public ExecutionProfiler(String suiteID, AutInfo[] auts, TestOptions options, EMap<String, String> metadata) throws CoreException, FileNotFoundException {
 		try {
 			ExecutionRegistry executions = ExecutionRegistry.getInstance();
@@ -344,11 +342,9 @@ public class ExecutionProfiler implements IExecutionProfiler {
 	}
 
 	private void storePropertiesTo(File metadataName, Properties props) {
-		BufferedOutputStream out;
-		try {
-			out = new BufferedOutputStream(new FileOutputStream(metadataName));
+		
+		try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(metadataName))) {
 			props.store(out, "");
-			out.close();
 		} catch (FileNotFoundException e) {
 			EclServerImplPlugin.err(e.getMessage(), e);
 		} catch (IOException e) {
@@ -379,7 +375,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		});
 
 		handle.updateStatistics(execStat -> {
-			execStat.setStartTime(System.currentTimeMillis());
 			execStat.setState(RUNNING);
 			execStat.setTotalCount(totalTestCount);
 		});
@@ -948,10 +943,9 @@ public class ExecutionProfiler implements IExecutionProfiler {
 
 	private void writeFile(File file, String content) {
 		try {
-			Files.write(content, file, Charset.forName("utf-8"));
+			Files.asCharSink(file, StandardCharsets.UTF_8).write(content);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 

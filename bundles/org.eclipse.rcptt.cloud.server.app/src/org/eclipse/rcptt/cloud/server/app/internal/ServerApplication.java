@@ -14,9 +14,9 @@ package org.eclipse.rcptt.cloud.server.app.internal;
 
 import java.io.File;
 
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.rcptt.util.NetworkUtils;
-
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.EclServerApplication;
@@ -25,8 +25,12 @@ import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.RegisterAgentService;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
+import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
+import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+import org.eclipse.rcptt.util.NetworkUtils;
 
 public class ServerApplication extends EclServerApplication {
+	private static final ILog LOG = Platform.getLog(ServerApplication.class);
 
 	@Arg
 	public int httpPort = 5007;
@@ -39,7 +43,7 @@ public class ServerApplication extends EclServerApplication {
 			.append("artifacts").toOSString();
 
 	@Arg(isRequired = false, description = "Keep only N sessions")
-	public int keepSesssions = 10000; // Keep no more then 100 sessions with
+	public int keepSessions = 10000; // Keep no more then 100 sessions with
 	// metadata.
 	@Arg(isRequired = false, description = "Keep AUT for N sessions")
 	public int keepAUTArtifacts = 5;
@@ -66,9 +70,17 @@ public class ServerApplication extends EclServerApplication {
 		}
 
 		ISMCore.initialize(new File(artifactsStore));
-		ExecutionRegistry.getInstance().initialize(keepSesssions,
-				keepAUTArtifacts);
-
+		ISMHandleStore<SuiteStats> suiteStore = ISMCore.getInstance().getSuiteStore();
+		ExecutionRegistry executions = ExecutionRegistry.getInstance(); 
+		MultiStatus status = new MultiStatus(getClass(), 0, "Previous run has been aborted");
+		suiteStore.getHandles().stream().map(s -> executions.onStart(s)).forEach(status::add);
+		if (!status.isOK()) {
+			LOG.log(status);
+		}
+		executions.addNewSuiteHook(() -> {
+			executions.removeOldExecutions(suiteStore.getHandles(), keepAUTArtifacts, keepSessions);
+		});
+		
 		RegisterAgentService.setServerInfo(agentServerName, agentHttpPort);
 
 		server.start(httpPort, sitesDir);

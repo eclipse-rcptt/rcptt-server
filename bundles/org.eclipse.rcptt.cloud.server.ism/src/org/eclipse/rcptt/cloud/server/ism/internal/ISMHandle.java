@@ -12,13 +12,13 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.ism.internal;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
@@ -27,8 +27,6 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.rcptt.util.FileUtil;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -97,6 +95,7 @@ public class ISMHandle<T extends EObject> {
 
 	private ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
+	// BUG: after apply is invoked, exists() returns true for deleted handles
 	public <R> R apply(Function<T, R> handle) {
 		rwLock.readLock().lock();
 		try {
@@ -119,15 +118,18 @@ public class ISMHandle<T extends EObject> {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
-			if (used != null) {
-				save(used);
+			try {
+				if (used != null) {
+					save(used);
+				}
+			} finally {
+				rwLock.writeLock().unlock();
 			}
-			rwLock.writeLock().unlock();
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	protected synchronized Node<T> use() {
+	protected Node<T> use() {
 		Node<T> node = null;
 		if (weakNode != null) {
 			node = weakNode.get();
@@ -157,12 +159,11 @@ public class ISMHandle<T extends EObject> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private synchronized void loadFromFile(Node<T> node) {
+	private void loadFromFile(Node<T> node) {
 		try {
 			Emf2Json emfjson = new Emf2Json(eclass.getEPackage());
 
-			byte[] bytes = FileUtil.getStreamContent(new BufferedInputStream(
-					new FileInputStream(getContentFile())));
+			byte[] bytes = Files.toByteArray(getContentFile());
 
 			JsonElement element = new JsonParser().parse(new String(bytes));
 			if (element.isJsonObject()) {
@@ -180,11 +181,11 @@ public class ISMHandle<T extends EObject> {
 			node.resource.setModified(false);
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
-	private synchronized boolean hasChanges(Node<T> node) {
+	private boolean hasChanges(Node<T> node) {
 		if (node == null || node.object == null) {
 			return false;
 		}
@@ -194,7 +195,7 @@ public class ISMHandle<T extends EObject> {
 		return node.resource.isModified();
 	}
 
-	private synchronized void save(Node<T> node) {
+	private void save(Node<T> node) {
 		weakNode = new WeakReference<ISMHandle.Node<T>>(node);
 		if (hasChanges(node)) {
 			Emf2Json emfjson = new Emf2Json(node.object.eClass()
@@ -206,7 +207,7 @@ public class ISMHandle<T extends EObject> {
 			File contentFile = getContentFile();
 			contentFile.getParentFile().mkdirs();
 			try {
-				Files.write(content, contentFile, Charsets.UTF_8);
+				Files.asCharSink(contentFile, StandardCharsets.UTF_8).write(content);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -217,18 +218,23 @@ public class ISMHandle<T extends EObject> {
 		return file.getName();
 	}
 
-	public synchronized boolean exists() {
-		Node<T> node = null;
-		if (weakNode != null) {
-			node = weakNode.get();
+	public boolean exists() {
+		rwLock.readLock().lock();
+		try {
+			Node<T> node = null;
+			if (weakNode != null) {
+				node = weakNode.get();
+			}
+			if (node != null && node.object != null) {
+				return true;
+			}
+			if (file.exists()) {
+				return true;
+			}
+			return false;
+		} finally {
+			rwLock.readLock().unlock();
 		}
-		if (node != null && node.object != null) {
-			return true;
-		}
-		if (file.exists()) {
-			return true;
-		}
-		return false;
 	}
 
 	public File getFileRoot() {
@@ -236,7 +242,13 @@ public class ISMHandle<T extends EObject> {
 	}
 
 	public void remove() {
-		FileUtil.deleteFiles(file.listFiles());
-		file.delete();
+		rwLock.writeLock().lock();
+		try {
+			FileUtil.deleteFiles(file.listFiles());
+			file.delete();
+			weakNode = null;
+		} finally {
+			rwLock.writeLock().unlock();
+		}
 	}
 }

@@ -17,15 +17,14 @@ import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import org.eclipse.jetty.server.Handler;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
@@ -77,10 +76,9 @@ public class SuiteHandler extends Handler.Abstract {
 				buffer.append("</tr>");
 				ISMHandleStore<Execution> execsStore = ExecutionRegistry
 						.getInstance().getExecutions(handle);
-				List<ISMHandle<Execution>> executions = ExecutionRegistry
-						.getFilteredHandles(execsStore.getHandles(), null);
-				Collections.reverse(executions);
-				for (ISMHandle<Execution> execution : executions) {
+				
+				List<ISMHandle<Execution>> executions = execsStore.getHandles().stream().sorted(Comparator.comparing(ISMHandle::getFileName)).toList();
+				for (ISMHandle<Execution> execution : executions.reversed()) {
 					Execution exec = execution.apply(getExecutionCopy);
 					String detailsURI = ExecutionHandler.URI + "?" + suiteID
 							+ "&" + execution.getFileName();

@@ -13,21 +13,19 @@
 package org.eclipse.rcptt.cloud.server.ism.internal;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 
-import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
-
 public class ISMHandleStore<T extends EObject> {
-	private File base;
-	private Map<String, ISMHandle<T>> handles = new LinkedHashMap<String, ISMHandle<T>>();
-	private EClass eclass;
+	private final File base;
+	private final Map<String, ISMHandle<T>> handles = new LinkedHashMap<String, ISMHandle<T>>();
+	private final EClass eclass;
 
 	public ISMHandleStore(File baseDir, EClass eclass) {
 		this.base = baseDir;
@@ -53,24 +51,16 @@ public class ISMHandleStore<T extends EObject> {
 	}
 
 	public synchronized ISMHandle<T> getHandle(String name) {
-		if (handles.containsKey(name)) {
-			return handles.get(name);
-		}
-		File newHandleFile = new File(this.base, name);
-		ISMHandle<T> newHandle = new ISMHandle<T>(newHandleFile, eclass);
-		handles.put(name, newHandle);
-		return newHandle;
+		return handles.computeIfAbsent(name, name2 -> 
+			new ISMHandle<T>(new File(this.base, name2), eclass)
+		);
 	}
 
 	public synchronized List<ISMHandle<T>> getHandles() {
-		return new ArrayList<ISMHandle<T>>(handles.values());
+		return handles.values().stream().filter(ISMHandle::exists).collect(Collectors.toUnmodifiableList());
 	}
 
 	public synchronized boolean containsHandle(String id) {
 		return handles.containsKey(id);
-	}
-
-	public synchronized void remove(ISMHandle<Execution> ismHandle) {
-		handles.remove(ismHandle);
 	}
 }

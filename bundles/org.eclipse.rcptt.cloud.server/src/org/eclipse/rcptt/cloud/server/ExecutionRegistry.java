@@ -12,21 +12,25 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.function.Predicate.not;
+
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.common.util.EList;
-import org.eclipse.rcptt.util.FileUtil;
-
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
@@ -34,14 +38,18 @@ import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState;
 import org.eclipse.rcptt.cloud.server.ism.stats.StatsPackage;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+import org.eclipse.rcptt.util.FileUtil;
 
 public class ExecutionRegistry {
 	private static ExecutionRegistry instance = null;
-	private Map<String, ExecutionEntry> runningSuites = new HashMap<String, ExecutionEntry>();
-	private int keepSessions;
-	private int keepAUTArtifacts;
+	private final Map<String, ExecutionEntry> runningSuites = Collections.synchronizedMap(new HashMap<>());
 
-	private Map<ISMHandle<SuiteStats>, ISMHandleStore<Execution>> executions = new HashMap<ISMHandle<SuiteStats>, ISMHandleStore<Execution>>();
+	private final Map<ISMHandle<SuiteStats>, ISMHandleStore<Execution>> executions = Collections.synchronizedMap(new HashMap<>());
+	private final ListenerList<Runnable> hooks = new ListenerList<>(); 
+	
+	public void addNewSuiteHook(Runnable runnable) {
+		hooks.add(runnable);
+	}
 
 	public static synchronized ExecutionRegistry getInstance() {
 		if (instance == null) {
@@ -49,51 +57,38 @@ public class ExecutionRegistry {
 		}
 		return instance;
 	}
-
-	public synchronized ExecutionEntry beginNewSuite(String suiteId,
-			String clientId, String clientSecret, String organization,
-			String licenseUrl) throws CoreException {
-
-		Preconditions.checkNotNull(suiteId);
-		ISMHandleStore<SuiteStats> store = ISMCore.getInstance()
-				.getSuiteStore();
-		ISMHandle<SuiteStats> suite = store.getHandle(suiteId);
+	
+	public synchronized ExecutionEntry beginNewSuite(ISMHandle<SuiteStats> suite) throws CoreException {
+		hooks.forEach(Runnable::run);
 		final ISMHandleStore<Execution> executionStore = getExecutions(suite);
-
 		ISMHandle<Execution> handle = suite
-				.commit(new Function<SuiteStats, ISMHandle<Execution>>() {
-					@Override
-					public ISMHandle<Execution> apply(
-							final SuiteStats suiteStats) {
-						int last = suiteStats.getLastSuiteID();
-						String newID = Integer.toString(last + 1);
-						suiteStats.setLastSuiteID(last + 1);
+				.commit(suiteStats -> {
+					int last = suiteStats.getLastSuiteID();
+					String newID = Integer.toString(last + 1);
+					suiteStats.setLastSuiteID(last + 1);
 
-						ISMHandle<Execution> execHandle = executionStore
-								.getHandle(getID(newID, 7));
-						execHandle.commit(new Function<Execution, Void>() {
-							@Override
-							public Void apply(Execution input) {
-								if (input.getSuiteId() == null) {
-									input.setSuiteId(suiteStats.getSuiteName());
-								}
-								input.setState(ExecutionState.PENDING);
-								input.setId(execHandle.getFileName());
-								return null;
-							}
-						});
-						return execHandle;
-					}
+					ISMHandle<Execution> execHandle = executionStore
+							.getHandle(getID(newID, 7));
+					execHandle.commit(input -> {
+						if (input.getSuiteId() == null) {
+							input.setSuiteId(suiteStats.getSuiteName());
+						}
+						input.setStartTime(System.currentTimeMillis());
+						input.setState(ExecutionState.PENDING);
+						input.setId(execHandle.getFileName());
+						return null;
+					});
+					return execHandle;
 				});
 		ServerPlugin.getDefault().getExecListener().created(handle);
-		clearOutOldHandles(executionStore, handle);
 
-		ExecutionEntry artifactSuite = ExecutionEntry.create(suiteId, handle);
+		ExecutionEntry artifactSuite = ExecutionEntry.create(suite.getFileName(), handle);
 
 
 		// Initialize test suite directory
 
-		runningSuites.put(artifactSuite.getSuiteId(), artifactSuite);
+		Object oldValue = runningSuites.put(artifactSuite.getSuiteId(), artifactSuite);
+		assert oldValue == null : "Suite " + artifactSuite.getSuiteId() + " was scheduled to run twice"; 
 		return artifactSuite;
 	}
 
@@ -107,48 +102,13 @@ public class ExecutionRegistry {
 	}
 
 	public ISMHandleStore<Execution> getExecutions(ISMHandle<SuiteStats> suite) {
-		ISMHandleStore<Execution> childs = executions.get(suite);
-		if (childs != null) {
-			return childs;
-		}
-
-		childs = new ISMHandleStore<Execution>(suite.getFileRoot(),
-				StatsPackage.eINSTANCE.getExecution());
-		executions.put(suite, childs);
-		return childs;
+		return executions.computeIfAbsent(suite, s ->
+			new ISMHandleStore<Execution>(s.getFileRoot(), StatsPackage.eINSTANCE.getExecution())
+		);
 	}
 
-	private void clearOutOldHandles(ISMHandleStore<Execution> executionStore,
-			ISMHandle<Execution> handle) {
-		List<ISMHandle<Execution>> handles = executionStore.getHandles();
-
-		List<ISMHandle<Execution>> filtered = getFilteredHandles(handles,
-				handle);
-		if (filtered.size() > keepSessions) {
-			// keep only specified amount of builds
-			int toRemove = filtered.size() - keepSessions + 1;
-			for (int i = 0; i < toRemove; i++) {
-				ISMHandle<Execution> ismHandle = filtered.remove(0);
-				executionStore.remove(ismHandle);
-				ismHandle.remove();
-			}
-
-		}
-		if (filtered.size() > keepAUTArtifacts) {
-			// Left artifacts only for specified builds
-			int toProceed = 1 + filtered.size() - keepAUTArtifacts;
-			for (int i = 0; i < toProceed; i++) {
-				ISMHandle<Execution> ismHandle = filtered.get(i);
-				clearAUTArtifacts(ismHandle);
-			}
-		}
-
-	}
-
-	private void clearAUTArtifacts(final ISMHandle<Execution> ismHandle) {
-		ismHandle.commit(new Function<Execution, Void>() {
-			@Override
-			public Void apply(Execution exec) {
+	private static void clearAUTArtifacts(final ISMHandle<Execution> ismHandle) {
+		ismHandle.commit(exec -> {
 				EList<String> list = exec.getAutArtifacts();
 				File root = ismHandle.getFileRoot();
 				for (String file : list) {
@@ -160,63 +120,51 @@ public class ExecutionRegistry {
 				exec.getAutArtifacts().clear();
 				return null;
 			}
-		});
+		);
 	}
 
-	public static List<ISMHandle<Execution>> getFilteredHandles(
-			List<ISMHandle<Execution>> handles, ISMHandle<Execution> handle) {
-		List<ISMHandle<Execution>> result = new ArrayList<ISMHandle<Execution>>();
-		result.addAll(handles);
-		if (handle != null) {
-			result.remove(handle);
-		}
-
-		Collections.sort(result, new Comparator<ISMHandle<Execution>>() {
-
-			@Override
-			public int compare(ISMHandle<Execution> o1, ISMHandle<Execution> o2) {
-				long s1 = 0, s2 = 0;
-				s1 = getTimestamp(o1);
-				s2 = getTimestamp(o2);
-
-				return Long.valueOf(s1).compareTo(s2);
-			}
-
-			private long getTimestamp(ISMHandle<Execution> o1) {
-				try {
-					String fileName = o1.getFileName();
-					for (int i = 0; i < fileName.length(); i++) {
-						if (fileName.charAt(i) == '0') {
-							continue;
-						} else {
-							String idValue = fileName.substring(i);
-							return Long.parseLong(idValue);
-						}
-					}
-				} catch (NumberFormatException e) {
+	public void removeOldExecutions(Collection<ISMHandle<SuiteStats>> suites, int maxArtifacts, int maxExecutions) {
+		ExecutionRegistry executions = ExecutionRegistry.getInstance();
+		List<ExecutionStart> allExecutions = suites.stream().<ExecutionStart>flatMap(s -> executions.getExecutions(s).getHandles().stream().map(e -> ExecutionStart.create(e, s)) ).sorted().collect(Collectors.toCollection(ArrayList::new));
+		int deleteCount = allExecutions.size() - maxExecutions; 
+		if (deleteCount > 0) {
+			List<ExecutionStart> toDelete = allExecutions.subList(0, deleteCount);
+			for (ExecutionStart i: toDelete) {
+				if (i.done()) {
+					i.execution().remove();
 				}
-				return 0;
 			}
-		});
-
-		return result;
+			toDelete.clear();
+		}
+		
+		allExecutions.removeIf(not(ExecutionStart::hasAUT)); // O(N^2). Fix if observed slow.
+		deleteCount = allExecutions.size() - maxArtifacts;
+		if (deleteCount > 0) {
+			List<ExecutionStart> toDelete = allExecutions.subList(0, deleteCount);
+			for (ExecutionStart i: toDelete) {
+				if (i.done()) {
+					clearAUTArtifacts(i.execution());
+				}
+			}
+		}
 	}
-
+	
 	public synchronized ExecutionEntry getSuiteHandle(String suiteId) {
 		return runningSuites.get(suiteId);
 	}
 
 	public synchronized void removeSuiteHandle(String suiteId) {
-		runningSuites.remove(suiteId);
+		ExecutionEntry execution = runningSuites.remove(suiteId);
+		execution.updateStatistics(e -> {
+			if (!ExecutionIndex.isDone(e)) {
+				e.setState(ExecutionState.CANCELED);
+				e.setEndTime(currentTimeMillis());
+			}
+		});
 	}
 
 	public File getRoot() {
 		return ISMCore.getInstance().getSuiteStore().getBase();
-	}
-
-	public void initialize(int keepSessions, int keepAUTArtifacts) {
-		this.keepSessions = keepSessions;
-		this.keepAUTArtifacts = keepAUTArtifacts;
 	}
 
 	public File getTempDir() {
@@ -228,4 +176,37 @@ public class ExecutionRegistry {
 		return getRoot().toURI().relativize(file.toURI());
 	}
 
+	public IStatus onStart(ISMHandle<SuiteStats> s) {
+		MultiStatus status = new MultiStatus(getClass(), 0, "Some executions in suite " + s.getFileName() +" from a previous session were not completed");
+		getExecutions(s).getHandles().forEach(executionHandle -> {
+			executionHandle.commit(e -> {
+				if (!ExecutionIndex.isDone(e)) {
+					var state = e.getState();
+					e.setState(ExecutionState.CANCELED);
+					e.setEndTime(currentTimeMillis());
+					status.add(Status.warning(executionHandle.getFileName() + " - invalid state: " + state));
+				}
+				if (e.getStartTime() == 0) {
+					e.setStartTime(currentTimeMillis());
+					status.add(Status.warning(executionHandle.getFileName() + " - startTime = 0"));
+				}
+				return null;
+			});
+		});
+		return status;
+	}
+	
+	private record ExecutionStart(long start, boolean hasAUT, boolean done, ISMHandle<Execution> execution, ISMHandle<SuiteStats> suite) implements Comparable<ExecutionStart>{
+		static ExecutionStart create (ISMHandle<Execution> execution,ISMHandle<SuiteStats> suite) {
+			return execution.apply(e -> {
+				return new ExecutionStart(e.getStartTime(), !e.getAutArtifacts().isEmpty(), ExecutionIndex.isDone(e), execution, suite);
+			});
+		}
+
+		@Override
+		public int compareTo(ExecutionStart o) {
+			return Long.compare(start(), o.start());
+		}
+	}
+	
 }

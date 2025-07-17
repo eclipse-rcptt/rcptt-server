@@ -3,7 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Impl
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.common.ecl.impl;singleton:=true
 Bundle-Version: 2.6.0.qualifier
-Bundle-Activator: org.eclipse.rcptt.cloud.common.ecl.impl.internal.EclCommonImplPlugin
 Bundle-Vendor: Eclipse RCP Testing Tool Project
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.rcptt.cloud.common.ecl.model,
@@ -11,8 +10,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.rcptt.cloud.common,
  org.eclipse.rcptt.cloud.server,
  org.eclipse.rcptt.cloud.server.ism,
- org.eclipse.rcptt.ecl.core;bundle-version="[2.3.0, 3.0.0)",
- org.eclipse.rcptt.logging;bundle-version="[2.3.0, 3.0.0)"
+ org.eclipse.rcptt.ecl.core;bundle-version="[2.3.0,3.0.0)",
+ org.eclipse.rcptt.logging;bundle-version="[2.3.0,3.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: org.eclipse.rcptt.cloud.common.ecl.impl
