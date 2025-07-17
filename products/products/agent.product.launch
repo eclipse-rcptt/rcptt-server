@@ -164,6 +164,7 @@
         <setEntry value="org.eclipse.rcptt.cloud.util@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
+    <stringAttribute key="timestamp" value="1752741705373"/>
     <booleanAttribute key="useCustomFeatures" value="true"/>
     <booleanAttribute key="useDefaultConfig" value="true"/>
     <booleanAttribute key="useDefaultConfigArea" value="true"/>
