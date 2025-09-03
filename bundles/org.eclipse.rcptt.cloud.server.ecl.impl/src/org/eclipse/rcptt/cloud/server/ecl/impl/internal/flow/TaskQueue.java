@@ -29,8 +29,10 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
@@ -60,6 +62,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Sets;
 
 public class TaskQueue {
+	private static final ILog LOG = Platform.getLog(TaskQueue.class);
 	public interface ITaskListener {
 		void timeoutHappen(AgentInfo agent);
 	}
@@ -584,6 +587,8 @@ public class TaskQueue {
 	}
 
 	public void reportProblem(AgentInfo agent, IStatus iStatus) {
+		MultiStatus multistatus = new MultiStatus(getClass(), 0, new IStatus[] {iStatus}, "Error in agent " + (agent == null ? null : agent.getUri()), null);
+		LOG.log(multistatus); // This is a workaround for the missing stacktrace during mass task cancellations, it is hard to find the problem in suites, because it is only logged for running tasks
 		if (agent != null) {
 			problemLog.log("error in agent: " + agent.getUri() + " " + iStatus,
 					null);
