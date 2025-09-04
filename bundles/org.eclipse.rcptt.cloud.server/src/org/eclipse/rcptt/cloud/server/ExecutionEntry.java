@@ -79,7 +79,7 @@ public class ExecutionEntry {
 	public static final String EXECUTION_MONITOR = "execution";
 	public static final String ERROR_MONITOR = "errors";
 	private final TestSuiteDirectory suiteDir;
-	private Map<ExecutionEntry.MonitorMetaInfo, IQ7Monitor> monitors = new HashMap<ExecutionEntry.MonitorMetaInfo, IQ7Monitor>();
+	private Map<ExecutionEntry.MonitorMetaInfo, IQ7Monitor> monitors = Collections.synchronizedMap(new HashMap<>());
 	private final String suiteId;
 	public final Instant created = Instant.now();
 	private final ISMHandle<Execution> handle;
@@ -193,38 +193,13 @@ public class ExecutionEntry {
 	public IQ7Monitor getMonitor(String monitorName) {
 		ExecutionEntry.MonitorMetaInfo mon = new MonitorMetaInfo(monitorName
 				+ "_", ".log");
-		IQ7Monitor monitor = monitors.get(mon);
-		if (monitor != null) {
-			return monitor;
-		}
-		monitor = new FileQ7Monitor(new File(handle.getFileRoot(), monitorName));
-		monitors.put(mon, monitor);
-
+		IQ7Monitor monitor = monitors.computeIfAbsent(mon, key -> {
+			return new FileQ7Monitor(new File(handle.getFileRoot(), monitorName));
+		});
 		return monitor;
 	}
 
 	public void applyMonitorFiles() {
-		handle.commit(new Function<Execution, Void>() {
-			@Override
-            public Void apply(Execution input) {
-				File file = handle.getFileRoot();
-				File[] files = file.listFiles();
-				for (File f : files) {
-					for (ExecutionEntry.MonitorMetaInfo info : monitors
-							.keySet()) {
-						String name = f.getName();
-						if (name.startsWith(info.prefix)
-								&& (name.endsWith(info.postfix) || name
-										.endsWith(info.postfix + ".lck"))) {
-							if (!input.getAutArtifacts().contains(name)) {
-								input.getAutArtifacts().add(name);
-							}
-						}
-					}
-				}
-				return null;
-			}
-		});
 
 		for (IQ7Monitor monitor : monitors.values()) {
 			monitor.close();
