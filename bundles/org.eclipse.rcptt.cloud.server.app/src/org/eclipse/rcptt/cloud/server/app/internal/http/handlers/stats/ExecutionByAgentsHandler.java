@@ -41,6 +41,7 @@ import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.app.ReportHelper;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.Q7AbstractHandler;
@@ -147,8 +148,7 @@ public class ExecutionByAgentsHandler extends Q7AbstractHandler {
 						- exec.getStartTime()))));
 
 		buffer.append(tr(td("First report time")
-				+ td(ReportUtils.formatTime(exec
-						.getFirstReportTime() - exec.getStartTime()))));
+				+ td(ReportUtils.formatTime(ReportHelper.firstReportTime(exec)))));
 
 		buffer.append("</table></div></div>");
 

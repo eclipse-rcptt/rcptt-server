@@ -6,7 +6,7 @@
         <setEntry value="org.eclipse.equinox.common:3.20.0.v20250129-1348:default:true:2:true"/>
         <setEntry value="org.eclipse.equinox.event:1.7.200.v20250129-1349:default:true:2:true"/>
         <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.400.v20250129-0942:default:true:1:true"/>
-        <setEntry value="org.eclipse.rcptt.cloud.client:2.5.5.qualifier:default:true:2:true"/>
+        <setEntry value="org.eclipse.rcptt.cloud.client:2.6.0.qualifier:default:true:2:true"/>
     </setAttribute>
     <booleanAttribute key="append.args" value="true"/>
     <stringAttribute key="application" value="org.eclipse.rcptt.cloud.client.headless"/>

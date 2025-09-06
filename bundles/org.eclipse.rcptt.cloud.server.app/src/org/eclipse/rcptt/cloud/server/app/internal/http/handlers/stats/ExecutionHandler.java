@@ -30,6 +30,7 @@ import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 import org.eclipse.rcptt.sherlock.core.streams.SherlockReportIterator;
 
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.app.ReportHelper;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.Q7AbstractHandler;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
@@ -77,21 +78,13 @@ public class ExecutionHandler extends Q7AbstractHandler {
 					buffer.append("<tr class=\"th\">");
 					buffer.append("<th>Property</th>");
 					buffer.append("<th>Value</th></tr>");
-					buffer.append("<tr><td>Suite Name</td><td>"
-							+ stats.getSuiteName() + "</td></tr>");
-					buffer.append("<tr><td>Session</td><td>"
-							+ new Date(exec.getStartTime()) + "</td></tr>");
+					row(buffer, "Suite Name", stats.getSuiteName());
+					row(buffer, "Session", ""+new Date(exec.getStartTime()));
 
-					buffer.append("<tr><td>Total tests</td><td>"
-							+ exec.getTotalCount() + "</td></tr>");
-					buffer.append("<tr><td>Failed tests</td><td>"
-							+ exec.getFailedCount() + "</td></tr>");
-					buffer.append("<tr><td>Total time</td><td>"
-							+ ReportUtils.formatTime(exec.getEndTime()
-									- exec.getStartTime()) + "</td></tr>");
-					buffer.append("<tr><td>First report time</td><td>"
-							+ ReportUtils.formatTime(exec.getFirstReportTime()
-									- exec.getStartTime()) + "</td></tr>");
+					row(buffer, "Total tests", ""+exec.getTotalCount());
+					row(buffer, "Failed tests", ""+exec.getFailedCount());
+					row(buffer, "Total time", ReportUtils.formatTime(ReportHelper.getCloudTime(exec)));
+					row(buffer, "First report time", ReportUtils.formatTime(ReportHelper.firstReportTime(exec)));
 					buffer.append("</table></div></div>");
 					buffer.append("<a href=\"/artifacts/" + suiteID + "/" + id
 							+ "\">Produced artifacts</a><br>");
@@ -173,5 +166,11 @@ public class ExecutionHandler extends Q7AbstractHandler {
 		writeMenuAndContent(response, responseContent, buffer);
 		callback.succeeded();
 		return true;
+	}
+	
+	private void row(Appendable builder, String column1, String column2) throws IOException {
+		builder.append("<tr><td>").append(column1).append("</td><td>").
+				append(column2).append("</td></tr>");
+
 	}
 }

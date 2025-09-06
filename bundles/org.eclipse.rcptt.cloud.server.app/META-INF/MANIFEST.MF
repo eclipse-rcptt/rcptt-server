@@ -35,7 +35,8 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Eclipse-BundleShape: dir
-Export-Package: org.eclipse.rcptt.cloud.server.app.internal,
+Export-Package: org.eclipse.rcptt.cloud.server.app,
+ org.eclipse.rcptt.cloud.server.app.internal;x-friends:="org.eclipse.rcptt.cloud.server.tests",
  org.eclipse.rcptt.cloud.server.app.internal.http,
  org.eclipse.rcptt.cloud.server.app.internal.http.handlers,
  org.eclipse.rcptt.cloud.server.app.internal.http.handlers.stats

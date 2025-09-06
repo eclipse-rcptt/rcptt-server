@@ -26,6 +26,7 @@ import java.util.List;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.io.Content.Sink;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.rcptt.cloud.server.app.ReportHelper;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.Q7AbstractHandler;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentStats;
@@ -70,14 +71,7 @@ public class Utils {
 	}
 
 	public static long getCloudTime(Execution exec) {
-		long endTime = isDone(exec) ? exec.getEndTime() : System
-				.currentTimeMillis();
-
-		if ((isPending(exec) || isDone(exec)) && exec.getStartTime() == 0) {
-			return 0;
-		}
-
-		return endTime - exec.getStartTime();
+		return org.eclipse.rcptt.cloud.server.app.ReportHelper.getCloudTime(exec);
 	}
 
 	public static long getCpuTime(Execution exec) {
