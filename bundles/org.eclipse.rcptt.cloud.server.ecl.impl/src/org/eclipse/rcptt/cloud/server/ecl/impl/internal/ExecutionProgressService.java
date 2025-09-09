@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2011 Xored Software Inc and others
+ * Copyright (c) 2025 Xored Software Inc and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -52,21 +52,9 @@ public class ExecutionProgressService implements ICommandService {
 			return returnNoSuite(context);
 		}
 
-		boolean complete = profiler != null && profiler.isComplete();
-
 		if (profiler != null) {
-			if (complete || profiler.getReporter().getQueueLength() > 0) {
-				for (Envelope envelope : profiler.getReporter().getReports()) {
-					context.getOutput().write(envelope);
-				}
-
-				if (complete) {
-					context.getOutput().write(profiler.getExecutionState());
-				}
-
-				if (complete) {
-					profiler.markComplete();
-				}
+			for (Envelope envelope : profiler.pollReports()) {
+				context.getOutput().write(envelope);
 			}
 		}
 

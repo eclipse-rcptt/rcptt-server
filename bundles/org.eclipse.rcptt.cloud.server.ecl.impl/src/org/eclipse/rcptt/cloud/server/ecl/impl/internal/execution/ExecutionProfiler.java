@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2011 Xored Software Inc and others
+ * Copyright (c) 2025 Xored Software Inc and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -132,8 +132,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 	private final IQ7Monitor monitor;
 	private final IQ7Monitor errorMonitor;
 	private volatile AtomicReference<IStatus> result = new AtomicReference<IStatus>();
-	private volatile boolean completed = false;
-	private boolean clientComplete = false;
 	private final Collection<AutInfo> infos;
 
 	private List<TaskSuiteDescriptor> suites;
@@ -408,12 +406,17 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			synchronized (this) {
 				reportOut.close();
 				monitor.log("done with suite execution:" + suiteId, null);
-				if (clientComplete) {
-					monitor.log("Client is sucessfully recieved all reports", null);
-				} else {
-					monitor.log(
-							"Some reports are not recieved by client, because of client timeout.",
-							null);
+				try {
+					if (waitReporter()) {
+						monitor.log("Client has sucessfully recieved all reports", null);
+					} else {
+						monitor.log(
+								"Some reports are not recieved by client, because of client timeout.",
+								null);
+						
+					}
+				} catch (InterruptedException e) {
+					// We have to finish disk writes below, so we can not interrupt again
 				}
 				monitor.log("finish waiting for completion", null);
 				monitor.close();
@@ -433,10 +436,19 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			handle.applyMonitorFiles();
 		}
 	}
-
-	@Override
-	public synchronized boolean isComplete() {
-		return completed;
+	
+	private boolean waitReporter() throws InterruptedException {
+		long stop = currentTimeMillis() + (5 * 60 * 1000);				
+		// While is not terminated, wait for client to do a termination.
+		// No more 5 minutes to wait for client to get next report file.
+		BooleanSupplier isCancelled = () -> {
+			IStatus iStatus = ExecutionProfiler.this.result.get();
+			if (iStatus != null && iStatus.matches(IStatus.CANCEL)) {
+				return true;
+			}
+			return currentTimeMillis() > stop;
+		};
+		return reporter.close(isCancelled);
 	}
 
 	/*
@@ -537,7 +549,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		AgentInfo agent = descr.getAgent();
 		final String agentId = agent == null ? "server" : agent.getUri();
 		synchronized (this) {
-			if (reportOut != null && agentId != null && !completed) {
+			if (reportOut != null && agentId != null) {
 				report.getRoot().getProperties()
 						.put(IQ7ReportConstants.AGENTID,
 								BoxedValues.box(agent == null ? "" : agent.getUri()));
@@ -621,12 +633,12 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			executionsMonitor.log(envelope.getMessage(), null);
 		}
 
-		getReporter().sendReport(envelope, this);
+		reporter.sendReport(envelope);
 	}
 
 	@Override
-	public Reporter getReporter() {
-		return reporter;
+	public Envelope[] pollReports() {
+		return reporter.getReports();
 	}
 
 	/*
@@ -681,7 +693,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		envelope.setFrom("no_agent");
 		envelope.setArch("");
 		envelope.setMessage(msg);
-		reporter.sendReport(envelope, ExecutionProfiler.this);
+		reporter.sendReport(envelope);
 	}
 
 	@Override
@@ -836,7 +848,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 						tempRes = Status.error("Result is not set due to an internal server error");
 					}
 					finish(tempRes);
-					waitReporter();
 				} finally {
 					try {
 						cleanup();
@@ -845,22 +856,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 						throw new IllegalStateException(e);
 					}
 				}
-			}
-		}
-
-		private void waitReporter() {
-			// While is not terminated, wait for client to do a termination.
-			// No more 5 minutes to wait for client to get next report file.
-			try {
-				long stop = currentTimeMillis() + (5 * 60 * 1000);				
-				while (!clientComplete && reporter.getQueueLength() > 0
-						&& currentTimeMillis() < stop) {
-					IStatus result = ExecutionProfiler.this.result.get();
-					if (result != null && result.matches(IStatus.CANCEL))
-						return;
-					Thread.sleep(500);
-				}
-			} catch (InterruptedException e) {
 			}
 		}
 		
@@ -896,11 +891,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 	public void reportProblem(AgentInfo agent, String cause) {
 		errorMonitor.log("error from agent: " + agent.getUri() + " msg: "
 				+ cause, null);
-	}
-
-	@Override
-	public synchronized void markComplete() {
-		clientComplete = true;
 	}
 
 	private Map<String, Integer> autStartLogIndex = new HashMap<String, Integer>();
