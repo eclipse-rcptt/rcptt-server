@@ -334,7 +334,7 @@ public class ClientApplication extends CommandLineApplication {
 		int index = 0;
 		long time1 = System.currentTimeMillis();
 		int chunkBytes = multiplyExact(chunkSize, 1024 * 1024);
-		final ByteArrayOutputStream bout = new ByteArrayOutputStream(addExact(chunkBytes, 1024 * 1024));
+		ByteArrayOutputStream bout = new ByteArrayOutputStream(addExact(chunkBytes, 1024 * 1024));
 		ZipOutputStream zout = null;
 		int chunk = 0;
 		System.out.println("Preparing artifacts for sending...");
@@ -393,16 +393,15 @@ public class ClientApplication extends CommandLineApplication {
 			zout.close();
 		}
 
-		if (bout != null) {
-			waitFor(upload);
-			// Send last fragment
-			System.out.println("Sending last resources chunk (" + chunk
-					+ " artifacts).");
-			URI uploadedRoot = api.uploadDataAsFile(suiteID,
-					bout.toByteArray(), "artifacts" + ch + ".zip", false);
-			addTestResource(uploadedRoot);
-			zout = null;
-		}
+		waitFor(upload);
+		// Send last fragment
+		System.out.println("Sending last resources chunk (" + chunk
+				+ " artifacts).");
+		URI uploadedRoot = api.uploadDataAsFile(suiteID,
+				bout.toByteArray(), "artifacts" + ch + ".zip", false);
+		addTestResource(uploadedRoot);
+		zout = null;
+		bout = null;
 
 		long time2 = System.currentTimeMillis();
 		System.out.println("Complete uploading artifacts to server (time:"
