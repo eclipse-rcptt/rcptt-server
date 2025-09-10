@@ -416,7 +416,8 @@ public class ExecutionProfiler implements IExecutionProfiler {
 						
 					}
 				} catch (InterruptedException e) {
-					// We have to finish disk writes below, so we can not interrupt again
+					monitor.log(
+							"Some reports are not recieved by client, because execution is terminated");
 				}
 				monitor.log("finish waiting for completion", null);
 				monitor.close();
