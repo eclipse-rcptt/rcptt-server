@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.client;
 
+import static java.lang.Math.addExact;
+import static java.lang.Math.multiplyExact;
 import static java.lang.String.format;
 import static org.eclipse.core.runtime.Status.error;
 
@@ -331,7 +333,8 @@ public class ClientApplication extends CommandLineApplication {
 
 		int index = 0;
 		long time1 = System.currentTimeMillis();
-		ByteArrayOutputStream bout = null;
+		int chunkBytes = multiplyExact(chunkSize, 1024 * 1024);
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream(addExact(chunkBytes, 1024 * 1024));
 		ZipOutputStream zout = null;
 		int chunk = 0;
 		System.out.println("Preparing artifacts for sending...");
@@ -341,11 +344,7 @@ public class ClientApplication extends CommandLineApplication {
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
 		for (final Q7ArtifactRef ref : values) {
-			if (bout == null) {
-				bout = new ByteArrayOutputStream();
-				zout = new ZipOutputStream(bout);
-				// zout.setLevel(0);
-			}
+			zout = new ZipOutputStream(bout);
 			processed++;
 			Q7Artifact artifact = getArtifact(ref);
 			if (!artifact.getId().equals(ref.getId())) {
@@ -385,7 +384,7 @@ public class ClientApplication extends CommandLineApplication {
 					}
 				});
 				zout = null;
-				bout = null;
+				bout.reset();
 				chunk = 0;
 				ch++;
 			}
@@ -403,7 +402,6 @@ public class ClientApplication extends CommandLineApplication {
 					bout.toByteArray(), "artifacts" + ch + ".zip", false);
 			addTestResource(uploadedRoot);
 			zout = null;
-			bout = null;
 		}
 
 		long time2 = System.currentTimeMillis();
