@@ -1,0 +1,194 @@
+/********************************************************************************
+ * Copyright (c) 2025 Xored Software Inc and others
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Xored Software Inc - initial API and implementation
+ ********************************************************************************/
+package org.eclipse.rcptt.cloud.server.app.internal;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileTime;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeoutException;
+
+import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet.Entry;
+
+import com.google.common.base.Preconditions;
+import com.google.common.hash.HashCode;
+
+public class ArtfactCache
+		implements org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet.Repository {
+
+	private final Path root;
+	private final ValueLock locks = new ValueLock();
+	private static final int TIMEOUT_MS = 1 * 60 * 60 * 1000; // 1h
+	private final Set<String> validHashes = Collections.synchronizedSet(new HashSet<>());
+	private final String digestType = "SHA-256";
+	
+	public ArtfactCache(Path root) throws IOException {
+		super();
+		this.root = Objects.requireNonNull(root);
+		Files.createDirectories(root);
+		try (DirectoryStream<Path> directory = Files.newDirectoryStream(root, "*.tmp")) {
+			for (Path i: directory) {
+				Files.delete(i);
+			}
+		}
+	}
+
+	@Override
+	public Optional<Entry> get(String hash) {
+		try {
+			return locks.exclusively(hash, TIMEOUT_MS, () -> {
+				if (!validate(hash)) {
+					return Optional.empty();
+				}
+				Path file = root.resolve(hash);
+				return Optional.of(new Entry() {
+
+					@Override
+					public InputStream getContents() {
+						try {
+							return Files.newInputStream(file);
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}
+
+					@Override
+					public long size() {
+						try {
+							return Files.size(file);
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}
+
+				});
+			});
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return Optional.empty();
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public void putIfAbsent(String hash, InputStream data) {
+		Preconditions.checkArgument(!hash.isEmpty(), "Hash can not be empty");
+		try {
+			locks.exclusively(hash, TIMEOUT_MS, () -> {
+				if (validate(hash)) {
+					return null;
+				}
+				try {
+					// Temporary files have to be on the same FS for efficient move
+					Path file = Files.createTempFile(root, "", ".tmp");
+					try {
+						MessageDigest md = createDigest();
+						try (DigestInputStream is = new DigestInputStream(data, md);
+								OutputStream os = Files.newOutputStream(file, StandardOpenOption.WRITE)) {
+							is.transferTo(os);
+						}
+
+						String dataHash = toString(md);
+						if (!hash.equals(dataHash)) {
+							throw new IllegalArgumentException(
+									String.format("Data hash %s does not match hash argument %s", dataHash, hash));
+						}
+						Files.move(file, root.resolve(hash));
+						validHashes.add(hash);
+					} finally {
+						if (Files.exists(file)) {
+							Files.delete(file);
+						}
+					}
+
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				return null;
+			});
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(e);
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private boolean validate(String hash) {
+		Path file = root.resolve(hash);
+		try {
+			if (validHashes.contains(hash)) {
+				if (Files.exists(file)) {
+					Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
+					return true;
+				}
+			}
+			if (!hash.equals(hash(file))) {
+				Files.delete(file);
+				return false;
+			}
+		} catch (IOException e) {
+			if (!Files.exists(file)) {
+				return false;
+			}
+			throw new IllegalStateException("Can't read " + file, e);
+		}
+		validHashes.add(hash);
+		return true;
+	}
+
+	private String hash(Path file) throws IOException {
+		try (ReadableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
+			ByteBuffer buffer = createBuffer(); // L1 cache size for CPU Intel(R) Xeon(R) CPU E5-2680 v3
+			MessageDigest md = createDigest();
+			while (channel.read(buffer) >= 0) {
+				buffer.flip();
+				md.update(buffer);
+				buffer.compact();
+			}
+			return toString(md);
+		}
+	}
+
+	private ByteBuffer createBuffer() {
+		return ByteBuffer.allocate(64 * 1024);
+	}
+
+	private String toString(MessageDigest md) {
+		return HashCode.fromBytes(md.digest()).toString();
+	}
+
+	private MessageDigest createDigest() {
+		try {
+			return MessageDigest.getInstance(digestType);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("Invalid digest type: " + digestType, e);
+		}
+	}
+
+}

@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2011 Xored Software Inc and others
+ * Copyright (c) 2025 Xored Software Inc and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -15,6 +15,7 @@ package org.eclipse.rcptt.cloud.server.app.internal.http;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +24,6 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.http.MimeTypes.Mutable;
 import org.eclipse.jetty.http.MimeTypes.Type;
@@ -38,8 +38,10 @@ import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.app.internal.ArtfactCache;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
+import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.EclExecService;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.IndexHandler;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.Q7SessionUploadService;
@@ -69,9 +71,10 @@ public class Q7HttpServer {
 				ServletContextHandler.SESSIONS);
 
 		context.setContextPath("/");
-		context.addServlet(new ServletHolder(new Q7SessionUploadService()),
-				"/api/upload");
-		context.addServlet(new ServletHolder(new EclExecService()), "/api/exec");
+		context.addServlet(Q7SessionUploadService.class, "/api/upload");
+		context.addServlet(EclExecService.class, "/api/exec");
+		Path cacheRoot = Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache");
+		context.addServlet(new ArtifactServlet(new ArtfactCache(cacheRoot)), "/api/cache/*");
 
 		setHandlers(sitesDir, context);
 
