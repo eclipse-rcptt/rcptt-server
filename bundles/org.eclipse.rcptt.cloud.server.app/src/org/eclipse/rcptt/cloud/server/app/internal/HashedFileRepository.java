@@ -12,6 +12,7 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,31 +27,34 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
-import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet.Entry;
+import org.eclipse.rcptt.cloud.server.app.internal.LRUCache.Repository;
 
 import com.google.common.base.Preconditions;
 import com.google.common.hash.HashCode;
 
-public class ArtfactCache
-		implements org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet.Repository {
+public class HashedFileRepository implements Repository<String, InputStream> {
 
-	private final Path root;
+	private final Path hashedDir;
 	private final ValueLock locks = new ValueLock();
 	private static final int TIMEOUT_MS = 1 * 60 * 60 * 1000; // 1h
 	private final Set<String> validHashes = Collections.synchronizedSet(new HashSet<>());
 	private final String digestType = "SHA-256";
+	private final Path temporaryDir;
 	
-	public ArtfactCache(Path root) throws IOException {
+	public HashedFileRepository(Path root) throws IOException {
 		super();
-		this.root = Objects.requireNonNull(root);
-		Files.createDirectories(root);
-		try (DirectoryStream<Path> directory = Files.newDirectoryStream(root, "*.tmp")) {
+		this.hashedDir = root.resolve("hashed");
+		this.temporaryDir = root.resolve("tmp");
+		Files.createDirectories(this.hashedDir);
+		Files.createDirectories(this.temporaryDir);
+		try (DirectoryStream<Path> directory = Files.newDirectoryStream(this.temporaryDir)) {
 			for (Path i: directory) {
 				Files.delete(i);
 			}
@@ -58,17 +62,17 @@ public class ArtfactCache
 	}
 
 	@Override
-	public Optional<Entry> get(String hash) {
+	public Optional<LRUCache.Entry<InputStream>> get(String hash) {
 		try {
 			return locks.exclusively(hash, TIMEOUT_MS, () -> {
 				if (!validate(hash)) {
 					return Optional.empty();
 				}
-				Path file = root.resolve(hash);
-				return Optional.of(new Entry() {
+				Path file = hashedDir.resolve(hash);
+				return Optional.of(new LRUCache.Entry<InputStream>() {
 
 					@Override
-					public InputStream getContents() {
+					public InputStream contents() {
 						try {
 							return Files.newInputStream(file);
 						} catch (IOException e) {
@@ -105,7 +109,7 @@ public class ArtfactCache
 				}
 				try {
 					// Temporary files have to be on the same FS for efficient move
-					Path file = Files.createTempFile(root, "", ".tmp");
+					Path file = Files.createTempFile(temporaryDir, hash, "");
 					try {
 						MessageDigest md = createDigest();
 						try (DigestInputStream is = new DigestInputStream(data, md);
@@ -118,7 +122,7 @@ public class ArtfactCache
 							throw new IllegalArgumentException(
 									String.format("Data hash %s does not match hash argument %s", dataHash, hash));
 						}
-						Files.move(file, root.resolve(hash));
+						Files.move(file, hashedDir.resolve(hash));
 						validHashes.add(hash);
 					} finally {
 						if (Files.exists(file)) {
@@ -139,8 +143,50 @@ public class ArtfactCache
 		}
 	}
 
+	@Override
+	public void remove(String key) {
+		try {
+			locks.exclusively(key, TIMEOUT_MS, () -> {
+				validHashes.remove(key);
+				Path file = hashedDir.resolve(key);
+				if (!Files.exists(file)) {
+					return null;
+				}
+				try {
+					Files.delete(file);
+				} catch (FileNotFoundException e) {
+					return null;
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				return null;
+			});
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(e);
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@SuppressWarnings("resource")
+	@Override
+	public Stream<String> oldestKeys() {
+		try {
+			return Files.walk(hashedDir, 1).filter(p -> p.getNameCount() > hashedDir.getNameCount()).sorted(Comparator.comparing(t -> {
+				try {
+					return Files.getLastModifiedTime(t);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			})).map(Path::getFileName).map(Path::toString);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private boolean validate(String hash) {
-		Path file = root.resolve(hash);
+		Path file = hashedDir.resolve(hash);
 		try {
 			if (validHashes.contains(hash)) {
 				if (Files.exists(file)) {
@@ -152,6 +198,7 @@ public class ArtfactCache
 				Files.delete(file);
 				return false;
 			}
+			Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
 		} catch (IOException e) {
 			if (!Files.exists(file)) {
 				return false;

@@ -14,12 +14,14 @@ package org.eclipse.rcptt.cloud.server.app.internal.http;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -38,7 +40,8 @@ import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
-import org.eclipse.rcptt.cloud.server.app.internal.ArtfactCache;
+import org.eclipse.rcptt.cloud.server.app.internal.HashedFileRepository;
+import org.eclipse.rcptt.cloud.server.app.internal.LRUCache;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet;
@@ -74,7 +77,32 @@ public class Q7HttpServer {
 		context.addServlet(Q7SessionUploadService.class, "/api/upload");
 		context.addServlet(EclExecService.class, "/api/exec");
 		Path cacheRoot = Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache");
-		context.addServlet(new ArtifactServlet(new ArtfactCache(cacheRoot)), "/api/cache/*");
+		HashedFileRepository hashedRepository = new HashedFileRepository(cacheRoot);
+		LRUCache<String, InputStream> cache = new LRUCache<String, InputStream>(hashedRepository);
+		ArtifactServlet.Repository repository = new ArtifactServlet.Repository() {
+			
+			@Override
+			public void putIfAbsent(String hash, InputStream data) {
+				cache.putIfAbsent(hash, data);
+			}
+			
+			@Override
+			public Optional<ArtifactServlet.Entry> get(String hash) {
+				return cache.get(hash).map(e -> new ArtifactServlet.Entry() {
+					
+					@Override
+					public long size() {
+						return e.size();
+					}
+					
+					@Override
+					public InputStream getContents() {
+						return e.contents();
+					}
+				});
+			}
+		};
+		context.addServlet(new ArtifactServlet(repository), "/api/cache/*");
 
 		setHandlers(sitesDir, context);
 
