@@ -13,6 +13,7 @@
 package org.eclipse.rcptt.cloud.server.app.internal;
 
 import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,7 +35,7 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import org.eclipse.rcptt.cloud.server.app.internal.LRUCache.Repository;
+import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Repository;
 
 import com.google.common.base.Preconditions;
 import com.google.common.hash.HashCode;
@@ -47,7 +48,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	private final Set<String> validHashes = Collections.synchronizedSet(new HashSet<>());
 	private final String digestType = "SHA-256";
 	private final Path temporaryDir;
-	
+
 	public HashedFileRepository(Path root) throws IOException {
 		super();
 		this.hashedDir = root.resolve("hashed");
@@ -55,27 +56,43 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		Files.createDirectories(this.hashedDir);
 		Files.createDirectories(this.temporaryDir);
 		try (DirectoryStream<Path> directory = Files.newDirectoryStream(this.temporaryDir)) {
-			for (Path i: directory) {
+			for (Path i : directory) {
 				Files.delete(i);
 			}
 		}
 	}
 
 	@Override
-	public Optional<LRUCache.Entry<InputStream>> get(String hash) {
+	public Optional<WeakValueRepository.Entry<InputStream>> get(String hash) {
 		try {
 			return locks.exclusively(hash, TIMEOUT_MS, () -> {
 				if (!validate(hash)) {
 					return Optional.empty();
 				}
 				Path file = hashedDir.resolve(hash);
-				return Optional.of(new LRUCache.Entry<InputStream>() {
+				return Optional.of(new WeakValueRepository.Entry<InputStream>() {
 
 					@Override
 					public InputStream contents() {
 						try {
-							return Files.newInputStream(file);
+							FilterInputStream result = new FilterInputStream(Files.newInputStream(file)) {
+								@Override
+								public void close() throws IOException {
+									try {
+										super.close();
+									} finally {
+										locks.unlock(hash);
+									}
+								}
+							};
+							locks.lock(hash, TIMEOUT_MS);
+							return result;
 						} catch (IOException e) {
+							throw new RuntimeException(e);
+						} catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+							throw new RuntimeException(e);
+						} catch (TimeoutException e) {
 							throw new RuntimeException(e);
 						}
 					}
@@ -173,13 +190,14 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	@Override
 	public Stream<String> oldestKeys() {
 		try {
-			return Files.walk(hashedDir, 1).filter(p -> p.getNameCount() > hashedDir.getNameCount()).sorted(Comparator.comparing(t -> {
-				try {
-					return Files.getLastModifiedTime(t);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			})).map(Path::getFileName).map(Path::toString);
+			return Files.walk(hashedDir, 1).filter(p -> p.getNameCount() > hashedDir.getNameCount())
+					.sorted(Comparator.comparing(t -> {
+						try {
+							return Files.getLastModifiedTime(t);
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					})).map(Path::getFileName).map(Path::toString);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -211,7 +229,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 
 	private String hash(Path file) throws IOException {
 		try (ReadableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
-			ByteBuffer buffer = createBuffer(); // L1 cache size for CPU Intel(R) Xeon(R) CPU E5-2680 v3
+			ByteBuffer buffer = createBuffer();
 			MessageDigest md = createDigest();
 			while (channel.read(buffer) >= 0) {
 				buffer.flip();
@@ -223,7 +241,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	}
 
 	private ByteBuffer createBuffer() {
-		return ByteBuffer.allocate(64 * 1024);
+		return ByteBuffer.allocateDirect(64 * 1024); // L1 cache size for CPU Intel(R) Xeon(R) CPU E5-2680 v3
 	}
 
 	private String toString(MessageDigest md) {

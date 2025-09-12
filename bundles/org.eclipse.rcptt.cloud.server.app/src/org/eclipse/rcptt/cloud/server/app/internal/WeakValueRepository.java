@@ -26,7 +26,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
-public final class LRUCache<K, V> {
+/**
+ * Prevents removal of an element from a repository while its handle is still reachable.
+ */
+public final class WeakValueRepository<K, V> {
 	public interface Entry<V> {
 		V contents();
 		long size();
@@ -38,7 +41,7 @@ public final class LRUCache<K, V> {
 		Stream<K> oldestKeys();
 	}
 	
-	public LRUCache(Repository<K, V> repository) {
+	public WeakValueRepository(Repository<K, V> repository) {
 		super();
 		this.repository = repository;
 		try (Stream<K> keys = repository.oldestKeys()) {
@@ -47,6 +50,11 @@ public final class LRUCache<K, V> {
 		}
 	}
 
+	/**
+	 * 
+	 * @param key
+	 * @return
+	 */
 	public Optional<Entry<V>> get(K key) {
 		try {
 			Optional<Entry<V>> result = Optional.of(cache.get(key, () -> repository.get(key).orElseThrow()));

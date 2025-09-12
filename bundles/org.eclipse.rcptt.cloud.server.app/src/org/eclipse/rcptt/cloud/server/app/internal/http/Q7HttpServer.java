@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal.http;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,8 +43,8 @@ import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.app.internal.HashedFileRepository;
-import org.eclipse.rcptt.cloud.server.app.internal.LRUCache;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
+import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ArtifactServlet;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.EclExecService;
@@ -78,7 +80,7 @@ public class Q7HttpServer {
 		context.addServlet(EclExecService.class, "/api/exec");
 		Path cacheRoot = Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache");
 		HashedFileRepository hashedRepository = new HashedFileRepository(cacheRoot);
-		LRUCache<String, InputStream> cache = new LRUCache<String, InputStream>(hashedRepository);
+		WeakValueRepository<String, InputStream> cache = new WeakValueRepository<String, InputStream>(hashedRepository);
 		ArtifactServlet.Repository repository = new ArtifactServlet.Repository() {
 			
 			@Override
@@ -88,19 +90,10 @@ public class Q7HttpServer {
 			
 			@Override
 			public Optional<ArtifactServlet.Entry> get(String hash) {
-				return cache.get(hash).map(e -> new ArtifactServlet.Entry() {
-					
-					@Override
-					public long size() {
-						return e.size();
-					}
-					
-					@Override
-					public InputStream getContents() {
-						return e.contents();
-					}
-				});
+				return cache.get(hash).map(ServletEntryForWeakValue::new);
 			}
+
+
 		};
 		context.addServlet(new ArtifactServlet(repository), "/api/cache/*");
 
@@ -113,6 +106,25 @@ public class Q7HttpServer {
 		}
 	}
 
+	private static final class ServletEntryForWeakValue implements ArtifactServlet.Entry {
+		private final WeakValueRepository.Entry<InputStream> delegate; 
+
+		public ServletEntryForWeakValue(WeakValueRepository.Entry<InputStream> delegate) {
+			super();
+			this.delegate = requireNonNull(delegate);
+		}
+
+		@Override
+		public long size() {
+			return delegate.size();
+		}
+		
+		@Override
+		public InputStream getContents() {
+			return delegate.contents();
+		}
+	}
+	
 	private void configureConnector(int httpPort) {
 		HttpConfiguration configuration = new HttpConfiguration();
 		configuration.setOutputBufferSize(64 * 1024);
