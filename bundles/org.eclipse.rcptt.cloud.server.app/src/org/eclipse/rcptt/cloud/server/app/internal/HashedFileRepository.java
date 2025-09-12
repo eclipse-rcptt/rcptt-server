@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.FileNotFoundException;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -32,7 +34,8 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -40,13 +43,12 @@ import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Repositor
 
 import com.google.common.base.Preconditions;
 import com.google.common.hash.HashCode;
+import com.google.common.util.concurrent.Striped;
 
 public class HashedFileRepository implements Repository<String, InputStream> {
-
 	private final Path hashedDir;
-	private final ValueLock locks = new ValueLock();
-	private static final int TIMEOUT_MS = 1 * 60 * 60 * 1000; // 1h
 	private final Set<String> validHashes = Collections.synchronizedSet(new HashSet<>());
+	private final Striped<ReadWriteLock> locks = Striped.readWriteLock(1000);
 	private final String digestType = "SHA-256";
 	private final Path temporaryDir;
 
@@ -65,106 +67,72 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 
 	@Override
 	public Optional<WeakValueRepository.Entry<InputStream>> get(String hash) {
-		return exclusively(hash, (Supplier<Optional<WeakValueRepository.Entry<InputStream>>>)() -> {
+		Lock lock = locks.get(hash).readLock();
+		lock.lock();
+		try {
 			if (!validate(hash)) {
 				return Optional.<WeakValueRepository.Entry<InputStream>>empty();
 			}
-			Path file = hashedDir.resolve(hash);
-			return Optional.of(new WeakValueRepository.Entry<InputStream>() {
-				@Override
-				public InputStream contents() {
-					return exclusively(hash, (Supplier<InputStream>)() -> {
-						try {
-							FilterInputStream result = new FilterInputStream(Files.newInputStream(file)) {
-							};
-							return result;
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-					});
-				}
-
-				@Override
-				public long size() {
-					try {
-						return Files.size(file);
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-				}
-
-			});
-		});
+			return Optional.of(new EntryImplementation(hash, lock));
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
 	public void putIfAbsent(String hash, InputStream data) {
 		Preconditions.checkArgument(!hash.isEmpty(), "Hash can not be empty");
-		try {
-			locks.exclusively(hash, TIMEOUT_MS, () -> {
-				if (validate(hash)) {
-					return null;
-				}
+		exclusively(hash, () -> {
+			if (validate(hash)) {
+				return null;
+			}
+			try {
+				// Temporary files have to be on the same FS for efficient move
+				Path file = Files.createTempFile(temporaryDir, hash, "");
 				try {
-					// Temporary files have to be on the same FS for efficient move
-					Path file = Files.createTempFile(temporaryDir, hash, "");
-					try {
-						MessageDigest md = createDigest();
-						try (DigestInputStream is = new DigestInputStream(data, md);
-								OutputStream os = Files.newOutputStream(file, StandardOpenOption.WRITE)) {
-							is.transferTo(os);
-						}
-
-						String dataHash = toString(md);
-						if (!hash.equals(dataHash)) {
-							throw new IllegalArgumentException(
-									String.format("Data hash %s does not match hash argument %s", dataHash, hash));
-						}
-						Files.move(file, hashedDir.resolve(hash));
-						validHashes.add(hash);
-					} finally {
-						if (Files.exists(file)) {
-							Files.delete(file);
-						}
+					MessageDigest md = createDigest();
+					try (DigestInputStream is = new DigestInputStream(data, md);
+							OutputStream os = Files.newOutputStream(file, StandardOpenOption.WRITE)) {
+						is.transferTo(os);
 					}
 
-				} catch (IOException e) {
-					throw new RuntimeException(e);
+					String dataHash = toString(md);
+					if (!hash.equals(dataHash)) {
+						throw new IllegalArgumentException(
+								String.format("Data hash %s does not match hash argument %s", dataHash, hash));
+					}
+					Files.move(file, hashedDir.resolve(hash));
+					validHashes.add(hash);
+				} finally {
+					if (Files.exists(file)) {
+						Files.delete(file);
+					}
 				}
-				return null;
-			});
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new RuntimeException(e);
-		} catch (TimeoutException e) {
-			throw new RuntimeException(e);
-		}
+
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			return null;
+		});
 	}
 
 	@Override
 	public void remove(String key) {
-		try {
-			locks.exclusively(key, TIMEOUT_MS, () -> {
-				validHashes.remove(key);
-				Path file = hashedDir.resolve(key);
-				if (!Files.exists(file)) {
-					return null;
-				}
-				try {
-					Files.delete(file);
-				} catch (FileNotFoundException e) {
-					return null;
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+		exclusively(key, () -> {
+			validHashes.remove(key);
+			Path file = hashedDir.resolve(key);
+			if (!Files.exists(file)) {
 				return null;
-			});
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new RuntimeException(e);
-		} catch (TimeoutException e) {
-			throw new RuntimeException(e);
-		}
+			}
+			try {
+				Files.delete(file);
+			} catch (FileNotFoundException e) {
+				return null;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			return null;
+		});
 	}
 
 	@SuppressWarnings("resource")
@@ -183,7 +151,72 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	private final class EntryImplementation implements WeakValueRepository.Entry<InputStream> {
+		private final String hash;
+		private final Lock lock;
 
+		private EntryImplementation(String hash, Lock lock) {
+			this.hash = hash;
+			this.lock = lock;
+		}
+
+		@Override
+		public InputStream contents() {
+			lock.lock();
+			try {
+				if (!validate(hash)) {
+					// If wrapped in WeakValueRepository this should not happen
+					// It prevents removal of entries while they are reachable 
+					throw new FileNotFoundException(hash);
+				}
+				// Reentrant lock is locked second time in LockingInputStream. This is intentional.
+				// On one hand file should be open in a lock, on the other the lock should not be released until the result is closed.
+				FilterInputStream result = new LockingInputStream(Files.newInputStream(hashedDir.resolve(hash)), lock);
+				return result;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} finally {
+				lock.unlock();
+			}
+		}
+
+		@Override
+		public long size() {
+			lock.lock();
+			try {
+				if (!validate(hash)) {
+					// If wrapped in WeakValueRepository this should not happen
+					// It prevents removal of entries while they are reachable 
+					throw new FileNotFoundException(hash);
+				}
+				return Files.size(hashedDir.resolve(hash));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} finally {
+				lock.unlock();
+			}
+		}
+	}
+
+	private static final class LockingInputStream extends FilterInputStream {
+		private final Lock lock;
+		public LockingInputStream(InputStream delegate, Lock lock) {
+			super(delegate);
+			this.lock = requireNonNull(lock);
+			lock.lock();
+		}
+		
+		@Override
+		public void close() throws IOException {
+			try {
+				super.close();
+			} finally {
+				lock.unlock();
+			}
+		}
+	}
+	
 	private boolean validate(String hash) {
 		Path file = hashedDir.resolve(hash);
 		try {
@@ -209,13 +242,12 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	}
 
 	private <T> T exclusively(String hash, Supplier<T> runnable) {
+		Lock lock = locks.get(hash).writeLock();
+		lock.lock();
 		try {
-			return locks.exclusively(hash, TIMEOUT_MS, runnable);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new RuntimeException(e);
-		} catch (TimeoutException e) {
-			throw new RuntimeException(e);
+			return runnable.get();
+		} finally {
+			lock.unlock();
 		}
 	}
 
