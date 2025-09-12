@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Repository;
@@ -64,56 +65,36 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 
 	@Override
 	public Optional<WeakValueRepository.Entry<InputStream>> get(String hash) {
-		try {
-			return locks.exclusively(hash, TIMEOUT_MS, () -> {
-				if (!validate(hash)) {
-					return Optional.empty();
-				}
-				Path file = hashedDir.resolve(hash);
-				return Optional.of(new WeakValueRepository.Entry<InputStream>() {
-
-					@Override
-					public InputStream contents() {
+		return exclusively(hash, (Supplier<Optional<WeakValueRepository.Entry<InputStream>>>)() -> {
+			if (!validate(hash)) {
+				return Optional.<WeakValueRepository.Entry<InputStream>>empty();
+			}
+			Path file = hashedDir.resolve(hash);
+			return Optional.of(new WeakValueRepository.Entry<InputStream>() {
+				@Override
+				public InputStream contents() {
+					return exclusively(hash, (Supplier<InputStream>)() -> {
 						try {
 							FilterInputStream result = new FilterInputStream(Files.newInputStream(file)) {
-								@Override
-								public void close() throws IOException {
-									try {
-										super.close();
-									} finally {
-										locks.unlock(hash);
-									}
-								}
 							};
-							locks.lock(hash, TIMEOUT_MS);
 							return result;
 						} catch (IOException e) {
 							throw new RuntimeException(e);
-						} catch (InterruptedException e) {
-							Thread.currentThread().interrupt();
-							throw new RuntimeException(e);
-						} catch (TimeoutException e) {
-							throw new RuntimeException(e);
 						}
-					}
+					});
+				}
 
-					@Override
-					public long size() {
-						try {
-							return Files.size(file);
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
+				@Override
+				public long size() {
+					try {
+						return Files.size(file);
+					} catch (IOException e) {
+						throw new RuntimeException(e);
 					}
+				}
 
-				});
 			});
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			return Optional.empty();
-		} catch (TimeoutException e) {
-			throw new RuntimeException(e);
-		}
+		});
 	}
 
 	@Override
@@ -225,6 +206,17 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		}
 		validHashes.add(hash);
 		return true;
+	}
+
+	private <T> T exclusively(String hash, Supplier<T> runnable) {
+		try {
+			return locks.exclusively(hash, TIMEOUT_MS, runnable);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(e);
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private String hash(Path file) throws IOException {

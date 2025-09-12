@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 public final class ValueLock {
 	private final Set<Object> lockedKeys = new HashSet<>();
 
-	public void lock(Object key, int timeout_ms) throws InterruptedException, TimeoutException {
+	private void lock(Object key, int timeout_ms) throws InterruptedException, TimeoutException {
 		Preconditions.checkArgument(timeout_ms >= 0);
 		long stop = System.currentTimeMillis() + timeout_ms;
 		boolean timeout = false;
@@ -41,7 +41,7 @@ public final class ValueLock {
 		}
 	}
 
-	public void unlock(Object key) {
+	private void unlock(Object key) {
 		synchronized (lockedKeys) {
 			lockedKeys.remove(key);
 			lockedKeys.notifyAll();
