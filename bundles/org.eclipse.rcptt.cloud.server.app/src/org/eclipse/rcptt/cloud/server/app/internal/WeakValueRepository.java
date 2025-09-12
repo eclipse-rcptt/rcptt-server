@@ -50,11 +50,6 @@ public final class WeakValueRepository<K, V> {
 		}
 	}
 
-	/**
-	 * 
-	 * @param key
-	 * @return
-	 */
 	public Optional<Entry<V>> get(K key) {
 		try {
 			Optional<Entry<V>> result = Optional.of(cache.get(key, () -> repository.get(key).orElseThrow()));

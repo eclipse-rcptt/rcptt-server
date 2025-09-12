@@ -135,6 +135,10 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		});
 	}
 
+	/**
+	 * Useful for LRU cache.
+	 * @return keys in order of last access.
+	 */
 	@SuppressWarnings("resource")
 	@Override
 	public Stream<String> oldestKeys() {
@@ -146,7 +150,10 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 						} catch (IOException e) {
 							throw new RuntimeException(e);
 						}
-					})).map(Path::getFileName).map(Path::toString);
+					}))
+					.map(Path::getFileName)
+					.map(Path::toString)
+					.filter(i -> get(i).isPresent());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -170,9 +177,12 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 					// It prevents removal of entries while they are reachable 
 					throw new FileNotFoundException(hash);
 				}
+				Path file = hashedDir.resolve(hash);
+				// See oldestKeys()
+				Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
 				// Reentrant lock is locked second time in LockingInputStream. This is intentional.
 				// On one hand file should be open in a lock, on the other the lock should not be released until the result is closed.
-				FilterInputStream result = new LockingInputStream(Files.newInputStream(hashedDir.resolve(hash)), lock);
+				FilterInputStream result = new LockingInputStream(Files.newInputStream(file), lock);
 				return result;
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -222,7 +232,6 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		try {
 			if (validHashes.contains(hash)) {
 				if (Files.exists(file)) {
-					Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
 					return true;
 				}
 			}
@@ -230,7 +239,6 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 				Files.delete(file);
 				return false;
 			}
-			Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
 		} catch (IOException e) {
 			if (!Files.exists(file)) {
 				return false;
