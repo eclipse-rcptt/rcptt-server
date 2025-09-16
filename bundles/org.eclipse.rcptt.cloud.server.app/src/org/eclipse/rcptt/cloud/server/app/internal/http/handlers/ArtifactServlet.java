@@ -64,28 +64,17 @@ public class ArtifactServlet extends HttpServlet {
 
 	@Override
 	protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String key = getKey(req);
-		Entry entry = repository.get(key).orElse(null);
-		if (entry == null) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-		resp.setContentLengthLong(entry.size());
-		resp.setContentType(CONTENT_TYPE);
+		sendHeaders(req, resp);
 	}
-
+	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String key = getKey(req);
-		Entry entry = repository.get(key).orElse(null);
-		if (entry == null) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+		Optional<Entry> entry = sendHeaders(req, resp);
+		if (entry.isEmpty()) {
 			return;
 		}
-		resp.setContentLengthLong(entry.size());
-		resp.setContentType(CONTENT_TYPE);
 		try (OutputStream os = resp.getOutputStream()) {
-			try (InputStream is = entry.getContents()) {
+			try (InputStream is = entry.get().getContents()) {
 				is.transferTo(os);
 			}
 		}
@@ -118,6 +107,18 @@ public class ArtifactServlet extends HttpServlet {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getLocalizedMessage());
 			}
 		}
+	}
+	
+	private Optional<Entry> sendHeaders(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String key = getKey(req);
+		Optional<Entry> result = repository.get(key);
+		if (result.isEmpty()) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return result;
+		}
+		resp.setContentLengthLong(result.get().size());
+		resp.setContentType(CONTENT_TYPE);
+		return result;
 	}
 
 	private String getKey(HttpServletRequest req) {
