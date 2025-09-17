@@ -34,6 +34,7 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.client.AutTcpConnector.Aut;
 import org.eclipse.rcptt.cloud.client.Q7ArtifactLoader.ArtifactReferenceById;
+import org.eclipse.rcptt.cloud.client.Q7ServerApi.UploadResult;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
 import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
@@ -268,7 +270,7 @@ public class ClientApplication extends CommandLineApplication {
 			throw ClientAppPlugin.createException("Invalid server URL.", e);
 		}
 
-		api = new Q7ServerApi(serverUri.toASCIIString());
+		api = new Q7ServerApi(serverUri);
 
 		updateAutUri();
 
@@ -1063,15 +1065,11 @@ public class ClientApplication extends CommandLineApplication {
 							+ zipPath + " for architecture: "
 							+ autInfo.classifier, "-auts");
 				} else {
-					String autURI = uploadMap.get(zipPath);
-					if (autURI == null) {
-						String serverPath = api.uploadFile(suiteID, zipPath,
-								zipPath, false);
-						autURI = getServerPathURI(serverPath);
-						uploadMap.put(zipPath, autURI);
-					}
-
-					rv.add(createAutInfo(autURI, autInfo.classifier));
+					UploadResult uploadResult = api.uploadHashedFile(Path.of(zipPath));
+					String autURI = getServerPathURI(uploadResult.serverPath().toASCIIString());
+					AutInfo autInfo2 = createAutInfo(autURI, autInfo.classifier);
+					autInfo2.setHash(uploadResult.hash());
+					rv.add(autInfo2);
 					System.out.println("Uploaded aut:" + zipPath + " to: "
 							+ autURI);
 					System.out.flush();
@@ -1157,7 +1155,7 @@ public class ClientApplication extends CommandLineApplication {
 			if (uri == null) {
 				String serverPath = api.uploadFile(suiteID, zipPath, FileUtil.getID(split[0]), true);
 				if (serverPath != null) {
-					uri = getServerPathURI(serverPath);
+					uri = getServerPathURI("artifacts/" +serverPath);
 					uploadMap.put(zipPath, uri);
 				}
 			}
@@ -1176,7 +1174,7 @@ public class ClientApplication extends CommandLineApplication {
 
 	private String getServerPathURI(String serverPath) {
 		String uri = "server://" + serverHost + ":" + serverPort
-				+ "/artifacts/" + serverPath;
+				+ "/" + serverPath;
 		return uri;
 	}
 

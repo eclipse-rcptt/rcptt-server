@@ -12,6 +12,11 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.common;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.util.EObjectKey;
 
@@ -21,17 +26,32 @@ public class AutUtil {
 		return aut.getId();
 	}
 
-	public static EObjectKey<AutInfo> getAutKey(AutInfo info) {
-		return new EObjectKey<AutInfo>(info) {
-
-			@Override
-			protected int hash(AutInfo obj) {
-				int result = obj.getId().hashCode();
-				result = result * 31 + obj.getUri().hashCode();
-				result = result * 31 + obj.getClassifier().hashCode();
-				return result;
+	private static final class Key {
+		private final String id, uri;
+		private final byte[] hash;
+		
+		public Key(String id, String uri, byte[] hash) {
+			this.id = Objects.requireNonNull(id);
+			this.uri = requireNonNull(uri);
+			this.hash = Arrays.copyOf(hash, hash.length);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof Key that) {
+				return Arrays.deepEquals(flatten(), that.flatten());
 			}
-		};
+			return false;
+		}
+		
+		private Object[] flatten() {
+			return new Object[] {id, uri, hash};
+		}
+		
+	}
+	
+	public static Object getAutKey(AutInfo info) {
+		return new Key(info.getId(), info.getUri(), info.getHash());
 	}
 
 }

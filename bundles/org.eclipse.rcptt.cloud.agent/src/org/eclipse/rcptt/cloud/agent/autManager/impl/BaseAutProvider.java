@@ -37,7 +37,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.rcptt.cloud.agent.AgentPlugin;
 import org.eclipse.rcptt.cloud.agent.AutFileUtil;
@@ -49,7 +48,6 @@ import org.eclipse.rcptt.cloud.util.IOUtil;
 import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
 import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.util.Base64;
 import org.eclipse.rcptt.util.FileUtil;
 
 public abstract class BaseAutProvider implements IAutProvider, Closeable {
@@ -131,7 +129,7 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 
 			MessageDigest md = null;
 			try {
-				md = MessageDigest.getInstance("md5");
+				md = MessageDigest.getInstance((remoteHash != null && remoteHash.length == 32) ? "SHA-256" : "md5");
 			} catch (NoSuchAlgorithmException e) {
 				throw new IllegalStateException(e);
 			}
@@ -146,10 +144,7 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 					});
 			long end = System.currentTimeMillis();
 
-			if (md != null) {
-				downloadHash = Base64.encode(md.digest())
-						.getBytes();
-			}
+			downloadHash = md.digest();
 
 			// Calculate zip file size, and transfer rata
 			long length = autFile.length();
@@ -325,6 +320,9 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 
 	protected byte[] getRemoteHash(AutInfo aut, String classifier,
 			IProgressMonitor monitor, IQ7Monitor log) {
+		if (aut.getHash() != null) {
+			return aut.getHash();
+		}
 		ISrcFactory md5SourceFactory = getMd5SourceFactory(aut, classifier);
 		try {
 			log.log("download remote hash: " + md5SourceFactory.toString(),

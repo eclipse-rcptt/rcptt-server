@@ -6,7 +6,7 @@
         <setEntry value="org.eclipse.equinox.common:3.20.0.v20250129-1348:default:true:2:true"/>
         <setEntry value="org.eclipse.equinox.event:1.7.200.v20250129-1349:default:true:2:true"/>
         <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.400.v20250129-0942:default:true:1:true"/>
-        <setEntry value="org.eclipse.rcptt.cloud.client:2.6.0.qualifier:default:true:2:true"/>
+        <setEntry value="org.eclipse.rcptt.cloud.client:2.7.0.qualifier:default:true:2:true"/>
     </setAttribute>
     <booleanAttribute key="append.args" value="true"/>
     <stringAttribute key="application" value="org.eclipse.rcptt.cloud.client.headless"/>
@@ -29,7 +29,7 @@
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-23"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog&#10;-import&#10;${workspace_loc:/org.eclipse.rcptt.cloud.rcpttTests}&#10;-server http://127.0.0.1:5007&#10;-autVMArgs&#10;&quot;-DpreferHeavyControls=true -DtestAefSyncMode=true -DrefactoringWithoutConfirmation=true -DforceQueryWizardClose=true -DmigrationEnabled=true -DmigrationNotificationEnabled=false -De1c.dt.monitoring.host= -Xmx4g&quot;&#10;-autArgs&#10;\&quot;-clean\&quot;&#10;-auts&#10;&quot;macosx.cocoa.aarch64|/Users/vasiligulevich/.m2/repository/.cache/download-maven-plugin/eclipse-java-2024-12-R-macosx-cocoa-aarch64.dmg_62dffb8d91ecc67d4b4a6f0b6b3adae0&quot;&#10;-platforms&#10;win32.win32.x86&#10;-testSuiteName&#10;basilevs_source&#10;-agentResultsDir&#10;/tmp/agent_results"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog&#10;-import&#10;${workspace_loc:/org.eclipse.rcptt.cloud.rcpttTests}&#10;-server http://127.0.0.1:5007&#10;-autVMArgs&#10;&quot;-DpreferHeavyControls=true -DtestAefSyncMode=true -DrefactoringWithoutConfirmation=true -DforceQueryWizardClose=true -DmigrationEnabled=true -DmigrationNotificationEnabled=false -De1c.dt.monitoring.host= -Xmx4g&quot;&#10;-autArgs&#10;\&quot;-clean\&quot;&#10;-auts&#10;&quot;macosx.cocoa.aarch64|/tmp/1.dmg&quot;&#10;-platforms&#10;win32.win32.x86&#10;-testSuiteName&#10;basilevs_source&#10;-agentResultsDir&#10;/tmp/agent_results"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
     <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.graphics.Resource.reportNonDisposed=true -XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts&#10;-Xmx1G&#10;-XX:+HeapDumpOnOutOfMemoryError&#10;-ea&#10;-Xlog:gc"/>
     <stringAttribute key="pde.version" value="3.3"/>

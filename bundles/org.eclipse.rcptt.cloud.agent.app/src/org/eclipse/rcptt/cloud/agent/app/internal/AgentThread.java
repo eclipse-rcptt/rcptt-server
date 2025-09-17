@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +107,7 @@ public class AgentThread implements Runnable {
 	private int agentPort = 0;
 	private ITestExecutor.Closeable started = null;
 
-	EObjectKey<AutInfo> startedAutInfo = null;
+	Object startedAutInfo = null;
 
 	IQ7Monitor agentMonitor;
 	volatile boolean stopped = false;
@@ -651,7 +652,7 @@ public class AgentThread implements Runnable {
 	}
 
 	protected ITestExecutor getExecutor(AutInfo aut) throws CoreException, InterruptedException {
-		EObjectKey<AutInfo> key = AutUtil.getAutKey(aut);
+		Object key = AutUtil.getAutKey(aut);
 		if (started != null && key.equals(startedAutInfo)) {
 			return started;
 		}

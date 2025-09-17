@@ -46,7 +46,7 @@ public final class WeakValueRepository<K, V> {
 		this.repository = repository;
 		try (Stream<K> keys = repository.oldestKeys()) {
 			// This will hash the whole cache causing slow startup 
-			keys.forEach(this::get);
+			keys.parallel().forEachOrdered(this::get);
 		}
 	}
 

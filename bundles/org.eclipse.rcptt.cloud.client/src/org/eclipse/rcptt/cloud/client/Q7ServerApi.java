@@ -12,13 +12,19 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.client;
 
+import static org.eclipse.core.runtime.Status.error;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -26,9 +32,12 @@ import javax.net.ssl.SSLException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.scheme.Scheme;
@@ -54,19 +63,21 @@ import org.eclipse.rcptt.ecl.core.Command;
 import org.eclipse.rcptt.util.FileUtil;
 
 import com.google.common.base.Preconditions;
+import com.google.common.hash.HashCode;
 
 public class Q7ServerApi {
 
 	public static final int ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 	public static final int DEFAULT_TIMEOUT = 60 * 1000;
+	private static final String HASH_TYPE = "SHA-256";
 
-	private String url;
+	private URI url;
 
 	private DefaultHttpClient client;
 	private SSLSocketFactory socketFactory;
 	private HttpEclClient eclClient;
 
-	public Q7ServerApi(String url) {
+	public Q7ServerApi(URI url) {
 		this.url = url;
 		this.client = new SystemDefaultHttpClient();
 		ClientConnectionManager connManager = client.getConnectionManager();
@@ -117,13 +128,13 @@ public class Q7ServerApi {
 	}
 
 	public HttpPost makePost(String subUrl) {
-		return new HttpPost(String.format("%sapi/%s", url, subUrl));
+		return new HttpPost(url.resolve(subUrl));
 	}
 
 	public HttpGet makeGet(String subUrl) {
-		return new HttpGet(String.format("%s/%s", url, subUrl));
+		return new HttpGet(url.resolve(subUrl));
 	}
-
+	
 	public HttpResponse execute(HttpPost post) throws ClientProtocolException,
 			IOException {
 		return client.execute(post);
@@ -134,6 +145,37 @@ public class Q7ServerApi {
 		return client.execute(get);
 	}
 
+	public record UploadResult(byte[] hash, URI serverPath) {} 
+	public UploadResult uploadHashedFile(java.nio.file.Path file) throws CoreException {
+		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
+				DEFAULT_TIMEOUT);
+		try {
+			MessageDigest md = MessageDigest.getInstance(HASH_TYPE);
+			try (DigestInputStream is = new DigestInputStream(Files.newInputStream(file), md);
+					OutputStream os = OutputStream.nullOutputStream()) {
+				is.transferTo(os);
+			}
+			byte[] byteHash = md.digest();
+			String hash = HashCode.fromBytes(byteHash).toString();
+			URI uri = URI.create("api/cache/" + hash + "/" + file.getFileName().toString());
+			
+			HttpPut request = new HttpPut(url.resolve(uri));
+			request.setEntity(new FileEntity(file.toFile(), ContentType.APPLICATION_OCTET_STREAM));
+			request.addHeader("Expect", "100-continue");
+			
+			try (CloseableHttpResponse response = client.execute(request)) {
+				int status = response.getStatusLine().getStatusCode();
+				if (status == HttpStatus.SC_OK || status == HttpStatus.SC_CONFLICT) {
+					return new UploadResult(byteHash, uri);
+				}
+				throw new CoreException(error("Failed to upload " + file + ". HTTP status code: " + status));
+			}
+		} catch (Exception e) {
+			throw new CoreException(error("Failed to upload " + file, e));
+		}
+	}
+	
+	
 	public String uploadFile(String suiteID, String zipPath,
 			String artifactName, boolean unzip) throws CoreException {
 		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
@@ -214,7 +256,7 @@ public class Q7ServerApi {
 		String fileName = FileUtil.getID(new Path(artifactName).lastSegment());
 
 		try {
-			HttpPost post = makePost("upload");
+			HttpPost post = makePost("api/upload");
 
 			ByteArrayEntity entity = new ByteArrayEntity(data);
 			entity.setContentType("application/q7-filedata");

@@ -124,8 +124,12 @@ public class ArtifactServlet extends HttpServlet {
 	private String getKey(HttpServletRequest req) {
 		String path = req.getPathInfo();
 		assert path.startsWith("/");
-		path = path.substring(1);
-		return path;
+		// Ignore all but first segments, so that URI could have filename information to help with file type recognition.
+		String[] segments = path.split("/");
+		if (segments.length < 2) {
+			
+		}
+		return segments[1];
 	}
 
 	private static final long serialVersionUID = -3131705220846105409L;
