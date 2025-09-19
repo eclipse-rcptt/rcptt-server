@@ -77,7 +77,6 @@ public class RemoteEclClient implements Closeable {
 
 	public ExecResult execCommand(Command cmd, long timeout,
 			IProgressMonitor monitor) throws CoreException, InterruptedException {
-		IStatus lastStatus = null;
 		for (int i = 0; i < TRY_COUNT; i++) {
 			ExecResult result = null;
 			boolean retry = false;
@@ -97,9 +96,6 @@ public class RemoteEclClient implements Closeable {
 					session.close();
 				}
 				session = null;
-				if (result != null) {
-					lastStatus = result.getStatus();
-				}
 				try {
 					Thread.sleep(TRY_DELAY);
 				} catch (Throwable e) {
@@ -109,12 +105,7 @@ public class RemoteEclClient implements Closeable {
 				return result;
 			}
 		}
-		if (lastStatus != null) {
-			throw new CoreException(lastStatus);
-		} else {
-			throw UtilPlugin.createException("Failed to execute command: "
-					+ cmd.getClass().getName(), new Exception());
-		}
+		return  internalExecCommand(cmd, timeout, monitor);
 	}
 
 	private ExecResult internalExecCommand(Command cmd, long timeout,

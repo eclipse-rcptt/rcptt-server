@@ -972,8 +972,11 @@ public class ClientApplication extends CommandLineApplication {
 						}
 						logInfo(b.toString());
 					}
-				} else if (answer instanceof ExecutionState) {
+				} else if (answer instanceof ExecutionState s) {
 					completed = true;
+					if (s.getTotalTestCount() < 1) {
+						throw new CoreException(Status.error("No tests found"));
+					}
 				}
 			}
 			Thread.sleep(1000);

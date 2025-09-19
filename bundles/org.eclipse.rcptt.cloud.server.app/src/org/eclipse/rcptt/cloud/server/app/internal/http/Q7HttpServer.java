@@ -53,7 +53,6 @@ import org.eclipse.jetty.util.Attributes;
 import org.eclipse.rcptt.cloud.server.ExecutionIndex;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.IServerContext;
-import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.HashedFileRepository;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository;
@@ -132,7 +131,7 @@ public class Q7HttpServer {
 	public void start(int httpPort, String sitesDir, int keepSessions, int keepAUTArtifacts, String hostname)
 			throws IOException {
 		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);
-		serverFileUriPrefix = serverUri.resolve("artifacts");
+		serverFileUriPrefix = URI.create(".");
 		Map<String, Object> sessionProperties = Collections.singletonMap(IServerContext.ID, serverContext);
 		sessionProperties.forEach(server::setAttribute);
 
