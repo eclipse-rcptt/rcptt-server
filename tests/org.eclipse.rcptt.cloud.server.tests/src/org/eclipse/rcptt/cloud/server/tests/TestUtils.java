@@ -17,6 +17,7 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -489,6 +490,8 @@ public class TestUtils {
 			aut.setUri("localhost/qwe/qwe");
 			aut.setClassifier(platform);
 			aut.setId(testSuiteName);
+			byte[] hash = Arrays.copyOf(testSuiteName.getBytes(), 32);
+			aut.setHash(hash);
 			return aut;
 		}
 

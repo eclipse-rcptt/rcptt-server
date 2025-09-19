@@ -98,7 +98,7 @@ public class Q7HttpServer {
 	private final ExecutionRegistry executions = new ExecutionRegistry();
 	ExecutionIndex execIndex = new ExecutionIndex(null, executions);
 	
-	private final class ServerContextImpl implements IServerContext {
+	private final IServerContext serverContext = new IServerContext() {
 		@Override
 		public Optional<Supplier<InputStream>> getDataByHash(byte[] hash) {
 			return Q7HttpServer.this.getDataByHash(hash);
@@ -127,13 +127,12 @@ public class Q7HttpServer {
 		}
 
 		private final WeakHashMap<Object, Object> gcMonitor = new WeakHashMap<>();
-	}
+	};
 
 	public void start(int httpPort, String sitesDir, int keepSessions, int keepAUTArtifacts, String hostname)
 			throws IOException {
 		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);
 		serverFileUriPrefix = serverUri.resolve("artifacts");
-		ServerContextImpl serverContext = new ServerContextImpl();
 		Map<String, Object> sessionProperties = Collections.singletonMap(IServerContext.ID, serverContext);
 		sessionProperties.forEach(server::setAttribute);
 
@@ -183,6 +182,10 @@ public class Q7HttpServer {
 	
 	public static ExecutionIndex getExecutionIndex(Attributes server2) {
 		return requireNonNull(((IServerContext) server2.getAttribute(IServerContext.ID)).getExecutionIndex());
+	}
+	
+	public IServerContext getContext() {
+		return serverContext;
 	}
 
 	private static final class ServletEntryForWeakValue implements ArtifactServlet.Entry {

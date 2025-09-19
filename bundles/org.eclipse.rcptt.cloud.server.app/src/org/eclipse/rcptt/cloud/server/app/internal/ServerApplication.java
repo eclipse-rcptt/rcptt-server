@@ -21,6 +21,7 @@ import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.EclServerApplication;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.IServerContext;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.RegisterAgentService;
@@ -67,6 +68,8 @@ public class ServerApplication extends EclServerApplication {
 		RegisterAgentService.setServerInfo(agentServerName, httpPort);
 
 		server.start(httpPort, sitesDir, keepSessions, keepAUTArtifacts, agentServerName);
+		
+		setProperty(IServerContext.ID, server.getContext());
 		return super.run();
 	}
 

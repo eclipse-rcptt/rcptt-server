@@ -15,10 +15,8 @@ package org.eclipse.rcptt.cloud.common;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.util.EObjectKey;
 
 public class AutUtil {
 
@@ -27,25 +25,23 @@ public class AutUtil {
 	}
 
 	private static final class Key {
-		private final String id, uri;
-		private final byte[] hash;
+		private final Object[] fields;
 		
 		public Key(String id, String uri, byte[] hash) {
-			this.id = Objects.requireNonNull(id);
-			this.uri = requireNonNull(uri);
-			this.hash = Arrays.copyOf(hash, hash.length);
+			fields = new Object[] {requireNonNull(id), requireNonNull(uri), requireNonNull(hash)};
 		}
 		
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof Key that) {
-				return Arrays.deepEquals(flatten(), that.flatten());
+				return Arrays.deepEquals(fields, that.fields);
 			}
 			return false;
 		}
 		
-		private Object[] flatten() {
-			return new Object[] {id, uri, hash};
+		@Override
+		public int hashCode() {
+			return Arrays.deepHashCode(fields);
 		}
 		
 	}

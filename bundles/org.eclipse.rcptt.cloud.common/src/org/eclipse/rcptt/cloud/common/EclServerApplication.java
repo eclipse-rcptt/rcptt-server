@@ -14,16 +14,17 @@ package org.eclipse.rcptt.cloud.common;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.eclipse.rcptt.ecl.server.tcp.EclTcpServer;
-import org.eclipse.rcptt.ecl.server.tcp.EclTcpServerManager;
-import org.eclipse.rcptt.util.NetworkUtils;
+import java.util.Map;
 
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
 import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
+import org.eclipse.rcptt.ecl.server.tcp.EclTcpServer;
+import org.eclipse.rcptt.ecl.server.tcp.EclTcpServerManager;
+import org.eclipse.rcptt.util.NetworkUtils;
 
 public class EclServerApplication extends CommandLineApplication {
 	private static List<Integer> usedPorts = new LinkedList<Integer>();
@@ -40,7 +41,8 @@ public class EclServerApplication extends CommandLineApplication {
 		validateArguments();
 		for (int i = 0; i < 10; i++) {
 			try {
-				EclTcpServerManager.Instance.startServer(port, false, false);
+				EclTcpServer eclTcpServer = EclTcpServerManager.Instance.startServer(port, false, false);
+				properties.forEach(eclTcpServer::setProperty);
 				CommonPlugin.logInfo(String.format(
 						"Ecl server started on port %d", port));
 				break;
@@ -51,6 +53,11 @@ public class EclServerApplication extends CommandLineApplication {
 			}
 		}
 		return waitForCompletion();
+	}
+	
+	/** Should be called before run() **/
+	public void setProperty(String key, Object value) {
+		properties.put(key, value);
 	}
 
 	protected void validateArguments() throws InvalidCommandLineArgException {}
@@ -102,4 +109,6 @@ public class EclServerApplication extends CommandLineApplication {
 			server.interrupt();
 		}
 	}
+	
+	private final Map<String, Object> properties = new HashMap<>();
 }
