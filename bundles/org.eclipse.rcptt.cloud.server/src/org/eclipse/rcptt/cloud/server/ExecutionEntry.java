@@ -12,7 +12,6 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.rcptt.cloud.server.ServerPlugin.PLUGIN_ID;
 
@@ -74,7 +73,6 @@ import org.eclipse.rcptt.util.Base64;
 import org.eclipse.rcptt.util.FileUtil;
 
 import com.google.common.base.Throwables;
-import com.google.common.hash.HashCode;
 import com.google.common.io.Closeables;
 
 public class ExecutionEntry {
@@ -219,168 +217,18 @@ public class ExecutionEntry {
 	private int updateSiteIndex = 0;
 	private List<String> messages = Collections.synchronizedList(new ArrayList<>());
 
-	private static IStatus createError(String message) {
-		return new Status(IStatus.ERROR, PLUGIN_ID, message);
-	}
-
-	private static void throwError(String message) throws CoreException {
-		throw new CoreException(createError(message));
-	}
-
 	public AutInfo addAutForDownload(final AutInfo info, Function<File, URI> fileToServerUri, BiFunction<byte[], String, Optional<URI>> hashedRepository) throws CoreException {
 		final IQ7Monitor downloadMonitor = getMonitor(DOWNLOAD_MONITOR);
 		try {
-			if (info.getUri().startsWith("server://")) { 
-				byte[] requestedHash = info.getHash();
-				if (requestedHash != null && requestedHash.length == 32) {
-					String filename = Path.forPosix(URI.create(info.getUri()).getPath()).lastSegment();
-					Optional<URI> entry = hashedRepository.apply(requestedHash, filename);
-					if (entry.isPresent()) {
-						garbageCollectionGuard.add(entry.get());
-						info.setUri(entry.get().toASCIIString());
-					} else {
-						throw new CoreException(Status.error(format("Unable to resolve hash %s for %s - no such file is cached", HashCode.fromBytes(requestedHash), info.getUri())));
-					}
-				} else {
-					throw new CoreException(Status.error(format("Hash is not provided for AUT %s", info.getUri())));
-				}
-			} else {
-				// Only Download if not already on server.
-				final IServerAutProvider provider = AutDownloadManager
-						.getInstance().getProvider(info);
-
-				if (provider == null) {
-					String message = "No AUT download provider is registered for AUT URI: "
-							+ info.getUri();
-					throwError(message);
-				}
-
-				// Update classifier to most used Agent, if not specified.
-				if (info.getClassifier() == null) {
-					/*
-					 * TODO: Discuss how it should work in such situations.
-					 *
-					 * Right now will take classifiers from most agents, and
-					 * assign it to aut.
-					 *
-					 * In Theory it should check for available auts by url, if
-					 * classifier is used. Probable some execution options are
-					 * required here.
-					 */
-					String classifier = AgentUtils
-							.getMostUsedClassifier(ServerPlugin.getDefault()
-									.getAgentRegistry().getAgents());
-					if (classifier == null) {
-						String message = "Failed to specify AUT classifier, seems there is no agents registered.";
-						throwError(message);
-					}
-					info.setClassifier(classifier);
-				}
-
-				// Begin AUT download action.
-				final File autFile = provider.getAutFile(this, info,
-						info.getClassifier());
-
-				handle.commit(new Function<Execution, Void>() {
-					@Override
-                    public Void apply(Execution input) {
-						input.getAutNames().add(autFile.getName());
-						return null;
-					}
-				});
-
-				final AutInfo originalInfo = EcoreUtil.copy(info);
-
-				getPrepareQueue().addTask(new IPrepareRunnable() {
-
-					@Override
-                    public void run() throws Exception {
-						String msg = "Begin AUT download to " + autFile;
-						downloadMonitor.log(msg);
-						addMessage(
-								Thread.currentThread().getName(), msg);
-
-						final IQ7Monitor log = getMonitor(ExecutionEntry.DOWNLOAD_MONITOR
-								+ "_" + FileUtil.getID(autFile.getName()));
-
-						log.addListener(new IQ7LogListener() {
-
-							@Override
-                            public void added(String message) {
-								addMessage(
-										Thread.currentThread().getName(),
-										message);
-							}
-						});
-						provider.download(ExecutionEntry.this, originalInfo,
-								originalInfo.getClassifier(), autFile,
-								new NullProgressMonitor(), log);
-						downloadMonitor.log("AUT download is complete.");
-					}
-				}, "Download AUT");
-
-				// Add update site mirroring process.
-
-				info.setUri(fileToServerUri.apply(autFile).toASCIIString());
-			}
+			downloadAut(info, fileToServerUri, hashedRepository, downloadMonitor);
 
 			InjectionConfiguration injection = info.getInjection();
 			// Process update sites
 			if (injection == null) {
 				return info;
 			}
-			EList<Entry> list = injection
-					.getEntries();
-			Iterator<Entry> iterator = list
-					.iterator();
-			while (iterator.hasNext()) {
-				final Entry next = iterator
-						.next();
-				if (next instanceof UpdateSite) {
-					UpdateSite site = (UpdateSite) next;
-					if (site.getUri().startsWith("server://")) {
-						// continue, already on server
-						continue;
-					}
-					if (site.getUri().equals("null"))
-                    {
-                        throw new IllegalArgumentException(
-								"Invalid injection update site");
-                    }
-					final P2MirrorTool tool = new P2MirrorTool();
-					final URI uri = URI.create(site.getUri());
-					IPath path = new Path(uri.getPath());
+			downloadInjections(fileToServerUri, downloadMonitor, injection);
 
-					if (path.segmentCount() > 2) { // Reduce to 2 last segments
-						path = path
-								.removeFirstSegments(path.segmentCount() - 2);
-					}
-
-					String siteName = FileUtil.getID("updatesite_"
-							+ updateSiteIndex + "_" + path.toString());// +
-																		// ".zip";
-					updateSiteIndex++;
-
-					final File file = getArtifactName(siteName);
-					if (file.exists()) {
-						file.delete();
-					}
-
-					final UpdateSite donwloadSite = EcoreUtil.copy(site);
-					site.setUri(fileToServerUri.apply(file).toASCIIString());
-
-					getPrepareQueue().addTask(new IPrepareRunnable() {
-
-						@Override
-                        public void run() throws Exception {
-							doUpdateSiteMirroring(downloadMonitor, tool, file,
-									donwloadSite);
-						}
-					}, "Mirror update site:" + donwloadSite.getUri());
-				}
-			}
-
-			return info;
 		} catch (Exception e) {
 			downloadMonitor.log(e.getMessage(), e);
 			// terminate all pretend tasks
@@ -388,9 +236,8 @@ public class ExecutionEntry {
 			Throwables.throwIfInstanceOf(e, CoreException.class);
 			throw new CoreException(Status.error(e.getMessage(), e));
 		}
+		return info;
 	}
-
-
 
 	public Object getProfiler() {
 		return profiler;
@@ -585,5 +432,161 @@ public class ExecutionEntry {
 			return null;
 		});
 		garbageCollectionGuard.forEach(Reference::reachabilityFence);
+	}
+
+	private void downloadAut(final AutInfo info, Function<File, URI> fileToServerUri,
+			BiFunction<byte[], String, Optional<URI>> hashedRepository, final IQ7Monitor downloadMonitor)
+			throws CoreException {
+		byte[] requestedHash = info.getHash();
+		if (requestedHash != null && requestedHash.length == 32) {
+			String filename = Path.forPosix(URI.create(info.getUri()).getPath()).lastSegment();
+			Optional<URI> entry = hashedRepository.apply(requestedHash, filename);
+			if (entry.isPresent()) {
+				garbageCollectionGuard.add(entry.get());
+				info.setUri(entry.get().toASCIIString());
+				return;
+			}
+		}
+		if (!info.getUri().startsWith("server://")) { 
+			// Only Download if not already on server.
+			final IServerAutProvider provider = AutDownloadManager
+					.getInstance().getProvider(info);
+	
+			if (provider == null) {
+				String message = "No AUT download provider is registered for AUT URI: "
+						+ info.getUri();
+				throwError(message);
+			}
+	
+			// Update classifier to most used Agent, if not specified.
+			if (info.getClassifier() == null) {
+				/*
+				 * TODO: Discuss how it should work in such situations.
+				 *
+				 * Right now will take classifiers from most agents, and
+				 * assign it to aut.
+				 *
+				 * In Theory it should check for available auts by url, if
+				 * classifier is used. Probable some execution options are
+				 * required here.
+				 */
+				String classifier = AgentUtils
+						.getMostUsedClassifier(ServerPlugin.getDefault()
+								.getAgentRegistry().getAgents());
+				if (classifier == null) {
+					String message = "Failed to specify AUT classifier, seems there is no agents registered.";
+					throwError(message);
+				}
+				info.setClassifier(classifier);
+			}
+	
+			// Begin AUT download action.
+			final File autFile = provider.getAutFile(this, info,
+					info.getClassifier());
+	
+			handle.commit(new Function<Execution, Void>() {
+				@Override
+		        public Void apply(Execution input) {
+					input.getAutNames().add(autFile.getName());
+					return null;
+				}
+			});
+	
+			final AutInfo originalInfo = EcoreUtil.copy(info);
+	
+			getPrepareQueue().addTask(new IPrepareRunnable() {
+	
+				@Override
+		        public void run() throws Exception {
+					String msg = "Begin AUT download to " + autFile;
+					downloadMonitor.log(msg);
+					addMessage(
+							Thread.currentThread().getName(), msg);
+	
+					final IQ7Monitor log = getMonitor(ExecutionEntry.DOWNLOAD_MONITOR
+							+ "_" + FileUtil.getID(autFile.getName()));
+	
+					log.addListener(new IQ7LogListener() {
+	
+						@Override
+		                public void added(String message) {
+							addMessage(
+									Thread.currentThread().getName(),
+									message);
+						}
+					});
+					provider.download(ExecutionEntry.this, originalInfo,
+							originalInfo.getClassifier(), autFile,
+							new NullProgressMonitor(), log);
+					downloadMonitor.log("AUT download is complete.");
+				}
+			}, "Download AUT");
+	
+			// Add update site mirroring process.
+	
+			info.setUri(fileToServerUri.apply(autFile).toASCIIString());
+		}
+	}
+
+	private void downloadInjections(Function<File, URI> fileToServerUri, final IQ7Monitor downloadMonitor,
+			InjectionConfiguration injection) {
+		EList<Entry> list = injection
+				.getEntries();
+		Iterator<Entry> iterator = list
+				.iterator();
+		while (iterator.hasNext()) {
+			final Entry next = iterator
+					.next();
+			if (next instanceof UpdateSite) {
+				UpdateSite site = (UpdateSite) next;
+				if (site.getUri().startsWith("server://")) {
+					// continue, already on server
+					continue;
+				}
+				if (site.getUri().equals("null"))
+		        {
+		            throw new IllegalArgumentException(
+							"Invalid injection update site");
+		        }
+				final P2MirrorTool tool = new P2MirrorTool();
+				final URI uri = URI.create(site.getUri());
+				IPath path = new Path(uri.getPath());
+	
+				if (path.segmentCount() > 2) { // Reduce to 2 last segments
+					path = path
+							.removeFirstSegments(path.segmentCount() - 2);
+				}
+	
+				String siteName = FileUtil.getID("updatesite_"
+						+ updateSiteIndex + "_" + path.toString());// +
+																	// ".zip";
+				updateSiteIndex++;
+	
+				final File file = getArtifactName(siteName);
+				if (file.exists()) {
+					file.delete();
+				}
+	
+				final UpdateSite donwloadSite = EcoreUtil.copy(site);
+				site.setUri(fileToServerUri.apply(file).toASCIIString());
+	
+				getPrepareQueue().addTask(new IPrepareRunnable() {
+	
+					@Override
+		            public void run() throws Exception {
+						doUpdateSiteMirroring(downloadMonitor, tool, file,
+								donwloadSite);
+					}
+				}, "Mirror update site:" + donwloadSite.getUri());
+			}
+		}
+	}
+
+	private static IStatus createError(String message) {
+		return new Status(IStatus.ERROR, PLUGIN_ID, message);
+	}
+
+	private static void throwError(String message) throws CoreException {
+		throw new CoreException(createError(message));
 	}
 }

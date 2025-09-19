@@ -29,7 +29,7 @@ public class AutUtil {
 		private int hash = 0;
 		
 		public Key(String id, String uri, byte[] hash) {
-			fields = new Object[] {requireNonNull(id), requireNonNull(uri), Arrays.copyOf(hash, hash.length)};
+			fields = new Object[] {requireNonNull(id), requireNonNull(uri), hash == null ? null : Arrays.copyOf(hash, hash.length)};
 		}
 		
 		@Override
