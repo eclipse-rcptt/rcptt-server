@@ -96,8 +96,11 @@ Contributors:
             name="GetHTTPServerInfo"
             namespace="http:///q7/cloud/ecl/server/commands.ecore">
       </scriptlet>
-      
-      
+      <scriptlet
+            class="org.eclipse.rcptt.cloud.server.ecl.impl.internal.AddAutService"
+            name="AddAut"
+            namespace="http:///q7/cloud/ecl/common/commands.ecore">
+      </scriptlet>
    </extension>
 
    <extension

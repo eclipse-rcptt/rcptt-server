@@ -106,6 +106,7 @@ public class BaseTaskQueueTests {
 		aut.setClassifier(CLASSIFIER);
 		aut.setUri("a.com");
 		aut.setId("aut1");
+		aut.setHash(aut.getId().getBytes());
 		return aut;
 	}
 

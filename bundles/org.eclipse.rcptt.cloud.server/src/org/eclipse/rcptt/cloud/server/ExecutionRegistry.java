@@ -193,6 +193,15 @@ public class ExecutionRegistry {
 		return status;
 	}
 	
+	public String[] parseExecutionId(String executionId) {
+		int pos = executionId.lastIndexOf("-");
+		if (pos < 0) {
+			throw new IllegalArgumentException(executionId);
+		}
+		return new String[] {executionId.substring(0, pos), executionId.substring(pos+1, executionId.length())};
+	}
+
+	
 	private record ExecutionStart(long start, boolean hasAUT, boolean done, ISMHandle<Execution> execution, ISMHandle<SuiteStats> suite) implements Comparable<ExecutionStart>{
 		static ExecutionStart create (ISMHandle<Execution> execution,ISMHandle<SuiteStats> suite) {
 			return execution.apply(e -> {
@@ -205,6 +214,7 @@ public class ExecutionRegistry {
 			return Long.compare(start(), o.start());
 		}
 	}
+
 
 	
 }

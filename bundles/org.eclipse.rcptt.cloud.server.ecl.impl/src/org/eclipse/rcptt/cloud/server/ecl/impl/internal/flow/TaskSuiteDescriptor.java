@@ -34,7 +34,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
 import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
@@ -447,19 +446,11 @@ public class TaskSuiteDescriptor {
 	}
 
 	public synchronized int getRunningTasksCount() {
-		int count = 0;
-		for (List<TaskDescriptor> l : runningTasks.values()) {
-			count += l.size();
-		}
-		return count;
+		return runningTasks.values().stream().mapToInt(List::size).sum();
 	}
 
 	public synchronized Collection<TaskDescriptor> getRunningTasks() {
-		List<TaskDescriptor> rv = new ArrayList<TaskDescriptor>();
-		for (List<TaskDescriptor> l : runningTasks.values()) {
-			rv.addAll(l);
-		}
-		return rv;
+		return runningTasks.values().stream().flatMap(List::stream).toList();
 	}
 
 	public synchronized Collection<TaskDescriptor> getPendingTasks() {
@@ -494,6 +485,7 @@ public class TaskSuiteDescriptor {
 		ensureInvariants();
 	}
 
+	@SuppressWarnings("resource")
 	public void agentTimeout(AgentInfo agent) {
 		IStatus status = RcpttPlugin.createStatus("Agent " + agent.getUri() + " has timed out");
 		String agentID = AgentRegistry.getAgentID(agent);

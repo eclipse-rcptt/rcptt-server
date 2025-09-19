@@ -444,7 +444,8 @@ public class TestUtils {
 											info.getId());
 								}
 							}
-						} else if (answer instanceof ExecutionState) {
+						} else if (answer instanceof ExecutionState state) {
+							skipped = state.getSkippedTestCount();
 							completed = true;
 							if (listener != null) {
 								listener.done();

@@ -1,4 +1,4 @@
-package org.eclipse.rcptt.cloud.common.ecl.impl.internal;
+package org.eclipse.rcptt.cloud.server.ecl.impl.internal;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;

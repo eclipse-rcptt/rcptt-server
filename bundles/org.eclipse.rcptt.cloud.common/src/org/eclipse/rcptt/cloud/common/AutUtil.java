@@ -26,9 +26,10 @@ public class AutUtil {
 
 	private static final class Key {
 		private final Object[] fields;
+		private int hash = 0;
 		
 		public Key(String id, String uri, byte[] hash) {
-			fields = new Object[] {requireNonNull(id), requireNonNull(uri), requireNonNull(hash)};
+			fields = new Object[] {requireNonNull(id), requireNonNull(uri), Arrays.copyOf(hash, hash.length)};
 		}
 		
 		@Override
@@ -41,7 +42,10 @@ public class AutUtil {
 		
 		@Override
 		public int hashCode() {
-			return Arrays.deepHashCode(fields);
+			if (hash == 0) {
+				hash = Arrays.deepHashCode(fields);
+			}
+			return hash;
 		}
 		
 	}

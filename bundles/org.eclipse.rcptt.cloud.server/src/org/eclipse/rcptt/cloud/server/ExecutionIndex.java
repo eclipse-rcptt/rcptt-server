@@ -12,13 +12,13 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server;
 
+import static java.lang.Math.max;
+import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 import static org.eclipse.rcptt.cloud.server.ServerPlugin.logErr;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.CANCELED;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.FINISHED;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.PENDING;
-import static java.lang.Math.max;
-import static java.util.Arrays.asList;
-import static java.util.Objects.requireNonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,20 +29,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.eclipse.emf.common.util.EMap;
-
-import com.google.common.base.Function;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
+import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentStats;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentTest;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+
+import com.google.common.base.Function;
 
 public class ExecutionIndex {
 	private final ExecutionRegistry executionRegistry;
@@ -103,6 +105,20 @@ public class ExecutionIndex {
 			}
 			return new ArrayList<ISMHandle<Execution>>();
 		}
+	}
+	
+	public Optional<ISMHandle<Execution>> getExecution(String executionId) {
+		String[] suiteAndExecution = executionRegistry.parseExecutionId(executionId);
+		ISMHandle<SuiteStats> handle = ISMCore.getInstance()
+				.getSuiteStore().getHandle(suiteAndExecution[0]);
+		if (!handle.exists()) {
+			return Optional.empty();
+		}
+		ISMHandleStore<Execution> executions = executionRegistry.getExecutions(handle);
+		if (!executions.containsHandle(suiteAndExecution[1])) {
+			return Optional.empty();
+		}
+		return Optional.of(executions.getHandle(suiteAndExecution[1]));
 	}
 
 	public ISMHandle<Execution> getExecution(int id) {
@@ -176,8 +192,8 @@ public class ExecutionIndex {
 			return;
 		}
 		Properties props = new Properties();
-		try {
-			props.load(new FileInputStream(metadata));
+		try (FileInputStream is =new FileInputStream(metadata)) {
+			props.load(is);
 		} catch (IOException e) {
 			// Not a big deal if we have no props
 			return;

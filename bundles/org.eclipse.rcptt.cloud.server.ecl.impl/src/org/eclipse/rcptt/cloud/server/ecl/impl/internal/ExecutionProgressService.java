@@ -12,24 +12,27 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.ecl.impl.internal;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.rcptt.ecl.core.Command;
-import org.eclipse.rcptt.ecl.runtime.ICommandService;
-import org.eclipse.rcptt.ecl.runtime.IProcess;
+import static java.util.Collections.singletonList;
 
-import org.eclipse.rcptt.cloud.model.Envelope;
+import java.util.Arrays;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
-import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.IServerContext;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.IExecutionProfiler;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionProgress;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
 
-public class ExecutionProgressService implements ICommandService {
+public class ExecutionProgressService extends SingleCommandService<ExecutionProgress> {
 
-	public IStatus service(Command command, IProcess context)
+	public ExecutionProgressService() {
+		super(ExecutionProgress.class);
+	}
+
+	@Override
+	public Iterable<EObject> serviceTyped(ExecutionProgress command, IServerContext context)
 			throws InterruptedException, CoreException {
 
 		ExecutionProgress cmd = (ExecutionProgress) command;
@@ -37,36 +40,37 @@ public class ExecutionProgressService implements ICommandService {
 		if (cmd.getSuiteId() == null) {
 			ExecutionState state = ServerCommandsFactory.eINSTANCE
 					.createExecutionState();
-			context.getOutput().write(state);
-			return Status.CANCEL_STATUS;
+			return singletonList(state);
 		}
-		ExecutionEntry handle = ExecutionRegistry.getInstance(context).getSuiteHandle(cmd.getSuiteId());
+		ExecutionEntry handle = context.getExecutionRegistry().getSuiteHandle(cmd.getSuiteId());
 
 		if (handle == null) {
-			return returnNoSuite(context);
+			return singletonList(findCompleted(context, cmd.getSuiteId()));
 		}
 
 		IExecutionProfiler profiler = (IExecutionProfiler) handle.getProfiler();
 
 		if (profiler == null) {
-			return returnNoSuite(context);
+			return singletonList(findCompleted(context, cmd.getSuiteId()));
 		}
 
-		if (profiler != null) {
-			for (Envelope envelope : profiler.pollReports()) {
-				context.getOutput().write(envelope);
-			}
-		}
-
-		context.getOutput().close(Status.OK_STATUS);
-		return Status.OK_STATUS;
+		return Arrays.asList(profiler.pollReports());
 	}
 
-	private IStatus returnNoSuite(IProcess context) throws CoreException {
+	private ExecutionState findCompleted(IServerContext serverContext, String suiteId) {
 		ExecutionState state = ServerCommandsFactory.eINSTANCE
 				.createExecutionState();
-		context.getOutput().write(state);
-		context.getOutput().close(Status.OK_STATUS);
-		return Status.OK_STATUS;
+		serverContext.getExecutionIndex().getExecution(suiteId).ifPresent(handle -> {
+			handle.<Void>apply(execution -> {
+				state.setSkippedTestCount(execution.getCanceledCount());
+				state.setExecutedTestCount(execution.getExecutedCount());
+				state.setTotalTestCount(execution.getTotalCount());
+				state.setExecutionTime(execution.getEndTime() == 0 ? System.currentTimeMillis() : execution.getEndTime() - execution.getStartTime());
+				state.setFailedTestCount(execution.getFailedCount());
+				return null;
+			});
+		});
+		return state;
 	}
+
 }
