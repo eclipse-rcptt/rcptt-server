@@ -26,6 +26,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.IndexHandler;
@@ -74,8 +75,7 @@ public class SuiteHandler extends Handler.Abstract {
 				buffer.append("<th>Tests failed</th>");
 				buffer.append("<th></th>");
 				buffer.append("</tr>");
-				ISMHandleStore<Execution> execsStore = ExecutionRegistry
-						.getInstance().getExecutions(handle);
+				ISMHandleStore<Execution> execsStore = ContextEscape.getExecutionRegistry(getServer()).getExecutions(handle);
 				
 				List<ISMHandle<Execution>> executions = execsStore.getHandles().stream().sorted(Comparator.comparing(ISMHandle::getFileName)).toList();
 				for (ISMHandle<Execution> execution : executions.reversed()) {

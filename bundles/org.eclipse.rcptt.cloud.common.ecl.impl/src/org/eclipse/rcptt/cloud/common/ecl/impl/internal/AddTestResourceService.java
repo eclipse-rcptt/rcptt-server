@@ -51,7 +51,8 @@ public class AddTestResourceService implements ICommandService {
 					+ " resource: " + cmd.getResource().getId(), null);
 		}
 
-		ExecutionEntry handle = ExecutionRegistry.getInstance().getSuiteHandle(
+		ExecutionRegistry executions = ExecutionRegistry.getInstance(context);
+		ExecutionEntry handle = executions.getSuiteHandle(
 				cmd.getSuiteId());
 		if (handle == null) {
 			return new Status(IStatus.ERROR,
@@ -63,7 +64,7 @@ public class AddTestResourceService implements ICommandService {
 		if (cmd.getResource() != null) {
 			dir.putResource(EcoreUtil.copy(cmd.getResource()));
 		} else if (cmd.getArtifactsPath() != null) {
-			File artifactName = new File(ExecutionRegistry.getInstance()
+			File artifactName = new File(executions
 					.getRoot().toURI().resolve(URI.create(cmd.getArtifactsPath())));
 			try {
 				ZipInputStream zin = new ZipInputStream(

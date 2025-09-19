@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal.http.handlers;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
@@ -24,9 +26,17 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.IServerContext;
 
 @SuppressWarnings("serial")
 public class Q7SessionUploadService extends HttpServlet {
+
+	private final IServerContext context;
+
+	public Q7SessionUploadService(IServerContext context) {
+		this.context = requireNonNull(context);
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -43,13 +53,12 @@ public class Q7SessionUploadService extends HttpServlet {
 			outp.write("fail");
 			return;
 		}
-		ExecutionEntry artifacts = ExecutionRegistry.getInstance()
-				.getSuiteHandle(suiteID);
+		ExecutionEntry artifacts = context.getExecutionRegistry().getSuiteHandle(suiteID);
 		if (artifacts == null) {
 			outp.print("No suite " + suiteID);
 		} else {
 			ServletInputStream stream = req.getInputStream();
-			URI location = artifacts.recieveAUT(stream, fileName, unZip);
+			URI location = context.toUri(artifacts.recieveAUT(stream, fileName, unZip));
 			outp.print(location);
 		}
 	}

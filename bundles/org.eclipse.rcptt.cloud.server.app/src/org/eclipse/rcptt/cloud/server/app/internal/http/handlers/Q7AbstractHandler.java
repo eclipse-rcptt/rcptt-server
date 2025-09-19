@@ -22,13 +22,18 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content.Sink;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Response;
-
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 
 public abstract class Q7AbstractHandler extends Handler.Abstract {
 
 	public Q7AbstractHandler() {
 		super();
+	}
+	
+	public ExecutionRegistry getExecutionRegistry() {
+		return Q7HttpServer.getExecutionRegistry(getServer());
 	}
 
 	protected void writeMenuAndContent(Response response,

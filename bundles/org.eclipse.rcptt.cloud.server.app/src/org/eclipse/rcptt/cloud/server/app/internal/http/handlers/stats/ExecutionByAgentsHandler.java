@@ -43,6 +43,7 @@ import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.app.ReportHelper;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
+import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.Q7AbstractHandler;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
@@ -75,8 +76,7 @@ public class ExecutionByAgentsHandler extends Q7AbstractHandler {
 			if (handle.exists()) {
 				SuiteStats stats = handle.apply(getStatsCopy);
 
-				ISMHandleStore<Execution> executions = ExecutionRegistry
-						.getInstance().getExecutions(handle);
+				ISMHandleStore<Execution> executions = getExecutionRegistry().getExecutions(handle);
 
 				Execution exec = null;
 				if (executions.containsHandle(executionID)) {

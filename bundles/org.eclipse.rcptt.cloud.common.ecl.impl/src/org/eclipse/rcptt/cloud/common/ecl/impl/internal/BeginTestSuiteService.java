@@ -41,7 +41,7 @@ public class BeginTestSuiteService implements ICommandService {
 			ISMHandleStore<SuiteStats> store = ISMCore.getInstance()
 					.getSuiteStore();
 			ISMHandle<SuiteStats> suiteHandle = store.getHandle(addTestSuite.getSuiteId());
-			ExecutionEntry suite = ExecutionRegistry.getInstance().beginNewSuite(suiteHandle);
+			ExecutionEntry suite = ExecutionRegistry.getInstance(context).beginNewSuite(suiteHandle);
 
 			context.getOutput().write(BoxedValues.box(suite.getSuiteId()));
 		} catch (CoreException e) {

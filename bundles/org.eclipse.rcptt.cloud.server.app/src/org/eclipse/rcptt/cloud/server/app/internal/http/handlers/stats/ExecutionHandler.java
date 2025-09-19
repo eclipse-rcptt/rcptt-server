@@ -61,8 +61,7 @@ public class ExecutionHandler extends Q7AbstractHandler {
 			ISMHandle<Execution> execHandle = null;
 			if (handle.exists()) {
 				SuiteStats stats = handle.apply(getStatsCopy);
-				ISMHandleStore<Execution> executions = ExecutionRegistry
-						.getInstance().getExecutions(handle);
+				ISMHandleStore<Execution> executions = getExecutionRegistry().getExecutions(handle);
 				Execution exec = null;
 				if (executions.containsHandle(id)) {
 					execHandle = executions.getHandle(id);

@@ -73,46 +73,32 @@ import com.google.gson.JsonPrimitive;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionIndex;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.rest.internal.Utils.FoldFunction;
 
-
 public class ExecutionsHandler extends Handler.Abstract {
 
-	public ExecutionsHandler() {
-		this(ServerPlugin.getDefault().getExecIndex());
-	}
-
-	public ExecutionsHandler(ExecutionIndex index) {
-		this.index = index;
-	}
-
 	@Override
-	public boolean handle(Request request, Response response, Callback callback)
-			throws IOException {
+	public boolean handle(Request request, Response response, Callback callback) throws IOException {
 		String[] targetPath = getTargetPath(Request.getPathInContext(request));
+		ExecutionIndex index = ContextEscape.getExecutionIndex(getServer());
 
 		if (isExecList(targetPath)) {
-			writeJsonResponse(
-					handleExecutionList(getLimit(request), getFilters(request),
-							getSuiteNameFilter(request)), response);
+			writeJsonResponse(handleExecutionList(getLimit(request), getFilters(request), getSuiteNameFilter(request), index),
+					response);
 		} else if (isSingleExec(targetPath)) {
-			writeJsonResponse(
-					handleSingleExecution(getExecutionId(targetPath)), response);
+			writeJsonResponse(handleSingleExecution(getExecutionId(targetPath), index), response);
 		} else if (isReport(targetPath)) {
-			writeJsonResponse(handleReport(getExecutionId(targetPath)),
-					response);
+			writeJsonResponse(handleReport(getExecutionId(targetPath), index), response);
 		} else if (isArtifactList(targetPath)) {
-			writeJsonResponse(handleArtifactList(getExecutionId(targetPath)),
-					response);
+			writeJsonResponse(handleArtifactList(getExecutionId(targetPath), index), response);
 		} else if (isArtifactFile(targetPath)) {
-			Response.sendRedirect(request, response, callback, handleArtifactFile(
-					getExecutionId(targetPath), getArtifactFile(targetPath))
-					.toString());
+			Response.sendRedirect(request, response, callback,
+					handleArtifactFile(getExecutionId(targetPath), getArtifactFile(targetPath), index).toString());
 		} else if (ScreenshotParams.isScreenshot(targetPath)) {
-			handleScreenshot(ScreenshotParams.fromRequest(targetPath, request),
-					request, response, callback);
+			handleScreenshot(ScreenshotParams.fromRequest(targetPath, request), request, response, callback);
 		}
 		callback.succeeded();
 		return true;
@@ -123,9 +109,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 	}
 
 	private static String[] getTargetPath(String target) {
-		return Iterables
-				.toArray(Splitter.on("/").omitEmptyStrings().split(target),
-						String.class);
+		return Iterables.toArray(Splitter.on("/").omitEmptyStrings().split(target), String.class);
 	}
 
 	private static boolean isSingleExec(String[] target) {
@@ -149,8 +133,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 	}
 
 	private static boolean isScreenshot(String[] target) {
-		return target.length >= 4 && target[1].equals(REPORT)
-				&& target[3].equals(SCREENSHOT);
+		return target.length >= 4 && target[1].equals(REPORT) && target[3].equals(SCREENSHOT);
 	}
 
 	private static boolean isNumber(String str) {
@@ -167,8 +150,8 @@ public class ExecutionsHandler extends Handler.Abstract {
 	private static final String THUMBNAIL = "thumbnail";
 
 	private static final class ScreenshotParams {
-		public ScreenshotParams(int execId, int testId, int screenshotIndex,
-				boolean thumbnail, int thumbnailWidth, int thumbnailHeight) {
+		public ScreenshotParams(int execId, int testId, int screenshotIndex, boolean thumbnail, int thumbnailWidth,
+				int thumbnailHeight) {
 			this.execId = execId;
 			this.testId = testId;
 			this.screenshotIndex = screenshotIndex;
@@ -181,8 +164,8 @@ public class ExecutionsHandler extends Handler.Abstract {
 			if (target.length < 4) {
 				return false;
 			}
-			if (!isNumber(target[0]) || !REPORT.equals(target[1])
-					|| !isNumber(target[2]) || !SCREENSHOT.equals(target[3])) {
+			if (!isNumber(target[0]) || !REPORT.equals(target[1]) || !isNumber(target[2])
+					|| !SCREENSHOT.equals(target[3])) {
 				return false;
 			}
 
@@ -202,12 +185,9 @@ public class ExecutionsHandler extends Handler.Abstract {
 			int testId = parseInt(target[2]);
 			int screenshotIndex = target.length > 4 ? parseInt(target[4]) : -1;
 			boolean thumbnail = target.length > 5;
-			int thumbnailWidth = thumbnail ? getParam(req, WIDTH,
-					DEFAULT_WIDTH, Integer.class) : -1;
-			int thumbnailHeight = thumbnail ? getParam(req, HEIGHT,
-					DEFAULT_HEIGHT, Integer.class) : -1;
-			return new ScreenshotParams(execId, testId, screenshotIndex,
-					thumbnail, thumbnailWidth, thumbnailHeight);
+			int thumbnailWidth = thumbnail ? getParam(req, WIDTH, DEFAULT_WIDTH, Integer.class) : -1;
+			int thumbnailHeight = thumbnail ? getParam(req, HEIGHT, DEFAULT_HEIGHT, Integer.class) : -1;
+			return new ScreenshotParams(execId, testId, screenshotIndex, thumbnail, thumbnailWidth, thumbnailHeight);
 		}
 
 		public final int execId;
@@ -218,15 +198,14 @@ public class ExecutionsHandler extends Handler.Abstract {
 		public final int thumbnailHeight;
 	}
 
-	private void handleScreenshot(ScreenshotParams params, Request request, Response response, Callback callback) throws IOException {
+	private void handleScreenshot(ScreenshotParams params, Request request, Response response, Callback callback)
+			throws IOException {
 
-		ISMHandle<Execution> exec = index.getExecution(params.execId);
-		Iterable<Report> iterable = new Q7ReportIterator(new File(
-				exec.getFileRoot(), "q7.report"));
+		ISMHandle<Execution> exec = ContextEscape.getExecutionIndex(getServer()).getExecution(params.execId);
+		Iterable<Report> iterable = new Q7ReportIterator(new File(exec.getFileRoot(), "q7.report"));
 		Report report = get(iterable, params.testId);
 
-		List<Screenshot> screenshots = ReportUtils.findScreenshots(report
-				.getRoot());
+		List<Screenshot> screenshots = ReportUtils.findScreenshots(report.getRoot());
 		int screenshotIndex = params.screenshotIndex >= 0 ? params.screenshotIndex
 				: params.screenshotIndex + screenshots.size();
 		Screenshot screenshot = get(screenshots, screenshotIndex, null);
@@ -234,55 +213,50 @@ public class ExecutionsHandler extends Handler.Abstract {
 			send404(request, response, callback);
 			return;
 		}
-		byte[] data = params.thumbnail ? resizePng(screenshot.getData(),
-				params.thumbnailWidth, params.thumbnailHeight) : screenshot
-				.getData();
+		byte[] data = params.thumbnail ? resizePng(screenshot.getData(), params.thumbnailWidth, params.thumbnailHeight)
+				: screenshot.getData();
 		Utils.sendPng(response, data);
 	}
 
 	private static byte[] resizePng(byte[] original, int width, int height) {
 		try {
-	        // Read the input PNG into a BufferedImage
-	        ByteArrayInputStream inputStream = new ByteArrayInputStream(original);
-	        BufferedImage originalImage = ImageIO.read(inputStream);
-	
-	        if (originalImage == null) {
-	            throw new IOException("The input byte array is not a valid PNG image.");
-	        }
-	
-	        // Create a new BufferedImage with the desired dimensions
-	        BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-	
-	        // Draw the original image scaled to the new dimensions
-	        Graphics2D g2d = resizedImage.createGraphics();
-	        g2d.drawImage(originalImage, 0, 0, width, height, null);
-	        g2d.dispose();
-	
-	        // Write the resized image to a byte array
-	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-	        ImageIO.write(resizedImage, "png", outputStream);
-	
-	        return outputStream.toByteArray();
+			// Read the input PNG into a BufferedImage
+			ByteArrayInputStream inputStream = new ByteArrayInputStream(original);
+			BufferedImage originalImage = ImageIO.read(inputStream);
+
+			if (originalImage == null) {
+				throw new IOException("The input byte array is not a valid PNG image.");
+			}
+
+			// Create a new BufferedImage with the desired dimensions
+			BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+			// Draw the original image scaled to the new dimensions
+			Graphics2D g2d = resizedImage.createGraphics();
+			g2d.drawImage(originalImage, 0, 0, width, height, null);
+			g2d.dispose();
+
+			// Write the resized image to a byte array
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			ImageIO.write(resizedImage, "png", outputStream);
+
+			return outputStream.toByteArray();
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
 	}
 
-	private static void send404(Request request, Response response, Callback callback)
-			throws IOException {
+	private static void send404(Request request, Response response, Callback callback) throws IOException {
 		Response.writeError(request, response, callback, HttpStatus.NOT_FOUND_404);
 	}
 
-	public URI handleArtifactFile(int id, String name) {
+	public URI handleArtifactFile(int id, String name, ExecutionIndex index) {
 		ISMHandle<Execution> exec = index.getExecution(id);
-		return URI.create(String.format("/artifacts/%s/%s/%s",
-				exec.apply(getSuiteId), exec.apply(getBuildId), name));
+		return URI.create(String.format("/artifacts/%s/%s/%s", exec.apply(getSuiteId), exec.apply(getBuildId), name));
 	}
 
-	public JsonElement handleArtifactList(int id) {
-		return toArray(filter(
-				transform(getArtifactMap(index.getExecution(id)).entrySet(),
-						artifactToJson), notNull()));
+	public JsonElement handleArtifactList(int id, ExecutionIndex index) {
+		return toArray(filter(transform(getArtifactMap(index.getExecution(id)).entrySet(), artifactToJson), notNull()));
 
 	}
 
@@ -302,8 +276,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 		}
 	};
 
-	private static final Map<File, String> getArtifactMap(
-			final ISMHandle<Execution> exec) {
+	private static final Map<File, String> getArtifactMap(final ISMHandle<Execution> exec) {
 		return exec.apply(new Function<Execution, Map<File, String>>() {
 			@Override
 			public Map<File, String> apply(Execution input) {
@@ -323,26 +296,22 @@ public class ExecutionsHandler extends Handler.Abstract {
 		if (!input.getAutNames().isEmpty()) {
 			return input.getAutNames().get(0);
 		}
-		String autMetaName = getFirst(
-				filter(input.getMetadataArtifacts(), new Predicate<String>() {
-					@Override
-					public boolean apply(String input) {
-						return input.endsWith(".properties")
-								&& input.startsWith("aut");
-					}
-				}), null);
+		String autMetaName = getFirst(filter(input.getMetadataArtifacts(), new Predicate<String>() {
+			@Override
+			public boolean apply(String input) {
+				return input.endsWith(".properties") && input.startsWith("aut");
+			}
+		}), null);
 		if (autMetaName == null) {
 			return null;
 		}
 		File autMetaFile = new File(entry.getFileRoot(), autMetaName);
 		if (autMetaFile.exists()) {
 			Properties p = new Properties();
-			try (InputStream inputStream = new BufferedInputStream(new FileInputStream(
-						autMetaFile))) {
+			try (InputStream inputStream = new BufferedInputStream(new FileInputStream(autMetaFile))) {
 				p.load(inputStream);
 				String uri = p.getProperty("uri");
-				return (uri != null) ? ExecutionEntry.getAutNameFromUri(uri,
-						null) : null;
+				return (uri != null) ? ExecutionEntry.getAutNameFromUri(uri, null) : null;
 			} catch (Exception e) {
 				ServerPlugin.logErr(e, "Failed");
 				return null;
@@ -351,10 +320,9 @@ public class ExecutionsHandler extends Handler.Abstract {
 		return null;
 	}
 
-	public JsonElement handleReport(int id) {
+	public JsonElement handleReport(int id, ExecutionIndex index) {
 		ISMHandle<Execution> exec = index.getExecution(id);
-		try (Q7ReportIterator iterable = new Q7ReportIterator(new File(
-				exec.getFileRoot(), "q7.report")) ) {
+		try (Q7ReportIterator iterable = new Q7ReportIterator(new File(exec.getFileRoot(), "q7.report"))) {
 			return toArray(transformi(iterable, reportToJson));
 		}
 	}
@@ -367,17 +335,14 @@ public class ExecutionsHandler extends Handler.Abstract {
 			test.addProperty("id", index);
 			test.addProperty("name", input.getRoot().getName());
 			test.addProperty("description", info.getDescription());
-			test.addProperty("screenshotCount",
-					ReportUtils.findScreenshots(input.getRoot()).size());
+			test.addProperty("screenshotCount", ReportUtils.findScreenshots(input.getRoot()).size());
 			test.add("tags", getTags(info.getTags()));
-			test.addProperty("time", input.getRoot().getEndTime()
-					- input.getRoot().getStartTime());
+			test.addProperty("time", input.getRoot().getEndTime() - input.getRoot().getStartTime());
 			boolean fail = SimpleSeverity.create(info) != SimpleSeverity.OK;
 
 			test.addProperty("result", fail ? "FAILURE" : "SUCCESS");
 			if (fail) {
-				test.addProperty("failureReason",
-						ReportUtils.getFailMessage(input.getRoot()));
+				test.addProperty("failureReason", ReportUtils.getFailMessage(input.getRoot()));
 			}
 			return test;
 		}
@@ -387,27 +352,23 @@ public class ExecutionsHandler extends Handler.Abstract {
 		}
 
 		private JsonArray getTags(String tags) {
-			return toArray(transform(TagsUtil.extractTags(tags),
-					new Function<String, JsonElement>() {
-						@Override
-						public JsonElement apply(String input) {
-							return new JsonPrimitive(input);
-						}
-					}));
+			return toArray(transform(TagsUtil.extractTags(tags), new Function<String, JsonElement>() {
+				@Override
+				public JsonElement apply(String input) {
+					return new JsonPrimitive(input);
+				}
+			}));
 		}
 
 	};
 
-	public JsonElement handleSingleExecution(int id) {
-		return toArray(transform(singletonList(index.getExecution(id)),
-				entryToJson));
+	public JsonElement handleSingleExecution(int id, ExecutionIndex index) {
+		return toArray(transform(singletonList(index.getExecution(id)), entryToJson));
 	}
 
-	public JsonElement handleExecutionList(int limit,
-			final Iterable<JsonFilter> filters, String suiteNameFilter) {
-		return toArray(limit(
-				filter(transform(index.getExecutions(suiteNameFilter),
-						entryToJson), and(filters)), limit));
+	public JsonElement handleExecutionList(int limit, final Iterable<JsonFilter> filters, String suiteNameFilter, ExecutionIndex index) {
+		return toArray(
+				limit(filter(transform(index.getExecutions(suiteNameFilter), entryToJson), and(filters)), limit));
 	}
 
 	private static int getExecutionId(String[] target) {
@@ -445,7 +406,8 @@ public class ExecutionsHandler extends Handler.Abstract {
 
 	private static String getSuiteNameFilter(Request request) {
 		try {
-			return Request.getParameters(request).getValues(SUITE_FIELD).stream().filter(s -> s != null && !s.isEmpty()).findFirst().orElse(null);
+			return Request.getParameters(request).getValues(SUITE_FIELD).stream().filter(s -> s != null && !s.isEmpty())
+					.findFirst().orElse(null);
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
@@ -484,8 +446,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 					result.addProperty(SUITE_FIELD, exec.getSuiteId());
 					result.addProperty("aut", getAutName(exec, entry));
 					result.add("tests", fillTestInfo(exec));
-					result.addProperty(STATE_FIELD, exec.getState()
-							.getLiteral());
+					result.addProperty(STATE_FIELD, exec.getState().getLiteral());
 					result.add("metadata", fillMetadata(exec));
 					result.add("time", fillTimeInfo(exec));
 					return result;
@@ -516,8 +477,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 		}
 
 		private JsonObject fillTimeInfo(Execution exec) {
-			long endTime = isDone(exec) ? exec.getEndTime() : System
-					.currentTimeMillis();
+			long endTime = isDone(exec) ? exec.getEndTime() : System.currentTimeMillis();
 			long elapsedCloud = endTime - exec.getStartTime();
 			long elapsedCpu = getCpuTime(exec);
 
@@ -542,8 +502,6 @@ public class ExecutionsHandler extends Handler.Abstract {
 		}
 	};
 
-	private ExecutionIndex index;
-
 	private static final String LIMIT = "limit";
 	private static final String SUITE_FIELD = "testSuiteName";
 	private static final String STATE_FIELD = "status";
@@ -557,8 +515,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 		T apply(F f, int index);
 	}
 
-	private static <F, T> Iterable<T> transformi(Iterable<F> elements,
-			IndexFunction<F, T> map) {
+	private static <F, T> Iterable<T> transformi(Iterable<F> elements, IndexFunction<F, T> map) {
 		List<T> result = new ArrayList<T>();
 		int index = 0;
 		for (F f : elements) {
@@ -572,8 +529,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 		return foldLeft(new JsonArray(), elements, addElement);
 	}
 
-	private static <T> T getParam(Request request, String name,
-			T defVal, Class<T> clazz) {
+	private static <T> T getParam(Request request, String name, T defVal, Class<T> clazz) {
 		Field field;
 		try {
 			field = Request.getParameters(request).get(name);
@@ -581,9 +537,9 @@ public class ExecutionsHandler extends Handler.Abstract {
 			throw new IllegalStateException(e);
 		}
 		if (field == null) {
-			return defVal; 
+			return defVal;
 		}
-		String strVal = field.getValue(); 
+		String strVal = field.getValue();
 		if (strVal == null) {
 			return defVal;
 		}
@@ -601,8 +557,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 
 		if (Enum.class.isAssignableFrom(clazz)) {
 			try {
-				return clazz.cast(Enum.valueOf((Class<? extends Enum>) clazz,
-						strVal));
+				return clazz.cast(Enum.valueOf((Class<? extends Enum>) clazz, strVal));
 			} catch (IllegalArgumentException ex) {
 				return defVal;
 			}
@@ -616,8 +571,7 @@ public class ExecutionsHandler extends Handler.Abstract {
 			return null;
 		}
 
-		throw new IllegalArgumentException("Don't know how to convert to "
-				+ clazz);
+		throw new IllegalArgumentException("Don't know how to convert to " + clazz);
 	}
 
 }

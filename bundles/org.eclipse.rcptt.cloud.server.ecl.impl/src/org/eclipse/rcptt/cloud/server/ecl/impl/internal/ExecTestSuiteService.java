@@ -55,16 +55,17 @@ public class ExecTestSuiteService implements ICommandService {
 			return status;
 		}
 
-		ExecutionEntry handle = ExecutionRegistry.getInstance().getSuiteHandle(
+		ExecutionRegistry executions = ExecutionRegistry.getInstance(context);
+		ExecutionEntry handle = executions.getSuiteHandle(
 				cmd.getSuiteId());
 
 		try {
 			IExecutionProfiler profiler = new ExecutionProfiler(
 					cmd.getSuiteId(), auts,
-					cmd.getOptions(), cmd.getMetadata());
+					cmd.getOptions(), cmd.getMetadata(), executions);
 			File reportFile = profiler.getReportFile();
 
-			URI location = ExecutionRegistry.getInstance().makeRelativePath(
+			URI location = executions.makeRelativePath(
 					reportFile);
 
 			context.getOutput().write(BoxedValues.box(location.toASCIIString()));

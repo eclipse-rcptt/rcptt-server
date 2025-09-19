@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
@@ -33,7 +34,7 @@ public class ExecutionRegistryTests {
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 	private ISMHandleStore<SuiteStats> suiteStore;
-	private final ExecutionRegistry subject = ExecutionRegistry.getInstance();
+	private final ExecutionRegistry subject = new ExecutionRegistry();
 
 	
 	@Before

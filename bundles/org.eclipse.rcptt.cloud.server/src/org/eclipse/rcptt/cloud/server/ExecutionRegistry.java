@@ -13,6 +13,7 @@
 package org.eclipse.rcptt.cloud.server;
 
 import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.not;
 
 import java.io.File;
@@ -38,10 +39,10 @@ import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState;
 import org.eclipse.rcptt.cloud.server.ism.stats.StatsPackage;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+import org.eclipse.rcptt.ecl.runtime.IProcess;
 import org.eclipse.rcptt.util.FileUtil;
 
 public class ExecutionRegistry {
-	private static ExecutionRegistry instance = null;
 	private final Map<String, ExecutionEntry> runningSuites = Collections.synchronizedMap(new HashMap<>());
 
 	private final Map<ISMHandle<SuiteStats>, ISMHandleStore<Execution>> executions = Collections.synchronizedMap(new HashMap<>());
@@ -51,11 +52,8 @@ public class ExecutionRegistry {
 		hooks.add(runnable);
 	}
 
-	public static synchronized ExecutionRegistry getInstance() {
-		if (instance == null) {
-			instance = new ExecutionRegistry();
-		}
-		return instance;
+	public static synchronized ExecutionRegistry getInstance(IProcess process) {
+		return requireNonNull(IServerContext.get(process).getExecutionRegistry());
 	}
 	
 	public synchronized ExecutionEntry beginNewSuite(ISMHandle<SuiteStats> suite) throws CoreException {
@@ -124,8 +122,7 @@ public class ExecutionRegistry {
 	}
 
 	public void removeOldExecutions(Collection<ISMHandle<SuiteStats>> suites, int maxArtifacts, int maxExecutions) {
-		ExecutionRegistry executions = ExecutionRegistry.getInstance();
-		List<ExecutionStart> allExecutions = suites.stream().<ExecutionStart>flatMap(s -> executions.getExecutions(s).getHandles().stream().map(e -> ExecutionStart.create(e, s)) ).sorted().collect(Collectors.toCollection(ArrayList::new));
+		List<ExecutionStart> allExecutions = suites.stream().<ExecutionStart>flatMap(s -> getExecutions(s).getHandles().stream().map(e -> ExecutionStart.create(e, s)) ).sorted().collect(Collectors.toCollection(ArrayList::new));
 		int deleteCount = allExecutions.size() - maxExecutions; 
 		if (deleteCount > 0) {
 			List<ExecutionStart> toDelete = allExecutions.subList(0, deleteCount);
@@ -208,5 +205,6 @@ public class ExecutionRegistry {
 			return Long.compare(start(), o.start());
 		}
 	}
+
 	
 }

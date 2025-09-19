@@ -17,16 +17,24 @@ import static java.util.Objects.requireNonNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.function.Supplier;
 
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.http.MimeTypes.Mutable;
@@ -41,7 +49,11 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.util.Attributes;
+import org.eclipse.rcptt.cloud.server.ExecutionIndex;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.IServerContext;
+import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.HashedFileRepository;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository;
@@ -58,52 +70,119 @@ import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.stats.Execution
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.stats.SuiteHandler;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.stats.TestHandler;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.GetHTTPServerInfoService;
+import org.eclipse.rcptt.cloud.server.ism.ISMCore;
+import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
+import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
 import org.eclipse.rcptt.logging.Q7LoggingManager;
 
+import com.google.common.hash.HashCode;
+
 public class Q7HttpServer {
+	private static final ILog LOG = Platform.getLog(Q7HttpServer.class);
+	private static final Path cacheRoot = Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache");
+	private final HashedFileRepository HASHED_REPOSITORY;
+	{
+		try {
+			HASHED_REPOSITORY = new HashedFileRepository(cacheRoot);
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
 	private final Server server = new Server();
 	private ServerConnector connector;
+	private URI serverFileUriPrefix;
+	private URI serverCacheUriPrefix;
+	private final WeakValueRepository<String, InputStream> cache = new WeakValueRepository<String, InputStream>(HASHED_REPOSITORY);
 
-	public void start(int httpPort, String sitesDir)
+	private final ExecutionRegistry executions = new ExecutionRegistry();
+	ExecutionIndex execIndex = new ExecutionIndex(null, executions);
+	
+	private final class ServerContextImpl implements IServerContext {
+		@Override
+		public Optional<Supplier<InputStream>> getDataByHash(byte[] hash) {
+			return Q7HttpServer.this.getDataByHash(hash);
+		}
+
+		@Override
+		public ExecutionRegistry getExecutionRegistry() {
+			return executions;
+		}
+
+		@Override
+		public URI toUri(File file) {
+			return  serverFileUriPrefix.resolve(executions.makeRelativePath(file));
+		}
+
+		@Override
+		public Optional<URI> toUri(byte[] hash, String name) {
+			URI uri = serverCacheUriPrefix.resolve(HashCode.fromBytes(hash).toString()).resolve(name);
+			return getDataByHash(hash).
+					map(supplier -> {gcMonitor.put(uri, supplier); return uri; });
+		}
+
+		@Override
+		public ExecutionIndex getExecutionIndex() {
+			 return execIndex; 
+		}
+
+		private final WeakHashMap<Object, Object> gcMonitor = new WeakHashMap<>();
+	}
+
+	public void start(int httpPort, String sitesDir, int keepSessions, int keepAUTArtifacts, String hostname)
 			throws IOException {
+		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);
+		serverFileUriPrefix = serverUri.resolve("artifacts");
+		ServerContextImpl serverContext = new ServerContextImpl();
+		Map<String, Object> sessionProperties = Collections.singletonMap(IServerContext.ID, serverContext);
+		sessionProperties.forEach(server::setAttribute);
+
+		ISMHandleStore<SuiteStats> suiteStore = ISMCore.getInstance().getSuiteStore();
+		MultiStatus status = new MultiStatus(getClass(), 0, "Previous run has been aborted");
+		suiteStore.getHandles().stream().map(s -> executions.onStart(s)).forEach(status::add);
+		if (!status.isOK()) {
+			LOG.log(status);
+		}
+		executions.addNewSuiteHook(() -> {
+			executions.removeOldExecutions(suiteStore.getHandles(), keepAUTArtifacts, keepSessions);
+		});
 
 		GetHTTPServerInfoService.setPort(httpPort);
 		configureConnector(httpPort);
-		server.setAttribute("jakarta.servlet.context.tempdir", ExecutionRegistry
-				.getInstance().getTempDir().toString());
-		ServletContextHandler context = new ServletContextHandler(
-				ServletContextHandler.SESSIONS);
+		server.setAttribute("jakarta.servlet.context.tempdir", executions.getTempDir().toString());
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 
 		context.setContextPath("/");
-		context.addServlet(Q7SessionUploadService.class, "/api/upload");
-		context.addServlet(EclExecService.class, "/api/exec");
-		Path cacheRoot = Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache");
-		HashedFileRepository hashedRepository = new HashedFileRepository(cacheRoot);
-		WeakValueRepository<String, InputStream> cache = new WeakValueRepository<String, InputStream>(hashedRepository);
-		ArtifactServlet.Repository repository = new ArtifactServlet.Repository() {
-			
+		context.addServlet(new Q7SessionUploadService(serverContext), "/api/upload");
+		context.addServlet(new EclExecService(sessionProperties), "/api/exec");
+		final ArtifactServlet.Repository repository = new ArtifactServlet.Repository() {
 			@Override
 			public void putIfAbsent(String hash, InputStream data) {
 				cache.putIfAbsent(hash, data);
 			}
-			
 			@Override
 			public Optional<ArtifactServlet.Entry> get(String hash) {
 				return cache.get(hash).map(ServletEntryForWeakValue::new);
 			}
-
-
 		};
 		context.addServlet(new ArtifactServlet(repository), "/api/cache/*");
+		serverCacheUriPrefix = serverUri.resolve("api/cache");
 
 		setHandlers(sitesDir, context);
 
 		try {
 			server.start();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
+	}
+
+	public static ExecutionRegistry getExecutionRegistry(Attributes server) {
+		return requireNonNull(((IServerContext) server.getAttribute(IServerContext.ID)).getExecutionRegistry());
+	}
+	
+	public static ExecutionIndex getExecutionIndex(Attributes server2) {
+		return requireNonNull(((IServerContext) server2.getAttribute(IServerContext.ID)).getExecutionIndex());
 	}
 
 	private static final class ServletEntryForWeakValue implements ArtifactServlet.Entry {
@@ -205,12 +284,11 @@ public class Q7HttpServer {
 		return resource_handler;
 	}
 
-	private static ResourceHandler initializeArtifactsFileStore() {
+	private ResourceHandler initializeArtifactsFileStore() {
 		ResourceHandler resource_handler = new ResourceHandler();
 		resource_handler.setDirAllowed(true);
 		resource_handler.setWelcomeFiles(new String[] { "index.html" });
-		resource_handler.setBaseResourceAsString(ExecutionRegistry.getInstance()
-				.getRoot().toString());
+		resource_handler.setBaseResourceAsString(executions.getRoot().toString());
 		return resource_handler;
 	}
 
@@ -246,6 +324,11 @@ public class Q7HttpServer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private Optional<Supplier<InputStream>> getDataByHash(byte[] hash) {
+		String hashString = HashCode.fromBytes(hash).toString();
+		return cache.get(hashString).map(e -> e::contents);
 	}
 
 }

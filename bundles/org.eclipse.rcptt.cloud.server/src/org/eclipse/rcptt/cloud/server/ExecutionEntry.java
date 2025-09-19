@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server;
 
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.eclipse.rcptt.cloud.server.ServerPlugin.PLUGIN_ID;
 
 import java.io.BufferedOutputStream;
@@ -19,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.Reference;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -31,9 +34,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -67,11 +73,9 @@ import org.eclipse.rcptt.logging.IQ7Monitor.IQ7LogListener;
 import org.eclipse.rcptt.util.Base64;
 import org.eclipse.rcptt.util.FileUtil;
 
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.hash.HashCode;
 import com.google.common.io.Closeables;
-
-
 
 public class ExecutionEntry {
 	public static final String DOWNLOAD_MONITOR = "download";
@@ -87,9 +91,7 @@ public class ExecutionEntry {
 	private Object profiler;
 	private final PrepareTaskQueue pendingQueue = new PrepareTaskQueue();
 
-	// Map contain on server location -> file location mapping for auts and
-	// update sites.
-	private Map<URI, File> onServerPathToFile = new HashMap<URI, File>();
+	private final List<Object> garbageCollectionGuard = new ArrayList<>(1);
 
 	public static ExecutionEntry create(String suiteId, ISMHandle<Execution> handle) throws CoreException {
 		File testsFolder = getArtifactByName(handle, "tests");
@@ -99,9 +101,9 @@ public class ExecutionEntry {
 
 	public ExecutionEntry(String suiteId, ISMHandle<Execution> handle, TestSuiteDirectory testSuiteDirectory)
 			throws CoreException {
-		this.suiteId = suiteId;
-		this.handle = handle;
-		this.suiteDir = testSuiteDirectory;
+		this.suiteId = requireNonNull(suiteId);
+		this.handle = requireNonNull(handle);
+		this.suiteDir = requireNonNull(testSuiteDirectory);
 	}
 
 	private PrepareTaskQueue getPrepareQueue() {
@@ -225,11 +227,24 @@ public class ExecutionEntry {
 		throw new CoreException(createError(message));
 	}
 
-	public AutInfo addAutForDownload(final AutInfo info) throws CoreException {
+	public AutInfo addAutForDownload(final AutInfo info, Function<File, URI> fileToServerUri, BiFunction<byte[], String, Optional<URI>> hashedRepository) throws CoreException {
 		final IQ7Monitor downloadMonitor = getMonitor(DOWNLOAD_MONITOR);
 		try {
-
-			if (!info.getUri().startsWith("server://")) {
+			if (info.getUri().startsWith("server://")) { 
+				byte[] requestedHash = info.getHash();
+				if (requestedHash != null && requestedHash.length == 32) {
+					String filename = Path.forPosix(URI.create(info.getUri()).getPath()).lastSegment();
+					Optional<URI> entry = hashedRepository.apply(requestedHash, filename);
+					if (entry.isPresent()) {
+						garbageCollectionGuard.add(entry.get());
+						info.setUri(entry.get().toASCIIString());
+					} else {
+						throw new CoreException(Status.error(format("Unable to resolve hash %s for %s - no such file is cached", HashCode.fromBytes(requestedHash), info.getUri())));
+					}
+				} else {
+					throw new CoreException(Status.error(format("Hash is not provided for AUT %s", info.getUri())));
+				}
+			} else {
 				// Only Download if not already on server.
 				final IServerAutProvider provider = AutDownloadManager
 						.getInstance().getProvider(info);
@@ -306,8 +321,7 @@ public class ExecutionEntry {
 
 				// Add update site mirroring process.
 
-				info.setUri(getOnServerPath(autFile));
-
+				info.setUri(fileToServerUri.apply(autFile).toASCIIString());
 			}
 
 			InjectionConfiguration injection = info.getInjection();
@@ -353,7 +367,7 @@ public class ExecutionEntry {
 					}
 
 					final UpdateSite donwloadSite = EcoreUtil.copy(site);
-					site.setUri(getOnServerPath(file));
+					site.setUri(fileToServerUri.apply(file).toASCIIString());
 
 					getPrepareQueue().addTask(new IPrepareRunnable() {
 
@@ -376,11 +390,7 @@ public class ExecutionEntry {
 		}
 	}
 
-	private String getOnServerPath(final File file) {
-		return "server://" + ServerPlugin.getDefault().getServerName() + ":"
-				+ ServerPlugin.getDefault().getServerHttpPort() + "/artifacts/"
-				+ ExecutionRegistry.getInstance().makeRelativePath(file);
-	}
+
 
 	public Object getProfiler() {
 		return profiler;
@@ -471,7 +481,7 @@ public class ExecutionEntry {
 		}
 	}
 
-	public URI recieveAUT(InputStream stream, String fileName, String unZip)
+	public File recieveAUT(InputStream stream, String fileName, String unZip)
 			throws IOException {
 		if (stream != null) {
 			File outputFile = getArtifactName(fileName);
@@ -536,16 +546,9 @@ public class ExecutionEntry {
                 threw = true;
 			}
 
-			URI onServerPath = ExecutionRegistry.getInstance()
-					.makeRelativePath(outputFile);
-			onServerPathToFile.put(onServerPath, outputFile);
-			return onServerPath;
+			return outputFile;
 		}
 		return null;
-	}
-
-	private File findOnServerFile(URI uri) {
-		return onServerPathToFile.get(uri);
 	}
 
 	public static String getAutNameFromUri(String uri, String defaultValue) {
@@ -581,6 +584,6 @@ public class ExecutionEntry {
 			update.accept(execution);
 			return null;
 		});
-		
+		garbageCollectionGuard.forEach(Reference::reachabilityFence);
 	}
 }

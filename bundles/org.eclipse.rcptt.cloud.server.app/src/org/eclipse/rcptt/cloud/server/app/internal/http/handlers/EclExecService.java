@@ -14,12 +14,7 @@ package org.eclipse.rcptt.cloud.server.app.internal.http.handlers;
 
 import java.io.IOException;
 import java.util.HashMap;
-
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -27,6 +22,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.BasicInternalEList;
 import org.eclipse.emf.ecore.util.InternalEList;
+import org.eclipse.rcptt.cloud.server.IServerContext;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
+import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.ecl.core.Command;
 import org.eclipse.rcptt.ecl.core.CoreFactory;
 import org.eclipse.rcptt.ecl.core.ProcessStatus;
@@ -38,12 +36,22 @@ import org.eclipse.rcptt.ecl.runtime.EclRuntime;
 import org.eclipse.rcptt.ecl.runtime.IProcess;
 import org.eclipse.rcptt.ecl.runtime.ISession;
 
-import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-@SuppressWarnings("serial")
 public class EclExecService extends HttpServlet {
 
+	private static final long serialVersionUID = 5315841660939612772L;
 	private final ProcessStatusConverter statusConverter = new ProcessStatusConverter();
+	private final Map<String, Object> sessionProperties;
+	
+	public EclExecService(Map<String, Object> sessionProperties) {
+		super();
+		this.sessionProperties = Map.copyOf(sessionProperties);
+	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -65,6 +73,7 @@ public class EclExecService extends HttpServlet {
 
 		ISession session = EclRuntime.createSession();
 		try {
+			sessionProperties.forEach(session::putProperty);
 			IProcess process = session.execute((Command) eobject);
 			IStatus status = process.waitFor();
 			if (!status.isOK()) {

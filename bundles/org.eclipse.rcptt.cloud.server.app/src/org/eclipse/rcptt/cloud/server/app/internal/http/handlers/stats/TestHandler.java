@@ -40,6 +40,7 @@ import org.eclipse.rcptt.sherlock.core.streams.SherlockReportIterator;
 import com.google.common.base.Function;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.IndexHandler;
@@ -82,8 +83,7 @@ public class TestHandler extends Handler.Abstract {
 			ISMHandle<Execution> execHandle = null;
 			if (handle.exists()) {
 				SuiteStats stats = handle.apply(getStatsCopy);
-				ISMHandleStore<Execution> executions = ExecutionRegistry
-						.getInstance().getExecutions(handle);
+				ISMHandleStore<Execution> executions = ContextEscape.getExecutionRegistry(getServer()).getExecutions(handle);
 
 				Execution exec = null;
 				if (executions.containsHandle(executionID)) {

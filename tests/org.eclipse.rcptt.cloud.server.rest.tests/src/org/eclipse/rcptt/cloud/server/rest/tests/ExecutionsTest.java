@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.google.gson.JsonArray;
 import org.eclipse.rcptt.cloud.server.ExecutionIndex;
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState;
 import org.eclipse.rcptt.cloud.server.rest.internal.ExecutionsHandler;
 import org.eclipse.rcptt.cloud.server.rest.internal.JsonFilter;
@@ -33,15 +34,15 @@ public class ExecutionsTest {
 	private static final String SUITE_FIELD = "testSuiteName";
 	private static final String STATE_FIELD = "status";
 
-	private ExecutionsHandler handler = new ExecutionsHandler(
-			new ExecutionIndex(TestResources.getExecutions()));
+	private final ExecutionIndex index = new ExecutionIndex(TestResources.getExecutions(), new ExecutionRegistry());
+	private ExecutionsHandler handler = new ExecutionsHandler();
 
 	@Test
 	public void testLimit() {
 		assertEquals(8, ((JsonArray) handler.handleExecutionList(9,
-				noFilters(), null)).size());
+				noFilters(), null, index)).size());
 		assertEquals(4, ((JsonArray) handler.handleExecutionList(4,
-				noFilters(), null)).size());
+				noFilters(), null, index)).size());
 	}
 
 	private static Iterable<JsonFilter> noFilters() {
@@ -59,20 +60,20 @@ public class ExecutionsTest {
 	@Test
 	public void testFilterTestSuite() {
 		assertEquals(4, ((JsonArray) handler.handleExecutionList(9,
-				filterSuite("com.xored-e4.jdt.tests"), null)).size());
+				filterSuite("com.xored-e4.jdt.tests"), null, index)).size());
 	}
 
 	@Test
 	public void testFilterState() {
 		assertEquals(8, ((JsonArray) handler.handleExecutionList(9,
-				filterState(FINISHED), null)).size());
+				filterState(FINISHED), null, index)).size());
 		assertEquals(0, ((JsonArray) handler.handleExecutionList(9,
-				filterState(RUNNING), null)).size());
+				filterState(RUNNING), null, index)).size());
 	}
 
 	@Test
 	public void testById() {
-		JsonArray array = (JsonArray) handler.handleSingleExecution(38);
+		JsonArray array = (JsonArray) handler.handleSingleExecution(38, index);
 		assertEquals(1, array.size());
 		assertEquals(getJsonFromResource("response38.json"), array);
 	}

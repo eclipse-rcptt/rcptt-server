@@ -32,7 +32,6 @@ public class ServerPlugin extends Plugin {
 		super.start(context);
 		plugin = this;
 		execMonitor = new DelegatingExecutionMonitor();
-		execIndex = new ExecutionIndex();
 	}
 
 	@Override
@@ -41,7 +40,6 @@ public class ServerPlugin extends Plugin {
 			registry.dispose();
 		}
 		registry = null;
-		execIndex = null;
 		plugin = null;
 		super.stop(context);
 	}
@@ -59,17 +57,7 @@ public class ServerPlugin extends Plugin {
 		return registry;
 	}
 
-	private ExecutionIndex execIndex;
-
-	public ExecutionIndex getExecIndex() {
-		return execIndex;
-	}
-
 	private DelegatingExecutionMonitor execMonitor;
-
-	private String serverName;
-
-	private int serverHttpPort;
 
 	public ExecutionListener getExecListener() {
 		return execMonitor;
@@ -110,16 +98,4 @@ public class ServerPlugin extends Plugin {
 		registry = new AgentRegistry();
 	}
 
-	public void setServerCredentials(String serverName, int httpPort) {
-		this.serverName = serverName;
-		this.serverHttpPort = httpPort;
-	}
-
-	public int getServerHttpPort() {
-		return serverHttpPort;
-	}
-
-	public String getServerName() {
-		return serverName;
-	}
 }

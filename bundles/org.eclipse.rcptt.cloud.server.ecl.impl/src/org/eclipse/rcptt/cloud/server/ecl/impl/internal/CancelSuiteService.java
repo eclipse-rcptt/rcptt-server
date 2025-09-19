@@ -34,7 +34,7 @@ public class CancelSuiteService implements ICommandService {
 		CancelSuite cmd = (CancelSuite) command;
 
 		ExecutionEntry handle = org.eclipse.rcptt.cloud.server.ExecutionRegistry
-				.getInstance().getSuiteHandle(cmd.getSuiteId());
+				.getInstance(context).getSuiteHandle(cmd.getSuiteId());
 
 		int count = 0;
 		if (handle != null) {

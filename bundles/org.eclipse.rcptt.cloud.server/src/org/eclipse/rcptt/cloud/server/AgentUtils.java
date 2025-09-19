@@ -43,14 +43,4 @@ public class AgentUtils {
 		}
 		return classifier;
 	}
-
-	static StatusListener getAgentLog(AgentInfo agent, String suiteId) {
-		ExecutionEntry suiteHandle = ExecutionRegistry.getInstance()
-				.getSuiteHandle(suiteId);
-		String agentId = FileUtil.getID(AgentRegistry.getAgentID(agent));
-		StatusListener monitor = suiteHandle.getMonitor(agentId + ".log");
-		if (monitor == null)
-			throw new NullPointerException();
-		return monitor;
-	}
 }

@@ -51,9 +51,6 @@ public class ServerApplication extends EclServerApplication {
 	@Arg(isRequired = false, description = "Server name used by agents to download AUTS. Will be server IP if not specified")
 	public String agentServerName = null;
 
-	@Arg
-	public int agentHttpPort = -1;
-
 	private static String getDefaultSitesDir() {
 		String url = Platform.getInstallLocation().getURL().getPath();
 		return new File(url, "sites").getAbsolutePath();
@@ -64,28 +61,12 @@ public class ServerApplication extends EclServerApplication {
 	@Override
 	public Object run() throws Exception {
 		NetworkUtils.initTimeouts();
-		if (agentHttpPort == -1) {
-			agentHttpPort = httpPort; // Use inside jetty instead of some
-			// specified server.
-		}
 
 		ISMCore.initialize(new File(artifactsStore));
-		ISMHandleStore<SuiteStats> suiteStore = ISMCore.getInstance().getSuiteStore();
-		ExecutionRegistry executions = ExecutionRegistry.getInstance(); 
-		MultiStatus status = new MultiStatus(getClass(), 0, "Previous run has been aborted");
-		suiteStore.getHandles().stream().map(s -> executions.onStart(s)).forEach(status::add);
-		if (!status.isOK()) {
-			LOG.log(status);
-		}
-		executions.addNewSuiteHook(() -> {
-			executions.removeOldExecutions(suiteStore.getHandles(), keepAUTArtifacts, keepSessions);
-		});
 		
-		RegisterAgentService.setServerInfo(agentServerName, agentHttpPort);
+		RegisterAgentService.setServerInfo(agentServerName, httpPort);
 
-		server.start(httpPort, sitesDir);
-		ServerPlugin.getDefault().setServerCredentials(agentServerName,
-				httpPort);
+		server.start(httpPort, sitesDir, keepSessions, keepAUTArtifacts, agentServerName);
 		return super.run();
 	}
 

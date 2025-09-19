@@ -29,7 +29,7 @@ public class AddTestSuiteService implements ICommandService {
 			throws InterruptedException, CoreException {
 		AddTestSuite addTestSuite = (AddTestSuite) command;
 
-		ExecutionEntry suiteHandle = ExecutionRegistry.getInstance()
+		ExecutionEntry suiteHandle = ExecutionRegistry.getInstance(context)
 				.getSuiteHandle(addTestSuite.getSuiteId());
 		suiteHandle.getTestStore().clearOutDated(addTestSuite.getSuite(), true);
 

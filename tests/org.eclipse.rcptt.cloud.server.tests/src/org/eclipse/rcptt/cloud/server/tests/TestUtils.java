@@ -537,7 +537,7 @@ public class TestUtils {
 		}
 		
 		public int getCancelledCount() {
-			return ServerPlugin.getDefault().getExecIndex().getExecutions(suite.getId()).stream().findFirst().map(first -> first.apply(execution -> execution.getCanceledCount())).orElse(0);
+			return skipped;
 		}
 	}
 

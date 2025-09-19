@@ -21,6 +21,7 @@ import org.eclipse.rcptt.ecl.runtime.IProcess;
 
 import org.eclipse.rcptt.cloud.model.Envelope;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.IExecutionProfiler;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionProgress;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
@@ -39,8 +40,7 @@ public class ExecutionProgressService implements ICommandService {
 			context.getOutput().write(state);
 			return Status.CANCEL_STATUS;
 		}
-		ExecutionEntry handle = org.eclipse.rcptt.cloud.server.ExecutionRegistry
-				.getInstance().getSuiteHandle(cmd.getSuiteId());
+		ExecutionEntry handle = ExecutionRegistry.getInstance(context).getSuiteHandle(cmd.getSuiteId());
 
 		if (handle == null) {
 			return returnNoSuite(context);

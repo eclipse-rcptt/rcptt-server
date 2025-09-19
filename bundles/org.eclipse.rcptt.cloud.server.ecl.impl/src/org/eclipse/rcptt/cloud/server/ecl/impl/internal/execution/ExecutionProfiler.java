@@ -184,9 +184,8 @@ public class ExecutionProfiler implements IExecutionProfiler {
 	private final Instant stop;
 
 	@SuppressWarnings("resource")
-	public ExecutionProfiler(String suiteID, AutInfo[] auts, TestOptions options, EMap<String, String> metadata) throws CoreException, FileNotFoundException {
+	public ExecutionProfiler(String suiteID, AutInfo[] auts, TestOptions options, EMap<String, String> metadata, ExecutionRegistry executions) throws CoreException, FileNotFoundException {
 		try {
-			ExecutionRegistry executions = ExecutionRegistry.getInstance();
 			this.handle = Objects.requireNonNull(executions.getSuiteHandle(suiteID));
 			closer.register(() -> executions.removeSuiteHandle(suiteID));
 			this.options = new Options(options);

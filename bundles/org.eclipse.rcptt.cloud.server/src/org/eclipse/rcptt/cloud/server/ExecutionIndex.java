@@ -18,6 +18,7 @@ import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.FINISHED;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.PENDING;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,11 +45,10 @@ import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
 
 public class ExecutionIndex {
-	public ExecutionIndex() {
-		this(null);
-	}
+	private final ExecutionRegistry executionRegistry;
 
-	public ExecutionIndex(List<ISMHandle<Execution>> executions) {
+	public ExecutionIndex(List<ISMHandle<Execution>> executions, ExecutionRegistry executionRegistry) {
+		this.executionRegistry = requireNonNull(executionRegistry);
 		if (executions == null) {
 			loadExisting();
 		} else {
@@ -95,7 +95,7 @@ public class ExecutionIndex {
 					.getSuiteStore().getHandle(suiteNameFilter);
 			if (handle.exists()) {
 				final List<ISMHandle<Execution>> executions = new ArrayList<ISMHandle<Execution>>(
-						ExecutionRegistry.getInstance().getExecutions(handle)
+						executionRegistry.getExecutions(handle)
 								.getHandles());
 
 				Collections.reverse(executions);
@@ -125,8 +125,7 @@ public class ExecutionIndex {
 			}
 
 			final String suiteID = suite.apply(getSuiteId);
-			for (final ISMHandle<Execution> execution : ExecutionRegistry
-					.getInstance().getExecutions(suite).getHandles()) {
+			for (final ISMHandle<Execution> execution : executionRegistry.getExecutions(suite).getHandles()) {
 				if (!execution.exists()) {
 					logNoHandle(execution);
 					continue;

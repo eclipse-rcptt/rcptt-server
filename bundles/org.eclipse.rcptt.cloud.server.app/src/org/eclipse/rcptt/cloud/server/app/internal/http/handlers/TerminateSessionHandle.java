@@ -25,6 +25,7 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.EclServerImplPlugin;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.IExecutionProfiler;
@@ -38,8 +39,7 @@ public class TerminateSessionHandle extends Handler.Abstract {
 		int cancel = 0;
 		if (queryString != null) {
 
-			ExecutionEntry suiteHandle = org.eclipse.rcptt.cloud.server.ExecutionRegistry
-					.getInstance().getSuiteHandle(queryString);
+			ExecutionEntry suiteHandle = ContextEscape.getExecutionRegistry(getServer()).getSuiteHandle(queryString);
 			if (suiteHandle != null) {
 				IExecutionProfiler profiler = (IExecutionProfiler) suiteHandle
 						.getProfiler();

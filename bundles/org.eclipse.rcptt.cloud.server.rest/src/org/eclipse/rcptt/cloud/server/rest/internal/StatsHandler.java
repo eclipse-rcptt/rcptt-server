@@ -36,6 +36,8 @@ import com.google.common.base.Predicates;
 import com.google.gson.JsonObject;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
+import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
@@ -71,7 +73,7 @@ public class StatsHandler extends Handler.Abstract {
 		return parseBoolean(parameters.getValue(PUBLIC));
 	}
 
-	private static FoldFunction<ISMHandle<SuiteStats>, Stats> foldSuites = new FoldFunction<ISMHandle<SuiteStats>, StatsHandler.Stats>() {
+	private FoldFunction<ISMHandle<SuiteStats>, Stats> foldSuites = new FoldFunction<ISMHandle<SuiteStats>, StatsHandler.Stats>() {
 		public Stats apply(Stats stats, ISMHandle<SuiteStats> suite) {
 			ISMHandle<Execution> lastExec = lastExec(suite);
 			if (lastExec == null) {
@@ -97,12 +99,12 @@ public class StatsHandler extends Handler.Abstract {
 		};
 	};
 
-	private static Iterable<ISMHandle<SuiteStats>> getSuites(boolean isPublic) {
+	private Iterable<ISMHandle<SuiteStats>> getSuites(boolean isPublic) {
 		return filter(ISMCore.getInstance().getSuiteStore().getHandles(),
 				byPublic(isPublic));
 	}
 
-	private static Predicate<ISMHandle<SuiteStats>> byPublic(boolean isPublic) {
+	private Predicate<ISMHandle<SuiteStats>> byPublic(boolean isPublic) {
 		return !isPublic ? Predicates.<ISMHandle<SuiteStats>> alwaysTrue()
 				: new Predicate<ISMHandle<SuiteStats>>() {
 					public boolean apply(ISMHandle<SuiteStats> input) {
@@ -111,14 +113,14 @@ public class StatsHandler extends Handler.Abstract {
 				};
 	}
 
-	private static ISMHandle<Execution> lastExec(ISMHandle<SuiteStats> suite) {
-		return getLast(ExecutionRegistry.getInstance().getExecutions(suite)
+	private ISMHandle<Execution> lastExec(ISMHandle<SuiteStats> suite) {
+		return getLast(ContextEscape.getExecutionRegistry(getServer()).getExecutions(suite)
 				.getHandles(), null);
 	}
 
-	private static Iterable<ISMHandle<Execution>> allExecs(
+	private Iterable<ISMHandle<Execution>> allExecs(
 			ISMHandle<SuiteStats> suite) {
-		return ExecutionRegistry.getInstance().getExecutions(suite)
+		return ContextEscape.getExecutionRegistry(getServer()).getExecutions(suite)
 				.getHandles();
 	}
 
