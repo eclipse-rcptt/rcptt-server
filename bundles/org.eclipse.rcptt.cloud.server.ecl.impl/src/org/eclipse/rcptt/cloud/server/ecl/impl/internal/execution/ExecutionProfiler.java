@@ -118,7 +118,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 	 */
 	private static final int CANCEL_AUT_FAILURES_LIMIT = 7;
 
-	private final ITestStore suiteDir;
 	private final Options options;
 	private int totalTestCount = -1;
 	private final Reporter reporter;
@@ -192,7 +191,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			long timeout = this.options.getValue(Options.KEY_EXEC_TIMEOUT, Options.DEFAULT_EXEC_TIMEOUT);
 			this.stop = handle.created.plusSeconds(timeout);
 
-			this.suiteDir = handle.getTestStore();
 			infos = EcoreUtil.copyAll(Arrays.asList(auts));
 			reportFile = handle.getMetadataName("q7.report");
 			reportOut = closer.register(new SherlockReportOutputStream(
@@ -265,7 +263,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		List<TaskDescriptor> tasks = Lists.newArrayList();
 		for (Q7ArtifactRef scenario : scenarios) {
 			TaskDescriptor task = new TaskDescriptor(suiteDir, aut,
-					options.getTestOptions(), scenario, getTestCaseName(suiteDir, scenario));
+					options.getTestOptions(), scenario, getTestCaseName(suiteDir, scenario), resolver);
 			tasks.add(task);
 		}
 		TaskSuiteDescriptor descr = new TaskSuiteDescriptor(getSuiteID(), aut, errorMonitor, tasksPerAgent, maxAgents,
@@ -591,7 +589,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 
 	private final SherlockReportOutputStream reportOut;
 
-	private ExecutionEntry handle;
+	private final ExecutionEntry handle;
 
 	protected void sendReport(TaskSuiteDescriptor suite, Report report,
 			String agentUri, String classifier) {

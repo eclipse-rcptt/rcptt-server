@@ -17,6 +17,7 @@ import static com.google.common.base.Predicates.compose;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.collect.Iterables.filter;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.eclipse.core.runtime.Status.error;
 
 import java.io.IOException;
@@ -76,7 +77,7 @@ import com.google.common.collect.Lists;
  * 
  */
 public final class TaskDescriptor {
-	private final ITestStore dir;
+	private final Function<Q7ArtifactRef, Q7Artifact> resolver;
 	private final Task task;
 	private final String name;
 
@@ -184,22 +185,19 @@ public final class TaskDescriptor {
 
 	private final Listener.Composite listeners = new Listener.Composite();
 
-	public TaskDescriptor(ITestStore dir, AutInfo aut, TestOptions testOptions,
-			Q7ArtifactRef scenario, String name) throws IOException {
+	public TaskDescriptor(AutInfo aut, TestOptions testOptions,
+			Q7ArtifactRef scenario, String name, Function<Q7ArtifactRef, Q7Artifact> resolver) throws IOException {
 		super();
-		checkNotNull(dir);
-		checkNotNull(aut);
-		checkNotNull(scenario);
 
-		this.name = name;
-		this.dir = dir;
-		this.scenario = scenario;
+		this.name = requireNonNull(name);
+		this.resolver = requireNonNull(resolver);
+		this.scenario = requireNonNull(scenario);
 
 		task = ServerCommandsFactory.eINSTANCE.createTask();
-		task.setId(scenario.getId());
+		task.setId(requireNonNull(scenario.getId()));
 		checkNotNull(task.getId());
 
-		task.setAut(EcoreUtil.copy(aut));
+		task.setAut(EcoreUtil.copy(requireNonNull(aut)));
 		if (testOptions != null) {
 			task.setTestOptions(EcoreUtil.copy(testOptions));
 		}
@@ -209,9 +207,10 @@ public final class TaskDescriptor {
 	 * Verifies resources comprising test.
 	 * 
 	 * Immediately completes task on error
+	 * @param suiteId 
 	 * */
 	public synchronized void initialize(
-			Map<String, Q7ArtifactRef> dependencyResolver) {
+			Map<String, Q7ArtifactRef> dependencyResolver, String suiteId) {
 		if (state == State.REPORTED)
 			return;
 		try {
@@ -219,7 +218,7 @@ public final class TaskDescriptor {
 				throw new IllegalStateException("Can't initialize a task in "
 						+ state + " state");
 			TestSuite suite = ModelFactory.eINSTANCE.createTestSuite();
-			suite.setId(dir.getTestSuite().getId());
+			suite.setId(suiteId);
 			List<Q7ArtifactRef> refs = ImmutableList.<Q7ArtifactRef> builder()
 					.addAll(allDeps(scenario, dependencyResolver))
 					.add(scenario).build();
@@ -227,7 +226,7 @@ public final class TaskDescriptor {
 					Lists.newArrayList(EcoreUtil.copyAll(refs)));
 			task.setSuite(suite);
 			verifyScenarioReference(task);
-			checkIntegrity(suite, dir);
+			checkIntegrity(suite, resolver);
 			state = State.INITIALIZED;
 		} catch (Exception e) {
 			reportError(new RuntimeException("Task " + this
@@ -422,7 +421,7 @@ public final class TaskDescriptor {
 				throw new IllegalStateException("Task read is meanigless in "
 						+ state + " state");
 			Task copy = EcoreUtil.copy(task);
-			fillTaskWithResources(copy, dir);
+			fillTaskWithResources(copy, resolver);
 			return copy;
 		} catch (Exception e) {
 			reportError(new RuntimeException(e));
@@ -431,14 +430,14 @@ public final class TaskDescriptor {
 		}
 	}
 
-	private static void fillTaskWithResources(Task task, ITestStore store)
+	private static void fillTaskWithResources(Task task, Function<Q7ArtifactRef, Q7Artifact> resolver2)
 			throws CoreException, IOException {
-		checkIntegrity(task.getSuite(), store);
+		checkIntegrity(task.getSuite(), resolver2);
 		for (Q7ArtifactRef ref : task.getSuite().getRefs()) {
-			Q7Artifact resource = store.getResource(ref);
+			Q7Artifact resource = resolver2.apply(ref);
 			if (resource == null)
 				throw new IllegalStateException("Can't find resource "
-						+ ref.getId() + " in " + store);
+						+ ref.getId() + " in " + resolver2);
 			task.getArtifacts().add(resource);
 		}
 	}
@@ -497,11 +496,11 @@ public final class TaskDescriptor {
 		return name;
 	}
 
-	private static void checkIntegrity(TestSuite suite, ITestStore store)
+	private static void checkIntegrity(TestSuite suite, Function<Q7ArtifactRef, Q7Artifact> resolver2)
 			throws CoreException, IOException {
 		Map<String, Q7ArtifactRef> map = ModelUtil.refMap(suite);
 		for (Q7ArtifactRef ref : map.values()) {
-			Q7Artifact artifact = store.getResource(ref);
+			Q7Artifact artifact = resolver2.apply(ref);
 			if (artifact == null) {
 				throw new CoreException(ServerPlugin.createErr(String.format(
 						"Cannot find resource %s", ref.getId())));

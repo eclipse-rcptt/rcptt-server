@@ -228,7 +228,7 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		FakeTestStore dir = new FakeTestStore(suite);
 		TestOptions testOptions = ModelFactory.eINSTANCE.createTestOptions();
 		testOptions.getValues().put("testExecTimeout", "0");
-		TaskDescriptor task = new TaskDescriptor(dir, aut, testOptions, suite.refs.get(0), "taskName");
+		TaskDescriptor task = new TaskDescriptor(dir, aut, testOptions, suite.refs.get(0), "taskName", resolver);
 		AtomicReference<Report> report = new AtomicReference<>();
 		task.addListener(new TaskDescriptor.Listener.Adapter() {
 			@Override

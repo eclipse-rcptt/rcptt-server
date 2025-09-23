@@ -233,7 +233,7 @@ public class TaskSuiteDescriptor {
 			try {
 				monitor.subTask("Initializing " + task.getTaskName());
 				// Those that fail to initialize notify us and are removed by listeners
-				task.initialize(dependencyResolver);
+				task.initialize(dependencyResolver, suiteId);
 				monitor.worked(1);
 			} catch (Throwable e) {
 				cancel(e);

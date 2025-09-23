@@ -39,6 +39,7 @@ import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -73,6 +74,7 @@ import org.eclipse.rcptt.util.Base64;
 import org.eclipse.rcptt.util.FileUtil;
 
 import com.google.common.base.Throwables;
+import com.google.common.hash.HashCode;
 import com.google.common.io.Closeables;
 
 public class ExecutionEntry {
@@ -102,10 +104,6 @@ public class ExecutionEntry {
 		this.suiteId = requireNonNull(suiteId);
 		this.handle = requireNonNull(handle);
 		this.suiteDir = requireNonNull(testSuiteDirectory);
-	}
-
-	private PrepareTaskQueue getPrepareQueue() {
-		return pendingQueue;
 	}
 
 	private static class MonitorMetaInfo {
@@ -249,85 +247,6 @@ public class ExecutionEntry {
 
 	private static Set<String> mirroringQueue = new HashSet<String>();
 
-	private void doUpdateSiteMirroring(final IQ7Monitor downloadMonitor,
-			final P2MirrorTool tool, final File file,
-			final UpdateSite downloadSite) throws CoreException {
-		synchronized (mirroringQueue) {
-			while (mirroringQueue.contains(downloadSite.getUri())) {
-				try {
-					mirroringQueue.wait(100);
-				} catch (InterruptedException e) {
-					return;
-				}
-			}
-			mirroringQueue.add(downloadSite.getUri());
-		}
-		try {
-			String msg = "Begin Mirroring: " + downloadSite.getUri();
-			downloadMonitor.log(msg);
-			addMessage(Thread.currentThread().getName(), msg);
-
-			final IQ7Monitor log = getMonitor(ExecutionEntry.DOWNLOAD_MONITOR
-					+ "_" + FileUtil.getID(file.getName()));
-			final P2Utils.ILogMonitor logMonitor = new P2Utils.ILogMonitor() {
-				@Override
-                public void log(String message) {
-					log.log("\t--" + message);
-					addMessage(
-							Thread.currentThread().getName(), message);
-				}
-			};
-
-			logMonitor.log("Mirroring repository: " + downloadSite.getUri());
-
-			// File tempFolder = new File(file.getAbsolutePath()
-			// + "_temporaty");
-			final Transport transport = new Q7Transport(new IDownloadMonitor() {
-
-				@Override
-                public void logDownloaded(String msg) {
-					log.log("\t--" + msg);
-					addMessage(
-							Thread.currentThread().getName(), msg);
-				}
-			});
-
-			final IProvisioningAgent agent = P2Utils.getProvisioningAgent();
-			Object oldService = null;
-			synchronized (agent) {
-				try {
-					oldService = agent.getService(Transport.SERVICE_NAME);
-					((ProvisioningAgent) agent).registerService(
-							Transport.SERVICE_NAME, transport);
-					if (!tool.mirrorTry(new NullProgressMonitor() {
-						@Override
-						public boolean isCanceled() {
-							return Thread.currentThread().isInterrupted();
-						}
-					}, downloadSite, file, logMonitor, agent, 10, 5000)) {
-						log.log("\t--" + "Failed to mirror update site: "
-								+ tool.getErrorMessage());
-						addMessage(
-								Thread.currentThread().getName(),
-								"Failed to mirror update site: "
-										+ downloadSite.getUri() + ": "
-										+ tool.getErrorMessage());
-						throw new CoreException(ServerPlugin.createErr(tool
-								.getErrorMessage()));
-					}
-				} finally {
-					((ProvisioningAgent) agent).registerService(
-							Transport.SERVICE_NAME, oldService);
-				}
-			}
-		} finally {
-			synchronized (mirroringQueue) {
-				mirroringQueue.remove(downloadSite.getUri());
-				mirroringQueue.notifyAll();
-			}
-		}
-	}
-
 	public File recieveAUT(InputStream stream, String fileName, String unZip)
 			throws IOException {
 		if (stream != null) {
@@ -432,6 +351,10 @@ public class ExecutionEntry {
 			return null;
 		});
 		garbageCollectionGuard.forEach(Reference::reachabilityFence);
+	}
+	
+	public void addArtifact(HashCode hash, Supplier<InputStream> data) {
+		
 	}
 
 	private void downloadAut(final AutInfo info, Function<File, URI> fileToServerUri,
@@ -582,11 +505,94 @@ public class ExecutionEntry {
 		}
 	}
 
+	private void doUpdateSiteMirroring(final IQ7Monitor downloadMonitor,
+			final P2MirrorTool tool, final File file,
+			final UpdateSite downloadSite) throws CoreException {
+		synchronized (mirroringQueue) {
+			while (mirroringQueue.contains(downloadSite.getUri())) {
+				try {
+					mirroringQueue.wait(100);
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+			mirroringQueue.add(downloadSite.getUri());
+		}
+		try {
+			String msg = "Begin Mirroring: " + downloadSite.getUri();
+			downloadMonitor.log(msg);
+			addMessage(Thread.currentThread().getName(), msg);
+	
+			final IQ7Monitor log = getMonitor(ExecutionEntry.DOWNLOAD_MONITOR
+					+ "_" + FileUtil.getID(file.getName()));
+			final P2Utils.ILogMonitor logMonitor = new P2Utils.ILogMonitor() {
+				@Override
+	            public void log(String message) {
+					log.log("\t--" + message);
+					addMessage(
+							Thread.currentThread().getName(), message);
+				}
+			};
+	
+			logMonitor.log("Mirroring repository: " + downloadSite.getUri());
+	
+			// File tempFolder = new File(file.getAbsolutePath()
+			// + "_temporaty");
+			final Transport transport = new Q7Transport(new IDownloadMonitor() {
+	
+				@Override
+	            public void logDownloaded(String msg) {
+					log.log("\t--" + msg);
+					addMessage(
+							Thread.currentThread().getName(), msg);
+				}
+			});
+	
+			final IProvisioningAgent agent = P2Utils.getProvisioningAgent();
+			Object oldService = null;
+			synchronized (agent) {
+				try {
+					oldService = agent.getService(Transport.SERVICE_NAME);
+					((ProvisioningAgent) agent).registerService(
+							Transport.SERVICE_NAME, transport);
+					if (!tool.mirrorTry(new NullProgressMonitor() {
+						@Override
+						public boolean isCanceled() {
+							return Thread.currentThread().isInterrupted();
+						}
+					}, downloadSite, file, logMonitor, agent, 10, 5000)) {
+						log.log("\t--" + "Failed to mirror update site: "
+								+ tool.getErrorMessage());
+						addMessage(
+								Thread.currentThread().getName(),
+								"Failed to mirror update site: "
+										+ downloadSite.getUri() + ": "
+										+ tool.getErrorMessage());
+						throw new CoreException(ServerPlugin.createErr(tool
+								.getErrorMessage()));
+					}
+				} finally {
+					((ProvisioningAgent) agent).registerService(
+							Transport.SERVICE_NAME, oldService);
+				}
+			}
+		} finally {
+			synchronized (mirroringQueue) {
+				mirroringQueue.remove(downloadSite.getUri());
+				mirroringQueue.notifyAll();
+			}
+		}
+	}
+
 	private static IStatus createError(String message) {
 		return new Status(IStatus.ERROR, PLUGIN_ID, message);
 	}
 
 	private static void throwError(String message) throws CoreException {
 		throw new CoreException(createError(message));
+	}
+
+	private PrepareTaskQueue getPrepareQueue() {
+		return pendingQueue;
 	}
 }

@@ -120,7 +120,7 @@ public class BaseTaskQueueTests {
 				if (artifactRef.getKind() != RefKind.SCENARIO)
 					continue;
 				TaskDescriptor task = new TaskDescriptor(store, aut, null,
-						artifactRef, "taskName");
+						artifactRef, "taskName", resolver);
 				rv.add(task);
 			}
 			return rv;
