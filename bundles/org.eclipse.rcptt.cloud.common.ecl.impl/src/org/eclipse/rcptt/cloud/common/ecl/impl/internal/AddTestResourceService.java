@@ -15,8 +15,8 @@ package org.eclipse.rcptt.cloud.common.ecl.impl.internal;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -25,19 +25,18 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.rcptt.ecl.core.Command;
-import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
-import org.eclipse.rcptt.ecl.runtime.ICommandService;
-import org.eclipse.rcptt.ecl.runtime.IProcess;
-import org.eclipse.rcptt.logging.IQ7Monitor;
-import org.eclipse.rcptt.logging.Q7LoggingManager;
-
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.ITestStore;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
 import org.eclipse.rcptt.cloud.model.Q7Artifact;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.ecl.core.Command;
+import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
+import org.eclipse.rcptt.ecl.runtime.ICommandService;
+import org.eclipse.rcptt.ecl.runtime.IProcess;
+import org.eclipse.rcptt.logging.IQ7Monitor;
+import org.eclipse.rcptt.logging.Q7LoggingManager;
 
 public class AddTestResourceService implements ICommandService {
 
@@ -96,12 +95,8 @@ public class AddTestResourceService implements ICommandService {
 					md5File.delete();
 				}
 
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new UncheckedIOException(e);
 			}
 		}
 		return Status.OK_STATUS;

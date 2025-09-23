@@ -73,6 +73,8 @@ public final class WeakValueRepository<K, V> {
 		K key = notification.getKey();
 		cleaner.register(notification.getValue(), () -> {
 			if (cache.getIfPresent(key) == null) {
+				// TODO: fix race with get()
+				// The following line may remove the entry after it has been returned by a query
 				repository.remove(key);
 			}
 		});

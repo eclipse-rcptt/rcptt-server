@@ -19,8 +19,6 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +26,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -39,6 +36,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Repository;
 
 import com.google.common.base.Preconditions;
@@ -47,9 +45,8 @@ import com.google.common.util.concurrent.Striped;
 
 public class HashedFileRepository implements Repository<String, InputStream> {
 	private final Path hashedDir;
-	private final Set<String> validHashes = Collections.synchronizedSet(new HashSet<>());
+	private final Set<HashCode> validHashes = Collections.synchronizedSet(new HashSet<>());
 	private final Striped<ReadWriteLock> locks = Striped.readWriteLock(1000);
-	private final String digestType = "SHA-256";
 	private final Path temporaryDir;
 
 	public HashedFileRepository(Path root) throws IOException {
@@ -66,7 +63,8 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	}
 
 	@Override
-	public Optional<WeakValueRepository.Entry<InputStream>> get(String hash) {
+	public Optional<WeakValueRepository.Entry<InputStream>> get(String hashString) {
+		HashCode hash = HashCode.fromString(hashString);
 		Lock lock = locks.get(hash).readLock();
 		lock.lock();
 		try {
@@ -80,17 +78,19 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	}
 
 	@Override
-	public void putIfAbsent(String hash, InputStream data) {
-		Preconditions.checkArgument(!hash.isEmpty(), "Hash can not be empty");
+	public void putIfAbsent(String hashString, InputStream data) {
+		Preconditions.checkArgument(!hashString.isEmpty(), "Hash can not be empty");
+		HashCode hash = HashCode.fromString(hashString);
+		assert hashString.equals(hash.toString());
 		exclusively(hash, () -> {
 			if (validate(hash)) {
 				return null;
 			}
 			try {
 				// Temporary files have to be on the same FS for efficient move
-				Path file = Files.createTempFile(temporaryDir, hash, "");
+				Path file = Files.createTempFile(temporaryDir, hashString, "");
 				try {
-					MessageDigest md = createDigest();
+					MessageDigest md = Hash.createDigest();
 					try (DigestInputStream is = new DigestInputStream(data, md);
 							OutputStream os = Files.newOutputStream(file, StandardOpenOption.WRITE)) {
 						is.transferTo(os);
@@ -101,7 +101,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 						throw new IllegalArgumentException(
 								String.format("Data hash %s does not match hash argument %s", dataHash, hash));
 					}
-					Files.move(file, hashedDir.resolve(hash));
+					Files.move(file, hashedDir.resolve(hashString));
 					validHashes.add(hash);
 				} finally {
 					if (Files.exists(file)) {
@@ -118,8 +118,9 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 
 	@Override
 	public void remove(String key) {
-		exclusively(key, () -> {
-			validHashes.remove(key);
+		HashCode hash = HashCode.fromString(key);
+		exclusively(hash, () -> {
+			validHashes.remove(hash);
 			Path file = hashedDir.resolve(key);
 			if (!Files.exists(file)) {
 				return null;
@@ -160,10 +161,10 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	}
 	
 	private final class EntryImplementation implements WeakValueRepository.Entry<InputStream> {
-		private final String hash;
+		private final HashCode hash;
 		private final Lock lock;
 
-		private EntryImplementation(String hash, Lock lock) {
+		private EntryImplementation(HashCode hash, Lock lock) {
 			this.hash = hash;
 			this.lock = lock;
 		}
@@ -175,9 +176,9 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 				if (!validate(hash)) {
 					// If wrapped in WeakValueRepository this should not happen
 					// It prevents removal of entries while they are reachable 
-					throw new FileNotFoundException(hash);
+					throw new FileNotFoundException(hash.toString());
 				}
-				Path file = hashedDir.resolve(hash);
+				Path file = hashedDir.resolve(hash.toString());
 				// See oldestKeys()
 				Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
 				// Reentrant lock is locked second time in LockingInputStream. This is intentional.
@@ -198,9 +199,9 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 				if (!validate(hash)) {
 					// If wrapped in WeakValueRepository this should not happen
 					// It prevents removal of entries while they are reachable 
-					throw new FileNotFoundException(hash);
+					throw new FileNotFoundException(hash.toString());
 				}
-				return Files.size(hashedDir.resolve(hash));
+				return Files.size(hashedDir.resolve(hash.toString()));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			} finally {
@@ -227,8 +228,8 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		}
 	}
 	
-	private boolean validate(String hash) {
-		Path file = hashedDir.resolve(hash);
+	private boolean validate(HashCode hash) {
+		Path file = hashedDir.resolve(hash.toString());
 		try {
 			if (validHashes.contains(hash)) {
 				if (Files.exists(file)) {
@@ -249,7 +250,11 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		return true;
 	}
 
-	private <T> T exclusively(String hash, Supplier<T> runnable) {
+	private HashCode hash(Path file) throws IOException {
+		return HashCode.fromBytes(Hash.hash(file));
+	}
+
+	private <T> T exclusively(HashCode hash, Supplier<T> runnable) {
 		Lock lock = locks.get(hash).writeLock();
 		lock.lock();
 		try {
@@ -259,33 +264,8 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		}
 	}
 
-	private String hash(Path file) throws IOException {
-		try (ReadableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
-			ByteBuffer buffer = createBuffer();
-			MessageDigest md = createDigest();
-			while (channel.read(buffer) >= 0) {
-				buffer.flip();
-				md.update(buffer);
-				buffer.compact();
-			}
-			return toString(md);
-		}
-	}
-
-	private ByteBuffer createBuffer() {
-		return ByteBuffer.allocateDirect(64 * 1024); // L1 cache size for CPU Intel(R) Xeon(R) CPU E5-2680 v3
-	}
-
 	private String toString(MessageDigest md) {
 		return HashCode.fromBytes(md.digest()).toString();
-	}
-
-	private MessageDigest createDigest() {
-		try {
-			return MessageDigest.getInstance(digestType);
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException("Invalid digest type: " + digestType, e);
-		}
 	}
 
 }
