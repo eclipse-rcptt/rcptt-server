@@ -14,39 +14,28 @@ package org.eclipse.rcptt.cloud.client;
 
 import static org.eclipse.rcptt.cloud.util.internal.UtilPlugin.createException;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.ICoreRunnable;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.client.SuperContextSupport.ContextConfiguration;
+import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.model.ModelFactory;
 import org.eclipse.rcptt.cloud.model.Q7Artifact;
 import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
@@ -77,7 +66,6 @@ import org.eclipse.rcptt.workspace.WorkspaceContext;
 import com.google.common.base.Strings;
 
 public class Q7ArtifactLoader {
-	private static final boolean USE_MD5 = false;
 	private final String[] skipTags;
 
 	public Q7ArtifactLoader(String[] skipTags) {
@@ -116,47 +104,20 @@ public class Q7ArtifactLoader {
 			elements.addAll(contexts.getElements());
 		}
 
-
-
-		// ModelManager.getModelManager().getIndexManager().waitUntilReady();
-			class ProgressJob extends Job {
-				private final AtomicInteger count = new AtomicInteger(0);
-				public ProgressJob() {
-					super("Report progress");
+		try {
+			return elements.parallelStream().flatMap(e -> {
+				try {
+					return collectArtifactsRefs(e);
+				} catch (CoreException e1) {
+					throw new CheckedExceptionWrapper(e1);
 				}
-
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					while (!monitor.isCanceled()) {
-						System.out.println("Processing resources (" + count.get() + " of " + elements.size() + ")");
-						try {
-							Thread.sleep(10000);
-						} catch (InterruptedException e) {
-							return Status.OK_STATUS;
-						}
-					}
-					System.out.println(count.get() + " resources processed");
-					return Status.OK_STATUS;
-				}
-			}
-			ProgressJob progressJob = new ProgressJob();
-			progressJob.schedule(10000);
-			try {
-				return elements.parallelStream().flatMap(e -> {
-					try {
-						return collectArtifactsRefs(e);
-					} catch (CoreException e1) {
-						throw new CheckedExceptionWrapper(e1);
-					}
-				}).peek(ignored -> progressJob.count.getAndIncrement()).onClose(progressJob::cancel);
-			} catch (CheckedExceptionWrapper e) {
-				e.rethrow(InterruptedException.class);
-				e.rethrow(CoreException.class);
-				e.rethrowUnchecked();
-				throw e;
-			} finally {
-				progressJob.cancel();
-			}
+			});
+		} catch (CheckedExceptionWrapper e) {
+			e.rethrow(InterruptedException.class);
+			e.rethrow(CoreException.class);
+			e.rethrowUnchecked();
+			throw e;
+		}
 	}
 	
 	interface ArtifactReferenceById {
@@ -265,49 +226,26 @@ public class Q7ArtifactLoader {
 			throw new CoreException(Status.error("Failed to load " + base.getPath(), e));
 		}
 	}
-	
-	public static byte[] md5(IQ7NamedElement obj) throws CoreException {
-		if (USE_MD5) {
-			MessageDigest md;
-			try {
-				md = MessageDigest.getInstance("md5");
-			} catch (NoSuchAlgorithmException e) {
-				throw createException("Can't calc md5 hash", e);
-			}
-			md.reset();
-			md.update(md5simple(obj));
-			return md.digest();
-		}
-		return null;
-	}
 
-	private static byte[] md5simple(IQ7NamedElement obj) throws CoreException {
+	private static byte[] hash(IQ7NamedElement obj) throws CoreException {
 		IFile resource = (IFile) obj.getResource();
-		if (resource.exists()) {
-			// byte[] bs = md5cache.get(resource);
-			// if (bs != null) {
-			// return bs;
-			// }
-			MessageDigest md;
-			try {
-				md = MessageDigest.getInstance("md5");
-			} catch (NoSuchAlgorithmException e) {
-				throw createException("Can't calc md5 hash", e);
-			}
-			try (InputStream contents = new BufferedInputStream(resource.getContents())) {
-				byte[] buffer = new byte[4096];
-				int len = 0;
-				while ((len = contents.read(buffer)) > 0) {
-					md.update(buffer, 0, len);
-				}
-			} catch (IOException e) {
-				createException("Failed to calculate md5", e);
-			}
-			byte[] dg = md.digest();
-			// md5cache.put(resource, dg);
-			return dg;
+		if (!resource.exists()) {
+			return new byte[0];
 		}
-		return new byte[0];
+		MessageDigest md = Hash.createDigest();
+		try (DigestInputStream is = new DigestInputStream(resource.getContents(), md);
+				OutputStream nullOutputStream = OutputStream.nullOutputStream()) {
+			is.transferTo(nullOutputStream);
+			byte[] dg = md.digest();
+			return dg;
+		} catch (IOException e) {
+			throw createException("Failed to hash " + obj, e);
+		} catch (CoreException e) {
+			if (e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
+				return new byte[0];
+			}
+			throw e;
+		}
 	}
 
 	private Stream<ElementAndReferences> collectArtifactsRefs(IQ7NamedElement base) throws CoreException {
@@ -321,7 +259,7 @@ public class Q7ArtifactLoader {
 			Q7ArtifactRef result = ModelFactory.eINSTANCE
 					.createQ7ArtifactRef();
 			result.setId(element.getID());
-			result.setHash(md5(element));
+			result.setHash(hash(element));
 
 			if (element instanceof ITestCase) {
 				// Add Contexts
@@ -345,7 +283,7 @@ public class Q7ArtifactLoader {
 						return variants.stream().map(CheckedExceptionWrapper.wrap(contextConfiguration -> {
 							Q7ArtifactRef result2 = ModelFactory.eINSTANCE
 									.createQ7ArtifactRef();
-							result2.setHash(md5(element));
+							result2.setHash(result.getHash());
 							result2.setKind(RefKind.SCENARIO);
 	
 							Q7VariantTestCase varian = new Q7VariantTestCase((Q7Element) element.getParent(),
