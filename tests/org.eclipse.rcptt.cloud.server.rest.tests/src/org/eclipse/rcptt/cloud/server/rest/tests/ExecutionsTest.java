@@ -12,30 +12,44 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.rest.tests;
 
+import static java.util.Collections.singletonList;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.FINISHED;
 import static org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState.RUNNING;
 import static org.eclipse.rcptt.cloud.server.rest.resources.TestResources.getJsonFromResource;
-import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 
-import org.junit.Test;
-
-import com.google.gson.JsonArray;
 import org.eclipse.rcptt.cloud.server.ExecutionIndex;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionState;
 import org.eclipse.rcptt.cloud.server.rest.internal.ExecutionsHandler;
 import org.eclipse.rcptt.cloud.server.rest.internal.JsonFilter;
 import org.eclipse.rcptt.cloud.server.rest.resources.TestResources;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import com.google.gson.JsonArray;
+
+@RunWith(MockitoJUnitRunner.class)
 public class ExecutionsTest {
 	private static final String SUITE_FIELD = "testSuiteName";
 	private static final String STATE_FIELD = "status";
+	
+	@Mock
+	public ExecutionRegistry.Repository repository;
 
-	private final ExecutionIndex index = new ExecutionIndex(TestResources.getExecutions(), new ExecutionRegistry());
+	
+	private ExecutionIndex index;
 	private ExecutionsHandler handler = new ExecutionsHandler();
+	
+	@Before
+	public void before() {
+		index = new ExecutionIndex(TestResources.getExecutions(), new ExecutionRegistry(repository));
+	}
 
 	@Test
 	public void testLimit() {

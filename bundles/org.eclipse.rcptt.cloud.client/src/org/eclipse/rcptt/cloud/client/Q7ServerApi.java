@@ -57,6 +57,7 @@ import org.apache.http.util.EntityUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.rcptt.cloud.common.UriUtil;
+import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.cloud.util.HttpEclClient;
 import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 import org.eclipse.rcptt.ecl.core.Command;

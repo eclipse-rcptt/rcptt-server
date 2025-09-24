@@ -81,15 +81,12 @@ final class ExecutionThread extends Thread {
 					TestOptions options = EcoreUtil.copy(task.getTestOptions());
 					this.agentThread.agentApplication.replaceOptions(options);
 
-					final Q7ArtifactRef suiteRef = ModelUtil
-							.createSuiteRef(EcoreUtil.copy(suite));
-
 					executor = this.agentThread.getExecutor(aut);
 
 					executor.setTestOptions(options);
 
 					ITestStore dir = agentTask.dir;
-					executor.prepare(dir, suiteRef);
+					executor.prepare(dir);
 
 					monitor.setCanceled(false);
 					monitor.setSuiteID(task.getSuiteId());
@@ -109,8 +106,7 @@ final class ExecutionThread extends Thread {
 					final IProgressMonitor taskMonitor = monitor
 							.createSubMonitor("Run tests", -1);
 					try {
-						Report report = executor.runTest(id, dir, suiteRef,
-								taskMonitor);
+						Report report = executor.runTest(id, dir, taskMonitor);
 						if (report == null) {
 							throw new NullPointerException("Report should not be null");
 						}

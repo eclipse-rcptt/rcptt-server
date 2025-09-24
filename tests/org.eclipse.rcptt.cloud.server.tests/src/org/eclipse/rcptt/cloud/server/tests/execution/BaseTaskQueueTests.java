@@ -21,9 +21,6 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.rcptt.internal.core.RcpttPlugin;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
@@ -37,6 +34,8 @@ import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor
 import org.eclipse.rcptt.cloud.server.tests.FakeTestStore;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils.TestsSuite;
+import org.eclipse.rcptt.internal.core.RcpttPlugin;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 
 public class BaseTaskQueueTests {
 
@@ -113,14 +112,12 @@ public class BaseTaskQueueTests {
 	private Collection<TaskDescriptor> createTasks(AutInfo aut,
 			TestsSuite testSuite) {
 		try {
-			TestsSuite suite = testSuite;
-			FakeTestStore store = new FakeTestStore(suite);
 			List<TaskDescriptor> rv = newArrayList();
 			for (Q7ArtifactRef artifactRef : testSuite.refs) {
 				if (artifactRef.getKind() != RefKind.SCENARIO)
 					continue;
-				TaskDescriptor task = new TaskDescriptor(store, aut, null,
-						artifactRef, "taskName", resolver);
+				TaskDescriptor task = new TaskDescriptor(aut, null,
+						artifactRef, "taskName", ref -> testSuite.resolveArtifact(ref));
 				rv.add(task);
 			}
 			return rv;
@@ -128,6 +125,8 @@ public class BaseTaskQueueTests {
 			throw new RuntimeException(e);
 		}
 	}
+	
+
 
 	private AgentInfo createAgent(String name, String classifier) {
 		AgentInfo a1 = ModelFactory.eINSTANCE.createAgentInfo();

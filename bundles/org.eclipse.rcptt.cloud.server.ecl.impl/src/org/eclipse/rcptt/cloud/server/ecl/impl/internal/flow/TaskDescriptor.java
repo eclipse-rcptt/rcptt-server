@@ -14,7 +14,6 @@ package org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.compose;
-import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.collect.Iterables.filter;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -27,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -37,7 +38,6 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.common.AutUtil;
 import org.eclipse.rcptt.cloud.common.Functions;
-import org.eclipse.rcptt.cloud.common.ITestStore;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
@@ -55,13 +55,13 @@ import org.eclipse.rcptt.core.scenario.NamedElement;
 import org.eclipse.rcptt.core.utils.TagsUtil;
 import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.hash.HashCode;
 
 /**
  * Test representation.
@@ -246,7 +246,7 @@ public final class TaskDescriptor {
 		String id = task.getId();
 		Q7ArtifactRef scenarioRef = Iterables.getOnlyElement(
 				filter(task.getSuite().getRefs(),
-						compose(equalTo(id), getArtifactId)), null);
+						compose(Predicate.isEqual(id)::test, getArtifactId::apply)), null);
 		if (scenarioRef == null)
 			throw new IllegalStateException("Scenario reference for task "
 					+ task.getId() + " is not found.");
@@ -504,6 +504,10 @@ public final class TaskDescriptor {
 			if (artifact == null) {
 				throw new CoreException(ServerPlugin.createErr(String.format(
 						"Cannot find resource %s", ref.getId())));
+			}
+			if (artifact.getContent() == null) {
+				throw new CoreException(ServerPlugin.createErr(String.format(
+						"Cannot restore resource %s with hash %s from cache", ref.getId(), HashCode.fromBytes(ref.getHash()))));
 			}
 			checkRefsIncluded(artifact, map);
 		}

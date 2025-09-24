@@ -17,6 +17,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.not;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
@@ -32,6 +34,7 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry.Repository.Entry;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
@@ -42,11 +45,32 @@ import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
 import org.eclipse.rcptt.ecl.runtime.IProcess;
 import org.eclipse.rcptt.util.FileUtil;
 
+import com.google.common.hash.HashCode;
+
 public class ExecutionRegistry {
 	private final Map<String, ExecutionEntry> runningSuites = Collections.synchronizedMap(new HashMap<>());
 
 	private final Map<ISMHandle<SuiteStats>, ISMHandleStore<Execution>> executions = Collections.synchronizedMap(new HashMap<>());
 	private final ListenerList<Runnable> hooks = new ListenerList<>(); 
+	private final Repository repository;
+	
+	public interface Repository {
+		public interface Entry {
+			InputStream contents();
+		}
+
+		/** @return - lazy artifact content, guaranteed to stay available while reachable **/
+		public Optional<Entry> get(HashCode key);
+
+		public Entry put(HashCode hash, InputStream data);
+
+		public URI toServerUri(HashCode hash, String filename);
+	}
+	
+	
+	public ExecutionRegistry(Repository repository) {
+		this.repository = requireNonNull(repository);
+	}
 	
 	public void addNewSuiteHook(Runnable runnable) {
 		hooks.add(runnable);
@@ -80,7 +104,8 @@ public class ExecutionRegistry {
 				});
 		ServerPlugin.getDefault().getExecListener().created(handle);
 
-		ExecutionEntry artifactSuite = ExecutionEntry.create(suite.getFileName(), handle);
+
+		ExecutionEntry artifactSuite = ExecutionEntry.create(suite.getFileName(), handle, new EntryRepository());
 
 
 		// Initialize test suite directory
@@ -199,6 +224,43 @@ public class ExecutionRegistry {
 			throw new IllegalArgumentException(executionId);
 		}
 		return new String[] {executionId.substring(0, pos), executionId.substring(pos+1, executionId.length())};
+	}
+	
+	private final class EntryRepository implements ExecutionEntry.Repository {
+		private final Map<HashCode, Repository.Entry> capturedReferences = Collections.synchronizedMap(new HashMap<>());
+
+		@Override
+		public InputStream get(HashCode hash) {
+			return capturedReferences.computeIfAbsent(hash, key -> repository.get(key).get()).contents();
+		}
+
+		@Override
+		public void put(HashCode hash, InputStream data) {
+			if (capturedReferences.containsKey(hash)) {
+				return;
+			}
+			Entry entry = repository.put(hash, data);
+			capturedReferences.putIfAbsent(hash, entry);
+		}
+
+		@Override
+		public boolean contains(HashCode hash) {
+			if (capturedReferences.containsKey(hash)) {
+				return true;
+			}
+			Optional<Entry> optional = repository.get(hash);
+			if (optional.isEmpty()) {
+				return false;
+			}
+			capturedReferences.putIfAbsent(hash, optional.get());
+			return true;
+		}
+
+		@Override
+		public URI toServerUri(HashCode hash, String filename) {
+			return repository.toServerUri(hash, filename);
+		}
+		
 	}
 
 	

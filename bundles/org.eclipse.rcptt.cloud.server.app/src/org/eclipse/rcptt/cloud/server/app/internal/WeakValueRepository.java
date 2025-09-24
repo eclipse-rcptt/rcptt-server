@@ -36,7 +36,7 @@ public final class WeakValueRepository<K, V> {
 	}
 	public interface Repository<K, V> {
 		Optional<Entry<V>> get(K key);
-		void putIfAbsent(K key, V input);
+		Entry<V> putIfAbsent(K key, V input);
 		void remove(K key);
 		Stream<K> oldestKeys();
 	}
@@ -62,9 +62,12 @@ public final class WeakValueRepository<K, V> {
 		}
 	}
 
-	public void putIfAbsent(K key, V input) {
-		repository.putIfAbsent(key, input);
-		get(key);
+	public Entry<V> putIfAbsent(K key, V input) {
+		try {
+			return cache.get(key, () -> repository.putIfAbsent(key, input));
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void onRemove(RemovalNotification<K, Entry<V>> notification) {

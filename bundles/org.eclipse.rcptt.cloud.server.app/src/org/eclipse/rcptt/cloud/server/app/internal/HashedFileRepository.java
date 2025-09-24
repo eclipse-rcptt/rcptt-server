@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.eclipse.rcptt.cloud.common.Hash;
+import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Entry;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Repository;
 
 import com.google.common.base.Preconditions;
@@ -78,13 +79,14 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	}
 
 	@Override
-	public void putIfAbsent(String hashString, InputStream data) {
+	public WeakValueRepository.Entry<InputStream> putIfAbsent(String hashString, InputStream data) {
 		Preconditions.checkArgument(!hashString.isEmpty(), "Hash can not be empty");
 		HashCode hash = HashCode.fromString(hashString);
 		assert hashString.equals(hash.toString());
-		exclusively(hash, () -> {
-			if (validate(hash)) {
-				return null;
+		return exclusively(hash, () -> {
+			Optional<Entry<InputStream>> optional = get(hashString);
+			if (optional.isPresent()) {
+				return optional.get();
 			}
 			try {
 				// Temporary files have to be on the same FS for efficient move
@@ -96,7 +98,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 						is.transferTo(os);
 					}
 
-					String dataHash = toString(md);
+					HashCode dataHash = HashCode.fromBytes(md.digest());
 					if (!hash.equals(dataHash)) {
 						throw new IllegalArgumentException(
 								String.format("Data hash %s does not match hash argument %s", dataHash, hash));
@@ -112,7 +114,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-			return null;
+			return new EntryImplementation(hash, locks.get(hash).readLock());
 		});
 	}
 
@@ -262,10 +264,6 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 		} finally {
 			lock.unlock();
 		}
-	}
-
-	private String toString(MessageDigest md) {
-		return HashCode.fromBytes(md.digest()).toString();
 	}
 
 }

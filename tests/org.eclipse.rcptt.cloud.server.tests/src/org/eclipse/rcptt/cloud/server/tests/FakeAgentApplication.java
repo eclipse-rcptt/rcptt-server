@@ -125,8 +125,7 @@ public class FakeAgentApplication extends AgentApplication {
 			}
 
 			@Override
-			public Report runTest(int agentID, ITestStore dir,
-					Q7ArtifactRef suite, IProgressMonitor monitor)
+			public Report runTest(int agentID, ITestStore dir, IProgressMonitor monitor)
 					throws CoreException {
 				while (stopOnRun) {
 					try {
@@ -244,7 +243,7 @@ public class FakeAgentApplication extends AgentApplication {
 			}
 
 			@Override
-			public void prepare(ITestStore dir, Q7ArtifactRef suiteRef) {
+			public void prepare(ITestStore dir) {
 				for (Q7ArtifactRef scenarioRef : ModelUtil.scenarioList(dir
 						.getTestSuite())) {
 					try {

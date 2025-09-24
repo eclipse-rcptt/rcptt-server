@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
@@ -40,7 +41,6 @@ import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor;
-import org.eclipse.rcptt.cloud.server.tests.FakeTestStore;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils;
 import org.eclipse.rcptt.cloud.server.tests.TestUtils.TestsSuite;
 import org.eclipse.rcptt.ecl.core.ProcessStatus;
@@ -225,10 +225,10 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		TaskQueue subject = new TaskQueue(r, consoleLog, consoleLog);
 		TestsSuite suite = TestUtils.createSuite("Initialization failure", 1,
 				TestCaseState.wait20sec);
-		FakeTestStore dir = new FakeTestStore(suite);
 		TestOptions testOptions = ModelFactory.eINSTANCE.createTestOptions();
 		testOptions.getValues().put("testExecTimeout", "0");
-		TaskDescriptor task = new TaskDescriptor(dir, aut, testOptions, suite.refs.get(0), "taskName", resolver);
+		Function<Q7ArtifactRef, Q7Artifact> resolver = suite::resolveArtifact;
+		TaskDescriptor task = new TaskDescriptor(aut, testOptions, suite.refs.get(0), "taskName", resolver);
 		AtomicReference<Report> report = new AtomicReference<>();
 		task.addListener(new TaskDescriptor.Listener.Adapter() {
 			@Override
@@ -239,7 +239,7 @@ public class TaskQueueTests extends BaseTaskQueueTests {
 		});
 		Collection<TaskDescriptor> tasks = Collections.singletonList(task);
 		TaskSuiteDescriptor suiteDescriptor = new TaskSuiteDescriptor(suite.testSuiteName, aut, consoleLog, 1, 1, tasks);
-		Map<String, Q7ArtifactRef> contexts = ModelUtil.dependenciesMap(dir.getTestSuite());
+		Map<String, Q7ArtifactRef> contexts = ModelUtil.dependenciesMap(suite.suite);
 		suiteDescriptor.initialize(contexts, null);
 		subject.schedule(suiteDescriptor);
 		subject.get(agents.get(0), suiteDescriptor.getSuiteId());

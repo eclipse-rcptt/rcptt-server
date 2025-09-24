@@ -31,7 +31,7 @@ public class AddAutService extends SingleCommandService<AddAut> {
 	protected Object serviceTyped(AddAut command, IServerContext context) throws InterruptedException, CoreException {
 		ExecutionEntry suite = context.getExecutionRegistry().getSuiteHandle(command.getSuiteId());
 		AutInfo info = command.getAut();
-		info = suite.addAutForDownload(info, context::toUri, context::toUri);
+		info = suite.addAutForDownload(info, context::toUri);
 		if (info == null) {
 			throw new CoreException(new Status(IStatus.ERROR, CommonPlugin.PLUGIN_ID, "Failed to load AUT " + info));
 		}

@@ -16,6 +16,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.zip.ZipEntry;
@@ -24,13 +25,12 @@ import java.util.zip.ZipInputStream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
-import org.eclipse.rcptt.cloud.common.ITestStore;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
 import org.eclipse.rcptt.cloud.model.Q7Artifact;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
 import org.eclipse.rcptt.ecl.core.Command;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 import org.eclipse.rcptt.ecl.runtime.ICommandService;
@@ -59,13 +59,14 @@ public class AddTestResourceService implements ICommandService {
 					+ cmd.getSuiteId() + " not found");
 		}
 
-		ITestStore dir = handle.getTestStore();
-		if (cmd.getResource() != null) {
-			dir.putResource(EcoreUtil.copy(cmd.getResource()));
-		} else if (cmd.getArtifactsPath() != null) {
-			File artifactName = new File(executions
+		try {
+			if (cmd.getResource() != null) {
+				try (InputStream is = EmfResourceUtil.toInputStream(cmd.getResource().getContent())) {
+					handle.addArtifact(is);
+				}
+			} else if (cmd.getArtifactsPath() != null) {
+				File artifactName = new File(executions
 					.getRoot().toURI().resolve(URI.create(cmd.getArtifactsPath())));
-			try {
 				ZipInputStream zin = new ZipInputStream(
 						new BufferedInputStream(new FileInputStream(
 								artifactName)));
@@ -84,7 +85,9 @@ public class AddTestResourceService implements ICommandService {
 						continue;
 					}
 					Q7Artifact artifact = (Q7Artifact) res.getContents().get(0);
-					dir.putResource(artifact);
+					try (InputStream inputStream = EmfResourceUtil.toInputStream(artifact.getContent())) {
+						handle.addArtifact(inputStream);
+					}
 				}
 				zin.close();
 				// Delete zip artifact
@@ -95,9 +98,9 @@ public class AddTestResourceService implements ICommandService {
 					md5File.delete();
 				}
 
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
+		}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
 		return Status.OK_STATUS;
 	}

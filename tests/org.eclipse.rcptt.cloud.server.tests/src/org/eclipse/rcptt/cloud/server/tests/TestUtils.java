@@ -28,20 +28,11 @@ import java.util.Set;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.rcptt.core.Scenarios;
-import org.eclipse.rcptt.core.scenario.Scenario;
-import org.eclipse.rcptt.core.scenario.ScenarioFactory;
-import org.eclipse.rcptt.ecl.core.BoxedValue;
-import org.eclipse.rcptt.ecl.core.ProcessStatus;
-import org.eclipse.rcptt.ecl.runtime.BoxedValues;
-import org.eclipse.rcptt.ecl.server.tcp.EclTcpServerManager;
-import org.eclipse.rcptt.reporting.Q7Info;
-import org.eclipse.rcptt.reporting.core.SimpleSeverity;
-
 import org.eclipse.rcptt.cloud.agent.app.internal.AgentThread;
 import org.eclipse.rcptt.cloud.client.ClientAppPlugin;
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.EclServerApplication;
+import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestSuite;
 import org.eclipse.rcptt.cloud.common.commonCommands.BeginTestSuite;
@@ -66,9 +57,17 @@ import org.eclipse.rcptt.cloud.server.serverCommands.ExecTestSuite;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionProgress;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
-import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
 import org.eclipse.rcptt.cloud.util.RemoteEclClient;
 import org.eclipse.rcptt.cloud.util.RemoteEclClient.ExecResult;
+import org.eclipse.rcptt.core.Scenarios;
+import org.eclipse.rcptt.core.scenario.Scenario;
+import org.eclipse.rcptt.core.scenario.ScenarioFactory;
+import org.eclipse.rcptt.ecl.core.BoxedValue;
+import org.eclipse.rcptt.ecl.core.ProcessStatus;
+import org.eclipse.rcptt.ecl.runtime.BoxedValues;
+import org.eclipse.rcptt.ecl.server.tcp.EclTcpServerManager;
+import org.eclipse.rcptt.reporting.Q7Info;
+import org.eclipse.rcptt.reporting.core.SimpleSeverity;
 
 public class TestUtils {
 	private static List<Integer> usedPorts = new ArrayList<Integer>();
@@ -326,6 +325,16 @@ public class TestUtils {
 		private synchronized Q7Artifact getArtifact(Q7ArtifactRef ref) {
 			return artifacts.get(ref.getId());
 		}
+		
+		public Q7Artifact resolveArtifact( Q7ArtifactRef ref) {
+			Q7Artifact rv = artifacts.get(ref.getId());
+			if (Q7TestingHelper.containsTag(rv.getContent(),
+					TestCaseState.failtoload)) {
+				return null;
+			}
+			return rv;
+		}
+
 
 		private synchronized List<Q7ArtifactRef> addTestSuite(TestSuite suite,
 				RemoteEclClient server) throws IOException,
@@ -421,6 +430,9 @@ public class TestUtils {
 					for (Object answer : result.getPipeContent()) {
 						if (answer instanceof Envelope) {
 							Envelope envelope = (Envelope) answer;
+							if (envelope.getMessage() != null) {
+								System.out.println(envelope.getMessage());
+							}
 							Q7Info info = (Q7Info) envelope.getQ7Info();
 							if (info != null) {
 								if (!processedNames.add(info.getId())) {
@@ -520,7 +532,7 @@ public class TestUtils {
 
 			Q7ArtifactRef ref = ModelFactory.eINSTANCE.createQ7ArtifactRef();
 			ref.setId(uid);
-			ref.setHash(EmfResourceUtil.md5(scenario));
+			ref.setHash(Hash.hash(scenario));
 			ref.setKind(RefKind.SCENARIO);
 
 			refs.add(ref);
@@ -532,7 +544,7 @@ public class TestUtils {
 
 			testSuiteRef = ModelFactory.eINSTANCE.createQ7ArtifactRef();
 			testSuiteRef.setId(testSuiteName);
-			testSuiteRef.setHash(EmfResourceUtil.md5(suite));
+			testSuiteRef.setHash(Hash.hash(suite));
 			testSuiteRef.setKind(RefKind.TEST_SUITE);
 		}
 

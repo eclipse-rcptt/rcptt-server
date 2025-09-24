@@ -102,19 +102,6 @@ public class ModelUtil {
 		return suite;
 	}
 
-	public static Q7ArtifactRef createSuiteRef(TestSuite suite)
-			throws CoreException {
-		Q7ArtifactRef result = ModelFactory.eINSTANCE.createQ7ArtifactRef();
-		result.setId(suite.getId());
-		result.setHash(EmfResourceUtil.md5(suite));
-		result.setKind(RefKind.TEST_SUITE);
-		for (Q7ArtifactRef ref : suite.getRefs()) {
-			result.getRefs().add(requireNotNull(ref.getId()));
-		}
-
-		return result;
-	}
-
 	public static List<String> getAtrifactIds(List<Q7ArtifactRef> refs) {
 		List<String> result = new ArrayList<>();
 		for (Q7ArtifactRef ref : refs) {
@@ -123,15 +110,6 @@ public class ModelUtil {
 		return result;
 	}
 
-	public static Q7ArtifactRef createRef(Q7Artifact artifact, RefKind kind)
-			throws CoreException {
-		Q7ArtifactRef rv = ModelFactory.eINSTANCE.createQ7ArtifactRef();
-		rv.setId(artifact.getId());
-		rv.setHash(EmfResourceUtil.md5(artifact.getContent()));
-		rv.setKind(kind);
-		return rv;
-	}
-	
 	private static String requireNotNull(String id) {
 		if (Strings.isNullOrEmpty(id) || "null".contentEquals(id))
 			throw new NullPointerException();

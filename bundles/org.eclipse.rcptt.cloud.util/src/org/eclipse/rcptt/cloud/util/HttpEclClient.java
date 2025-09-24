@@ -28,6 +28,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.BasicInternalEList;
 import org.eclipse.emf.ecore.util.InternalEList;
@@ -75,15 +76,23 @@ public class HttpEclClient {
 				bs = IOUtil.getStreamContent(responseContent);
 				EObjectInputStream ein = new EObjectInputStream(
 						new ByteArrayInputStream(bs), new HashMap<Object, Object>());
-				IStatus status = statusConverter.fromEObject((ProcessStatus) ein
+				IStatus status1 = statusConverter.fromEObject((ProcessStatus) ein
 						.loadEObject());
 				InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
 						InternalEObject.class);
 				ein.loadEObjects(results);
 	
 				EntityUtils.consume(responseEntity);
-	
-				return new ExecutionResult(status, results.toArray());
+				
+				IStatus status2 = statusConverter.fromEObject((ProcessStatus) results.remove(results.size() - 1));
+				
+				IStatus status = status1;
+				if (!status1.isOK() && !status2.isOK()) {
+					status = new MultiStatus(getClass(), 0, new IStatus[] {status1, status2}, "Multiple errors reported by HTTP ECL server", null);
+				} else if (!status2.isOK()) {
+					status = status2;
+				}
+				return new ExecutionResult(status, results. toArray());
 			}
 		} catch (SocketTimeoutException e) {
 			ConnectException e1 = new ConnectException(e.getLocalizedMessage());

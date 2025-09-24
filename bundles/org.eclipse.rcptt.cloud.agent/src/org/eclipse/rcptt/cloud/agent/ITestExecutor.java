@@ -20,7 +20,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
 
 import org.eclipse.rcptt.cloud.common.ITestStore;
-import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.TestOptions;
 
 public interface ITestExecutor {
@@ -39,14 +38,13 @@ public interface ITestExecutor {
 
 	public void clearConfigurations();
 
-	public Report runTest(int agentID, ITestStore dir, Q7ArtifactRef suite,
-			IProgressMonitor monitor) throws CoreException, TimeoutException;
+	public Report runTest(int agentID, ITestStore dir, IProgressMonitor monitor) throws CoreException, TimeoutException;
 
 	public void shutdown();
 
 	public void setTestOptions(TestOptions options);
 
-	public void prepare(ITestStore dir, Q7ArtifactRef suiteRef);
+	public void prepare(ITestStore dir);
 
 	public String getOutStreamFile(long limit);
 

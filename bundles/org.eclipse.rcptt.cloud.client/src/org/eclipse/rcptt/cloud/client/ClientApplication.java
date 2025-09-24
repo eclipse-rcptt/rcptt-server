@@ -36,6 +36,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +44,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -71,6 +73,7 @@ import org.eclipse.rcptt.cloud.client.Q7ServerApi.UploadResult;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
 import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
+import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddAut;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
@@ -91,7 +94,7 @@ import org.eclipse.rcptt.cloud.server.serverCommands.ExecTestSuite;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionProgress;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
-import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
+import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 import org.eclipse.rcptt.core.internal.builder.MigrateProjectsJob;
 import org.eclipse.rcptt.core.model.IQ7Element;
@@ -217,7 +220,6 @@ public class ClientApplication extends CommandLineApplication {
 	private final Map<String, IQ7NamedElement> resourceFilesById = new HashMap<>();
 	private final Map<String, Q7ArtifactRef> resourcesById = new HashMap<>();
 
-	private Q7ArtifactRef testSuiteRef;
 	private TestSuite suite;
 
 	private Q7ArtifactLoader loader;
@@ -329,7 +331,7 @@ public class ClientApplication extends CommandLineApplication {
 
 		st = System.currentTimeMillis();
 		logInfo("Prepare list of artifacts required by server");
-		addTestSuite(suite);
+		List<Q7ArtifactRef> missingResources = addTestSuite(suite);
 		ed = System.currentTimeMillis();
 		System.out.println("Add suite complete:" + (ed - st));
 
@@ -345,7 +347,7 @@ public class ClientApplication extends CommandLineApplication {
 		int total = values.size();
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
-		for (final Q7ArtifactRef ref : values) {
+		for (final Q7ArtifactRef ref : missingResources) {
 			zout = new ZipOutputStream(bout);
 			processed++;
 			Q7Artifact artifact = getArtifact(ref);
@@ -787,7 +789,7 @@ public class ClientApplication extends CommandLineApplication {
 			throw ClientAppPlugin.createException(String.format(
 					"Requested resource %s is not found", ref.getId()));
 		}
-		return Q7ArtifactLoader.getArtifact(file, new ArtifactReferenceById() {
+		Q7Artifact result = Q7ArtifactLoader.getArtifact(file, new ArtifactReferenceById() {
 			@Override
 			public Q7ArtifactRef apply(String id) throws CoreException {
 				Q7ArtifactRef eObject = resourcesById.get(id);
@@ -797,6 +799,8 @@ public class ClientApplication extends CommandLineApplication {
 				return EcoreUtil.copy(eObject);
 			}
 		});
+		assert Arrays.equals(Hash.hash(result.getContent()), ref.getHash());
+		return result;
 	}
 
 	private void addTestResource(URI artifactsFile) throws CoreException {
@@ -1238,7 +1242,7 @@ public class ClientApplication extends CommandLineApplication {
 		return line;
 	}
 
-	private void addTestSuite(TestSuite newSuite) throws IOException,
+	private List<Q7ArtifactRef> addTestSuite(TestSuite newSuite) throws IOException,
 			UnknownHostException, CoreException, InterruptedException {
 		AddTestSuite addTestSuite = CommonCommandsFactory.eINSTANCE
 				.createAddTestSuite();
@@ -1250,19 +1254,14 @@ public class ClientApplication extends CommandLineApplication {
 			throw new RuntimeException("Failed to launch suite:"
 					+ result.status.getMessage());
 		}
+		return Arrays.stream(result.results).map(Q7ArtifactRef.class::cast).map(Q7ArtifactRef::getId).map(resourcesById::get).peek(Objects::requireNonNull).toList();
 	}
 
 	private TestSuite createTestSuite() throws CoreException {
 		TestSuite rv = ModelFactory.eINSTANCE.createTestSuite();
-		// TODO: think how to identify test suite. Workspace name??
 		rv.setId(testSuiteName);
 		ModelUtil.setRefs(rv,
 				new ArrayList<>(resourcesById.values()));
-
-		testSuiteRef = ModelFactory.eINSTANCE.createQ7ArtifactRef();
-		testSuiteRef.setId(testSuiteName);
-		testSuiteRef.setHash(EmfResourceUtil.md5(rv));
-		testSuiteRef.setKind(RefKind.TEST_SUITE);
 		return rv;
 	}
 

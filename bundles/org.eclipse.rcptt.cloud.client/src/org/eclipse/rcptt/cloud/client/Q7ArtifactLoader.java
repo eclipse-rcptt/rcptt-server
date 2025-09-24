@@ -12,12 +12,6 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.client;
 
-import static org.eclipse.rcptt.cloud.util.internal.UtilPlugin.createException;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,8 +19,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -111,7 +103,7 @@ public class Q7ArtifactLoader {
 				} catch (CoreException e1) {
 					throw new CheckedExceptionWrapper(e1);
 				}
-			});
+			}).peek(element -> {assert element.references().getHash() != null; });
 		} catch (CheckedExceptionWrapper e) {
 			e.rethrow(InterruptedException.class);
 			e.rethrow(CoreException.class);
@@ -228,24 +220,7 @@ public class Q7ArtifactLoader {
 	}
 
 	private static byte[] hash(IQ7NamedElement obj) throws CoreException {
-		IFile resource = (IFile) obj.getResource();
-		if (!resource.exists()) {
-			return new byte[0];
-		}
-		MessageDigest md = Hash.createDigest();
-		try (DigestInputStream is = new DigestInputStream(resource.getContents(), md);
-				OutputStream nullOutputStream = OutputStream.nullOutputStream()) {
-			is.transferTo(nullOutputStream);
-			byte[] dg = md.digest();
-			return dg;
-		} catch (IOException e) {
-			throw createException("Failed to hash " + obj, e);
-		} catch (CoreException e) {
-			if (e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
-				return new byte[0];
-			}
-			throw e;
-		}
+		return Hash.hash(obj.getNamedElement());
 	}
 
 	private Stream<ElementAndReferences> collectArtifactsRefs(IQ7NamedElement base) throws CoreException {
@@ -259,7 +234,6 @@ public class Q7ArtifactLoader {
 			Q7ArtifactRef result = ModelFactory.eINSTANCE
 					.createQ7ArtifactRef();
 			result.setId(element.getID());
-			result.setHash(hash(element));
 
 			if (element instanceof ITestCase) {
 				// Add Contexts
@@ -274,6 +248,8 @@ public class Q7ArtifactLoader {
 
 					// Add verifications
 					addVerifications(element, result);
+					
+					result.setHash(hash(element));
 
 					return Stream.of(new ElementAndReferences(base, result));
 				} else {
@@ -283,7 +259,6 @@ public class Q7ArtifactLoader {
 						return variants.stream().map(CheckedExceptionWrapper.wrap(contextConfiguration -> {
 							Q7ArtifactRef result2 = ModelFactory.eINSTANCE
 									.createQ7ArtifactRef();
-							result2.setHash(result.getHash());
 							result2.setKind(RefKind.SCENARIO);
 	
 							Q7VariantTestCase varian = new Q7VariantTestCase((Q7Element) element.getParent(),
@@ -297,6 +272,8 @@ public class Q7ArtifactLoader {
 							// Add verifications
 							addVerifications(element, result2);
 	
+							result2.setHash(hash(varian));
+
 							return new ElementAndReferences(varian, result2);
 						}));
 					} catch (CheckedExceptionWrapper e) {
@@ -317,9 +294,11 @@ public class Q7ArtifactLoader {
 					return Stream.empty();
 				}
 				result.setKind(RefKind.CONTEXT);
+				result.setHash(hash(element));
 				return Stream.of(new ElementAndReferences(base, result));
 			} else if (element instanceof IVerification) {
 				result.setKind(RefKind.VERIFICATION);
+				result.setHash(hash(element));
 				return Stream.of(new ElementAndReferences(base, result));
 			}
 			return Stream.empty();

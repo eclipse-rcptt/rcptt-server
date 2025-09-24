@@ -10,7 +10,9 @@
  * Contributors:
  *   Xored Software Inc - initial API and implementation
  ********************************************************************************/
-package org.eclipse.rcptt.cloud.client;
+package org.eclipse.rcptt.cloud.util;
+
+import java.util.function.Function;
 
 import com.google.common.base.Throwables;
 
@@ -35,6 +37,22 @@ public final class CheckedExceptionWrapper extends RuntimeException {
 			} 
 		};
 	}
+	
+	public interface ThrowingFunction<T, R> {
+		R apply(T t) throws Exception;
+	}
+	
+	public static <T,R> Function<T, R> encode(ThrowingFunction<T,R> throwing) {
+		return t -> {
+			try {
+				return throwing.apply(t);
+			} catch (Exception e) {
+				Throwables.throwIfUnchecked(e);
+				throw new CheckedExceptionWrapper(e);
+			} 
+		};
+	}
+	
 	
 	public <E extends Exception> void rethrow(Class<E> clazz) throws E {
 		Throwables.throwIfInstanceOf(getCause(), clazz);

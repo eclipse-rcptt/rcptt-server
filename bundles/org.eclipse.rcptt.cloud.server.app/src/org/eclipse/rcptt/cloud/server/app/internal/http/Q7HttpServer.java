@@ -93,15 +93,10 @@ public class Q7HttpServer {
 	private URI serverFileUriPrefix;
 	private URI serverCacheUriPrefix;
 	private final WeakValueRepository<String, InputStream> cache = new WeakValueRepository<String, InputStream>(HASHED_REPOSITORY);
-
-	private final ExecutionRegistry executions = new ExecutionRegistry();
+	private final ExecutionRegistry executions = new ExecutionRegistry(new ExecutionRegistryRepositoryCacheAdapter());
 	ExecutionIndex execIndex = new ExecutionIndex(null, executions);
 	
 	private final IServerContext serverContext = new IServerContext() {
-		@Override
-		public Optional<Supplier<InputStream>> getDataByHash(byte[] hash) {
-			return Q7HttpServer.this.getDataByHash(hash);
-		}
 
 		@Override
 		public ExecutionRegistry getExecutionRegistry() {
@@ -185,6 +180,25 @@ public class Q7HttpServer {
 	
 	public IServerContext getContext() {
 		return serverContext;
+	}
+
+	private final class ExecutionRegistryRepositoryCacheAdapter implements ExecutionRegistry.Repository {
+		
+		@Override
+		public URI toServerUri(HashCode hash, String filename) {
+			return serverContext.toUri(hash.asBytes(), filename).get();
+		}
+		
+		@Override
+		public Entry put(HashCode hash, InputStream data) {
+			return cache.putIfAbsent(hash.toString(), data)::contents;
+		}
+		
+		@Override
+		public Optional<Entry> get(HashCode hash) {
+			return cache.get(hash.toString()).map(e -> e::contents);
+		}
+		
 	}
 
 	private static final class ServletEntryForWeakValue implements ArtifactServlet.Entry {

@@ -17,9 +17,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry.Repository;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
 import org.eclipse.rcptt.cloud.server.ism.stats.StatsPackage;
@@ -28,17 +28,24 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ExecutionRegistryTests {
 	
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 	private ISMHandleStore<SuiteStats> suiteStore;
-	private final ExecutionRegistry subject = new ExecutionRegistry();
+	@Mock
+	public Repository repository;
+	private ExecutionRegistry subject;
 
 	
 	@Before
 	public void before() {
+		subject = new ExecutionRegistry(repository);
 		suiteStore = new ISMHandleStore<SuiteStats>(new File(temporaryFolder.getRoot(), "suites"),
 				StatsPackage.eINSTANCE.getSuiteStats());
 	}

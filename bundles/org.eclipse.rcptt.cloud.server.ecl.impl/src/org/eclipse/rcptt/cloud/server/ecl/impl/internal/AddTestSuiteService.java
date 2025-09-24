@@ -10,31 +10,29 @@
  * Contributors:
  *   Xored Software Inc - initial API and implementation
  ********************************************************************************/
-package org.eclipse.rcptt.cloud.common.ecl.impl.internal;
+package org.eclipse.rcptt.cloud.server.ecl.impl.internal;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.rcptt.ecl.core.Command;
-import org.eclipse.rcptt.ecl.runtime.ICommandService;
-import org.eclipse.rcptt.ecl.runtime.IProcess;
-
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestSuite;
+import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
-import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.IServerContext;
 
-public class AddTestSuiteService implements ICommandService {
+public class AddTestSuiteService extends SingleCommandService<AddTestSuite> {
 
-	public IStatus service(Command command, IProcess context)
+	public AddTestSuiteService() {
+		super(AddTestSuite.class);
+	}
+
+	@Override
+	public Iterable<Q7ArtifactRef> serviceTyped(AddTestSuite command, IServerContext context)
 			throws InterruptedException, CoreException {
 		AddTestSuite addTestSuite = (AddTestSuite) command;
 
-		ExecutionEntry suiteHandle = ExecutionRegistry.getInstance(context)
+		ExecutionEntry suiteHandle = context.getExecutionRegistry()
 				.getSuiteHandle(addTestSuite.getSuiteId());
-		suiteHandle.getTestStore().clearOutDated(addTestSuite.getSuite(), true);
-
-		context.getOutput().close(Status.OK_STATUS);
-		return Status.OK_STATUS;
+		suiteHandle.setTestSuite(addTestSuite.getSuite());
+		return suiteHandle.getUnresolvedReferences();
 	}
 
 }

@@ -63,6 +63,7 @@ import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.model.ModelUtil;
 import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.TestOptions;
+import org.eclipse.rcptt.cloud.model.TestSuite;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.eclipse.rcptt.core.scenario.Scenario;
 import org.eclipse.rcptt.core.workspace.IWorkspaceFinder;
@@ -456,8 +457,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 	 */
 
 	@Override
-	public Report runTest(int agentID, ITestStore dir, Q7ArtifactRef suite,
-			IProgressMonitor monitor) throws CoreException, TimeoutException {
+	public Report runTest(int agentID, ITestStore dir, IProgressMonitor monitor) throws CoreException, TimeoutException {
 		long start = System.currentTimeMillis();
 		if (monitor instanceof IAgentMonitor) {
 			((IAgentMonitor) monitor).logAgentMessage("Begin test",
@@ -465,9 +465,9 @@ public class TestExecutor implements ITestExecutor.Closeable {
 		}
 		IWorkspaceFinder cxFinder = new TestDirContextFinder(dir);
 
+		TestSuite testSuite = dir.getTestSuite();
 		try {
-			List<Q7ArtifactRef> scenarioList = ModelUtil.scenarioList(dir
-					.getTestSuite());
+			List<Q7ArtifactRef> scenarioList = ModelUtil.scenarioList(testSuite);
 			assert scenarioList.size() == 1 : "Scenario size should be 1, but was " + scenarioList.size();
 			if (monitor.isCanceled()) {
 				throw new CoreException(Status.CANCEL_STATUS);
@@ -477,7 +477,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			long end = System.currentTimeMillis();
 			if (monitor instanceof IAgentMonitor) {
 				((IAgentMonitor) monitor).logAgentMessage(
-						"Test complete: " + suite.getId() + " time: "
+						"Test complete: " + testSuite.getId() + " time: "
 								+ Long.toString(end - start),
 						IAgentMonitor.LogType.LogOnly);
 			}
@@ -759,7 +759,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 	}
 
 	@Override
-	public void prepare(ITestStore dir, Q7ArtifactRef suiteRef) {
+	public void prepare(ITestStore dir) {
 	}
 
 	@Override

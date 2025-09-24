@@ -13,13 +13,20 @@
 package org.eclipse.rcptt.cloud.common;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 
 public final class Hash {
 	public static final byte[] hash(Path file) throws IOException {
@@ -46,6 +53,20 @@ public final class Hash {
 			throw new IllegalStateException("Invalid digest type: " + digestType, e);
 		}
 	}
+	
+	public static byte[] hash(EObject obj) {
+		Resource r = new ECLBinaryResourceImpl();
+		r.getContents().add(EcoreUtil.copy(obj));
+		MessageDigest md = createDigest();
+		try (DigestOutputStream os = new DigestOutputStream(OutputStream.nullOutputStream(), md)) {
+			r.save(os, null);
+		} catch (IOException e) {
+			// shoudn't happen, in-memory operation
+			throw new RuntimeException(e);
+		}
+		return md.digest();
+	}
+
 	
 	private static final String digestType = "SHA-256";
 }

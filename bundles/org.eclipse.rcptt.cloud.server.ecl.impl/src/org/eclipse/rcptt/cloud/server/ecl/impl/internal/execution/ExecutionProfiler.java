@@ -54,7 +54,6 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.EMap;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.rcptt.cloud.common.ITestStore;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
@@ -65,6 +64,7 @@ import org.eclipse.rcptt.cloud.model.Options;
 import org.eclipse.rcptt.cloud.model.Q7Artifact;
 import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
 import org.eclipse.rcptt.cloud.model.TestOptions;
+import org.eclipse.rcptt.cloud.model.TestSuite;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
@@ -73,16 +73,15 @@ import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskDescriptor.Listener;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskSuiteDescriptor;
-import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentStats;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentTest;
 import org.eclipse.rcptt.cloud.server.ism.stats.ExecutionAgentTestStatus;
 import org.eclipse.rcptt.cloud.server.ism.stats.StatsFactory;
-import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
 import org.eclipse.rcptt.cloud.server.serverCommands.AgentLogEntryType;
 import org.eclipse.rcptt.cloud.server.serverCommands.AutStartupStatus;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecutionState;
 import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
+import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.core.scenario.Scenario;
 import org.eclipse.rcptt.ecl.core.ProcessStatus;
 import org.eclipse.rcptt.ecl.internal.core.ProcessStatusConverter;
@@ -190,7 +189,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			this.options = new Options(options);
 			long timeout = this.options.getValue(Options.KEY_EXEC_TIMEOUT, Options.DEFAULT_EXEC_TIMEOUT);
 			this.stop = handle.created.plusSeconds(timeout);
-
+			
 			infos = EcoreUtil.copyAll(Arrays.asList(auts));
 			reportFile = handle.getMetadataName("q7.report");
 			reportOut = closer.register(new SherlockReportOutputStream(
@@ -223,7 +222,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			errorMonitor = handle.getMonitor(ExecutionEntry.ERROR_MONITOR);
 			errorMonitor.log("#################### Initialize execution session",
 					null);
-			ismHandle = handle.getSuite();
 			handle.setProfiler(this);
 			closer.register(() -> handle.setProfiler(null));
 			start();
@@ -242,8 +240,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		int taskCount = 0;
 		if (totalTestCount >= 0)
 			throw new IllegalStateException("Repeated initialization");
-		List<Q7ArtifactRef> scenarios = ModelUtil.scenarioList(suiteDir
-				.getTestSuite());
+		List<Q7ArtifactRef> scenarios = ModelUtil.scenarioList(handle.getTestSuite());
 
 		ArrayList<TaskSuiteDescriptor> temp = new ArrayList<TaskSuiteDescriptor>();
 		for (AutInfo aut : infos) {
@@ -262,8 +259,8 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		int maxAgents = options.getValue(Options.MAX_AGENTS_TO_USE, -1);
 		List<TaskDescriptor> tasks = Lists.newArrayList();
 		for (Q7ArtifactRef scenario : scenarios) {
-			TaskDescriptor task = new TaskDescriptor(suiteDir, aut,
-					options.getTestOptions(), scenario, getTestCaseName(suiteDir, scenario), resolver);
+			java.util.function.Function<Q7ArtifactRef, Q7Artifact> resolver = CheckedExceptionWrapper.encode(this::resolveArtifact);
+			TaskDescriptor task = new TaskDescriptor(aut, options.getTestOptions(), scenario, getTestCaseName(scenario), resolver);
 			tasks.add(task);
 		}
 		TaskSuiteDescriptor descr = new TaskSuiteDescriptor(getSuiteID(), aut, errorMonitor, tasksPerAgent, maxAgents,
@@ -273,22 +270,14 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		return descr;
 	}
 
-	private String getTestCaseName(ITestStore suiteDir, Q7ArtifactRef scenario)
+	private String getTestCaseName(Q7ArtifactRef scenario)
 			throws IOException {
-		if (suiteDir == null)
-			throw new NullPointerException();
 		if (scenario == null)
 			throw new NullPointerException();
 		if (scenario.getId() == null)
 			throw new NullPointerException();
-		Q7Artifact resource = suiteDir.getResource(scenario);
-		if (resource == null)
-			throw new NullPointerException("Resource " + scenario.getId()
-					+ " not found " + " in " + suiteDir);
+		Q7Artifact resource = resolveArtifact(scenario);
 		Scenario content = (Scenario) resource.getContent();
-		if (content == null)
-			throw new NullPointerException("No content found for "
-					+ scenario.getId() + " in " + suiteDir);
 		return content.getName();
 	}
 
@@ -359,16 +348,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 	}
 
 	private void start() {
-		ismHandle.commit(new Function<SuiteStats, Void>() {
-			@Override
-			public Void apply(SuiteStats suiteStats) {
-				if (suiteStats.getSuiteName() == null) {
-					suiteStats.setSuiteName(suiteDir.getTestSuite().getId());
-				}
-				return null;
-			}
-		});
-
 		handle.updateStatistics(execStat -> {
 			execStat.setState(RUNNING);
 			execStat.setTotalCount(totalTestCount);
@@ -585,8 +564,6 @@ public class ExecutionProfiler implements IExecutionProfiler {
 		});
 	}
 
-	private final ISMHandle<SuiteStats> ismHandle;
-
 	private final SherlockReportOutputStream reportOut;
 
 	private final ExecutionEntry handle;
@@ -749,14 +726,19 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			monitor.log("Prepare tasks...", null);
 			try {
 
+				Set<Q7ArtifactRef> unresolved = handle.getUnresolvedReferences();
+				if (!unresolved.isEmpty()) {
+					throw new IllegalStateException("Following artifacts were not uploaded: " + unresolved.stream().map(Q7ArtifactRef::getId).toList());
+				}
+						
 				createSuites();
 				Preconditions.checkNotNull(suites);
 				if (totalTestCount < 0)
 					throw new IllegalStateException();
 				monitor.log("Schedule per aut suites: " + suites.size(), null);
 
-				Map<String, Q7ArtifactRef> contexts = ModelUtil
-						.dependenciesMap(suiteDir.getTestSuite());
+				TestSuite testSuite = handle.getTestSuite();
+				Map<String, Q7ArtifactRef> contexts = ModelUtil.dependenciesMap(testSuite);
 
 				IProgressMonitor pm = new NullProgressMonitor() {
 
@@ -769,6 +751,12 @@ public class ExecutionProfiler implements IExecutionProfiler {
 
 				if (!handle.waitForTasks(isCancelled, Duration.ofMinutes(30))) {
 					throw new TimeoutException("Failed to prepare execution " + handle.getSuiteId());
+				}
+				
+				Set<Q7ArtifactRef> missingArtifacts = handle.getUnresolvedReferences();
+				
+				if (!missingArtifacts.isEmpty()) {
+					throw new IllegalStateException("Following dependencies were not uploaded: " + missingArtifacts.stream().map(Q7ArtifactRef::getId).toList());
 				}
 
 				// Register suites in queue
@@ -1049,5 +1037,9 @@ public class ExecutionProfiler implements IExecutionProfiler {
 			return format("timeout in %d minutes", untilTimeout.toMinutes());
 		}
 		return format("completion in %d minutes", remaining.toMinutes());
+	}
+	
+	private Q7Artifact resolveArtifact(Q7ArtifactRef reference) throws IOException {
+		return handle.resolveArtifact(reference);
 	}
 }

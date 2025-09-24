@@ -15,10 +15,8 @@ package org.eclipse.rcptt.cloud.server;
 import static java.util.Objects.requireNonNull;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.eclipse.rcptt.ecl.runtime.IProcess;
 
@@ -28,8 +26,6 @@ public interface IServerContext {
 	static IServerContext get(IProcess process) {
 		return requireNonNull(((IServerContext) process.getSession().getProperty(IServerContext.ID)));
 	}
-
-	Optional<Supplier<InputStream>> getDataByHash(byte[] hash);
 
 	ExecutionRegistry getExecutionRegistry();
 	

@@ -16,45 +16,25 @@ import static org.eclipse.rcptt.cloud.util.internal.UtilPlugin.createException;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 
 public class EmfResourceUtil {
-	public static byte[] md5(EObject obj) throws CoreException {
-		Resource r = createResource();
-		r.getContents().add(EcoreUtil.copy(obj));
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("md5");
-		} catch (NoSuchAlgorithmException e) {
-			throw createException("Can't calc md5 hash", e);
-		}
-		ByteArrayOutputStream bout = new ByteArrayOutputStream();
-		try {
-			r.save(bout, null);
-		} catch (IOException e) {
-			// shoudn't happen
-			throw createException("Can't serialize EMF object", e);
-		}
-
-		md.reset();
-		md.update(bout.toByteArray());
-		return md.digest();
-	}
 
 	private static ResourceImpl createResource() {
 		return new ECLBinaryResourceImpl();
@@ -67,11 +47,10 @@ public class EmfResourceUtil {
 				dir.mkdirs();
 			}
 
-			OutputStream out = new BufferedOutputStream(new FileOutputStream(
-					file));
-			save(out, obj);
-			out.flush();
-			out.close();
+			try (OutputStream out = new BufferedOutputStream(new FileOutputStream(
+					file))) {
+				save(out, obj);
+			}
 		} catch (IOException e) {
 			throw createException("Can't save object", e);
 		}
@@ -98,10 +77,10 @@ public class EmfResourceUtil {
 	}
 
 	public static <T> T load(File file, Class<T> clazz) throws IOException {
-		InputStream in = new BufferedInputStream(new FileInputStream(file));
-		T result = load(in, clazz);
-		in.close();
-		return result;
+		try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+			T result = load(in, clazz);
+			return result;
+		}
 	}
 
 	public static String byteToStr(byte[] data) {
@@ -110,5 +89,46 @@ public class EmfResourceUtil {
 			result.append(Integer.toHexString(b & 0xFF));
 		}
 		return result.toString();
+	}
+
+	@SuppressWarnings("resource")
+	public static InputStream toInputStream(EObject obj) {
+		PipedOutputStream sink = new PipedOutputStream();
+		FutureTask<Void> task = new FutureTask<>(() -> {
+			try {
+				Resource r = createResource();
+				r.getContents().add(obj);
+				r.save(sink, null);
+				return null;
+			} finally {
+				sink.close();
+			}
+		});
+		PipedInputStream result;
+		try {
+			result = new PipedInputStream(sink) {
+				@Override
+				public void close() throws IOException {
+					super.close();
+					try {
+						task.cancel(true);
+						task.get();
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						throw new IOException(e);
+					} catch (ExecutionException e) {
+						if (e.getCause() instanceof IOException checked) {
+							throw checked;
+						}
+						throw new IOException(e.getCause());
+					}
+				}	
+			};
+		} catch (IOException e) {
+			// Already connected error can not happen
+			throw new AssertionError(e);
+		}
+		CompletableFuture.runAsync(task);
+		return result;
 	}
 }

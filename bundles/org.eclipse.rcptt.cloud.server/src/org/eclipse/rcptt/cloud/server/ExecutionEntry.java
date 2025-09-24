@@ -16,11 +16,11 @@ import static java.util.Objects.requireNonNull;
 import static org.eclipse.rcptt.cloud.server.ServerPlugin.PLUGIN_ID;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.Reference;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,13 +33,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -48,13 +48,17 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.equinox.internal.p2.core.ProvisioningAgent;
 import org.eclipse.equinox.internal.p2.repository.Transport;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
-import org.eclipse.rcptt.cloud.common.ITestStore;
-import org.eclipse.rcptt.cloud.common.TestSuiteDirectory;
+import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
+import org.eclipse.rcptt.cloud.model.Q7Artifact;
+import org.eclipse.rcptt.cloud.model.Q7ArtifactRef;
+import org.eclipse.rcptt.cloud.model.TestSuite;
 import org.eclipse.rcptt.cloud.server.PrepareTaskQueue.IPrepareRunnable;
 import org.eclipse.rcptt.cloud.server.internal.providers.AutDownloadManager;
 import org.eclipse.rcptt.cloud.server.internal.providers.IServerAutProvider;
@@ -62,6 +66,7 @@ import org.eclipse.rcptt.cloud.server.ism.ISMCore;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
 import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
 import org.eclipse.rcptt.launching.injection.Entry;
 import org.eclipse.rcptt.launching.injection.InjectionConfiguration;
@@ -77,12 +82,11 @@ import com.google.common.base.Throwables;
 import com.google.common.hash.HashCode;
 import com.google.common.io.Closeables;
 
-public class ExecutionEntry {
+public final class ExecutionEntry {
 	public static final String DOWNLOAD_MONITOR = "download";
 	public static final String CLIENT_EXECUTION_MONITOR = "client_messages";
 	public static final String EXECUTION_MONITOR = "execution";
 	public static final String ERROR_MONITOR = "errors";
-	private final TestSuiteDirectory suiteDir;
 	private Map<ExecutionEntry.MonitorMetaInfo, IQ7Monitor> monitors = Collections.synchronizedMap(new HashMap<>());
 	private final String suiteId;
 	public final Instant created = Instant.now();
@@ -90,20 +94,33 @@ public class ExecutionEntry {
 
 	private Object profiler;
 	private final PrepareTaskQueue pendingQueue = new PrepareTaskQueue();
+	private final Repository repository;
+	private final Set<HashCode> missingHashes = Collections.synchronizedSet(new HashSet<>());
+	private final Set<HashCode> allHashes = Collections.synchronizedSet(new HashSet<>());
+	private int updateSiteIndex = 0;
+	private List<String> messages = Collections.synchronizedList(new ArrayList<>());
+	private TestSuite suite;
+	private final Map<String, Q7ArtifactRef> referencesById = Collections.synchronizedMap(new HashMap<>());
 
-	private final List<Object> garbageCollectionGuard = new ArrayList<>(1);
-
-	public static ExecutionEntry create(String suiteId, ISMHandle<Execution> handle) throws CoreException {
-		File testsFolder = getArtifactByName(handle, "tests");
-		testsFolder.mkdirs();
-		return new ExecutionEntry(suiteId, handle, new TestSuiteDirectory(testsFolder, true));
+	
+	public interface Repository {
+		InputStream get(HashCode hash);
+		void put(HashCode hash, InputStream data);
+		boolean contains(HashCode hash);
+		URI toServerUri(HashCode hash, String filename);
 	}
 
-	public ExecutionEntry(String suiteId, ISMHandle<Execution> handle, TestSuiteDirectory testSuiteDirectory)
+	public static ExecutionEntry create(String suiteId, ISMHandle<Execution> handle, Repository repository) throws CoreException {
+		File testsFolder = getArtifactByName(handle, "tests");
+		testsFolder.mkdirs();
+		return new ExecutionEntry(suiteId, handle, repository);
+	}
+
+	public ExecutionEntry(String suiteId, ISMHandle<Execution> handle, Repository repository)
 			throws CoreException {
 		this.suiteId = requireNonNull(suiteId);
 		this.handle = requireNonNull(handle);
-		this.suiteDir = requireNonNull(testSuiteDirectory);
+		this.repository = requireNonNull(repository);
 	}
 
 	private static class MonitorMetaInfo {
@@ -204,21 +221,14 @@ public class ExecutionEntry {
 		}
 	}
 
-	public ISMHandle<SuiteStats> getSuite() {
+	private ISMHandle<SuiteStats> getSuiteStats() {
 		return ISMCore.getInstance().getSuiteStore().getHandle(suiteId);
 	}
-
-	public ITestStore getTestStore() {
-		return suiteDir;
-	}
-
-	private int updateSiteIndex = 0;
-	private List<String> messages = Collections.synchronizedList(new ArrayList<>());
-
-	public AutInfo addAutForDownload(final AutInfo info, Function<File, URI> fileToServerUri, BiFunction<byte[], String, Optional<URI>> hashedRepository) throws CoreException {
+	
+	public AutInfo addAutForDownload(final AutInfo info, Function<File, URI> fileToServerUri) throws CoreException {
 		final IQ7Monitor downloadMonitor = getMonitor(DOWNLOAD_MONITOR);
 		try {
-			downloadAut(info, fileToServerUri, hashedRepository, downloadMonitor);
+			downloadAut(info, fileToServerUri, downloadMonitor);
 
 			InjectionConfiguration injection = info.getInjection();
 			// Process update sites
@@ -350,23 +360,68 @@ public class ExecutionEntry {
 			update.accept(execution);
 			return null;
 		});
-		garbageCollectionGuard.forEach(Reference::reachabilityFence);
 	}
 	
-	public void addArtifact(HashCode hash, Supplier<InputStream> data) {
-		
+	public boolean addArtifact(InputStream data) throws IOException {
+		MessageDigest md = Hash.createDigest();
+		byte[] bytes = data.readAllBytes();
+		md.update(bytes);
+		HashCode hash = HashCode.fromBytes(md.digest());
+		if (!allHashes.contains(hash)) {
+			throw new IllegalArgumentException(String.format("Hash %s is not requested by suite %s", hash.toString(), getSuiteId()));
+		}
+		if (repository.contains(hash)) {
+			missingHashes.remove(hash);
+			return false;
+		}
+		repository.put(hash, new ByteArrayInputStream(bytes));
+		missingHashes.remove(hash);
+		return true;
 	}
 
-	private void downloadAut(final AutInfo info, Function<File, URI> fileToServerUri,
-			BiFunction<byte[], String, Optional<URI>> hashedRepository, final IQ7Monitor downloadMonitor)
+	public synchronized void setTestSuite(TestSuite suite) {
+		Set<HashCode> allHashes = suite.getRefs().stream()
+				.map(Q7ArtifactRef::getHash)
+				.map(HashCode::fromBytes).collect(Collectors.toSet());
+		Set<HashCode> unresolvedHashes = allHashes.stream()
+				.filter(Predicate.not(repository::contains))
+				.collect(Collectors.toSet());
+		if (this.suite != null) {
+			throw new IllegalStateException("Suite is already set");
+		}
+		this.suite = EcoreUtil.copy(suite);
+		this.missingHashes.addAll(unresolvedHashes);
+		this.allHashes.clear();
+		this.allHashes.addAll(allHashes);
+		referencesById.putAll(suite.getRefs().stream().collect(Collectors.toMap(Q7ArtifactRef::getId, Function.identity())));
+		getSuiteStats().commit(new Function<SuiteStats, Void>() {
+			@Override
+			public Void apply(SuiteStats suiteStats) {
+				if (suiteStats.getSuiteName() == null) {
+					suiteStats.setSuiteName(suite.getId());
+				}
+				return null;
+			}
+		});
+	}
+
+	public Set<Q7ArtifactRef> getUnresolvedReferences() {
+		Map<HashCode, List<Q7ArtifactRef>> index = suite.getRefs().stream().collect(Collectors.groupingBy(reference -> HashCode.fromBytes(reference.getHash())));
+		return missingHashes.stream().map(index::get).flatMap(List::stream).map(EcoreUtil::copy).collect(Collectors.toSet());
+	}
+
+	public final TestSuite getTestSuite() {
+		return EcoreUtil.copy(suite);
+	}
+
+	private void downloadAut(final AutInfo info, Function<File, URI> fileToServerUri, final IQ7Monitor downloadMonitor)
 			throws CoreException {
 		byte[] requestedHash = info.getHash();
 		if (requestedHash != null && requestedHash.length == 32) {
 			String filename = Path.forPosix(URI.create(info.getUri()).getPath()).lastSegment();
-			Optional<URI> entry = hashedRepository.apply(requestedHash, filename);
-			if (entry.isPresent()) {
-				garbageCollectionGuard.add(entry.get());
-				info.setUri(entry.get().toASCIIString());
+			HashCode hash = HashCode.fromBytes(requestedHash);
+			if (repository.contains(hash)) {
+				info.setUri(repository.toServerUri(hash, filename).toASCIIString());
 				return;
 			}
 		}
@@ -594,5 +649,15 @@ public class ExecutionEntry {
 
 	private PrepareTaskQueue getPrepareQueue() {
 		return pendingQueue;
+	}
+
+	public Q7Artifact resolveArtifact(Q7ArtifactRef reference) throws IOException {
+		Q7Artifact art = ModelFactory.eINSTANCE.createQ7Artifact();
+		art.setId(reference.getId());
+		art.getRefs().addAll(reference.getRefs().stream().map(referencesById::get).peek(Objects::requireNonNull).map(EcoreUtil::copy).toList());
+		try (InputStream contents = repository.get(HashCode.fromBytes(reference.getHash()))) {
+			art.setContent(EmfResourceUtil.load(contents, EObject.class));
+		}
+		return art;
 	}
 }
