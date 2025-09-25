@@ -94,7 +94,7 @@ public final class ExecutionEntry {
 
 	private Object profiler;
 	private final PrepareTaskQueue pendingQueue = new PrepareTaskQueue();
-	private final Repository repository;
+	final Repository repository;
 	private final Set<HashCode> missingHashes = Collections.synchronizedSet(new HashSet<>());
 	private final Set<HashCode> allHashes = Collections.synchronizedSet(new HashSet<>());
 	private int updateSiteIndex = 0;
@@ -415,6 +415,16 @@ public final class ExecutionEntry {
 		return EcoreUtil.copy(suite);
 	}
 
+	public Q7Artifact resolveArtifact(Q7ArtifactRef reference) throws IOException {
+		Q7Artifact art = ModelFactory.eINSTANCE.createQ7Artifact();
+		art.setId(reference.getId());
+		art.getRefs().addAll(reference.getRefs().stream().map(referencesById::get).peek(Objects::requireNonNull).map(EcoreUtil::copy).toList());
+		try (InputStream contents = repository.get(HashCode.fromBytes(reference.getHash()))) {
+			art.setContent(EmfResourceUtil.load(contents, EObject.class));
+		}
+		return art;
+	}
+	
 	private void downloadAut(final AutInfo info, Function<File, URI> fileToServerUri, final IQ7Monitor downloadMonitor)
 			throws CoreException {
 		byte[] requestedHash = info.getHash();
@@ -650,15 +660,5 @@ public final class ExecutionEntry {
 
 	private PrepareTaskQueue getPrepareQueue() {
 		return pendingQueue;
-	}
-
-	public Q7Artifact resolveArtifact(Q7ArtifactRef reference) throws IOException {
-		Q7Artifact art = ModelFactory.eINSTANCE.createQ7Artifact();
-		art.setId(reference.getId());
-		art.getRefs().addAll(reference.getRefs().stream().map(referencesById::get).peek(Objects::requireNonNull).map(EcoreUtil::copy).toList());
-		try (InputStream contents = repository.get(HashCode.fromBytes(reference.getHash()))) {
-			art.setContent(EmfResourceUtil.load(contents, EObject.class));
-		}
-		return art;
 	}
 }

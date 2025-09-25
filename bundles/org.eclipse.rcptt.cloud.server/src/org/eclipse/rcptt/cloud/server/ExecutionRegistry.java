@@ -23,9 +23,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
@@ -61,16 +65,24 @@ public class ExecutionRegistry {
 		}
 
 		/** @return - lazy artifact content **/
-		public Optional<Entry> get(HashCode key);
+		Optional<Entry> get(HashCode key);
 
-		public Entry put(HashCode hash, InputStream data);
+		Entry put(HashCode hash, InputStream data);
 
-		public URI toServerUri(HashCode hash, String filename);
+		URI toServerUri(HashCode hash, String filename);
+		
+		void listen(BiConsumer<HashCode, Entry> key);
+		
 	}
 	
 	
 	public ExecutionRegistry(Repository repository) {
 		this.repository = requireNonNull(repository);
+		repository.listen((key, entry) -> {
+			runningSuites.values().forEach(e -> {
+				((EntryRepository) e.repository).captureIfRequested(key, entry);
+			});
+		});
 	}
 	
 	public void addNewSuiteHook(Runnable runnable) {
@@ -229,10 +241,23 @@ public class ExecutionRegistry {
 	
 	private final class EntryRepository implements ExecutionEntry.Repository {
 		private final Map<HashCode, Repository.Entry> capturedReferences = Collections.synchronizedMap(new HashMap<>());
+		private final Set<HashCode> cacheMisses = Collections.synchronizedSet(new HashSet<>()); 
 
 		@Override
 		public InputStream get(HashCode hash) {
-			return capturedReferences.computeIfAbsent(hash, key -> repository.get(key).get()).contents();
+			try {
+				return capturedReferences.computeIfAbsent(hash, key -> repository.get(key).get()).contents();
+			} catch (NoSuchElementException e) {
+				cacheMisses.add(hash);
+				throw e;
+			}
+		}
+
+		private void captureIfRequested(HashCode hash, Entry entry) {
+			if (cacheMisses.remove(hash)) {
+				capturedReferences.putIfAbsent(hash, entry);
+				assert repository.get(hash).isPresent();
+			}
 		}
 
 		@Override
@@ -251,6 +276,7 @@ public class ExecutionRegistry {
 			}
 			Optional<Entry> optional = repository.get(hash);
 			if (optional.isEmpty()) {
+				cacheMisses.add(hash);
 				return false;
 			}
 			capturedReferences.putIfAbsent(hash, optional.get());
@@ -260,6 +286,7 @@ public class ExecutionRegistry {
 		@Override
 		public URI toServerUri(HashCode hash, String filename) {
 			if (!contains(hash)) {
+				cacheMisses.add(hash);
 				throw new IllegalArgumentException(hash.toString() + ", " + filename);
 			}
 			return repository.toServerUri(hash, filename);

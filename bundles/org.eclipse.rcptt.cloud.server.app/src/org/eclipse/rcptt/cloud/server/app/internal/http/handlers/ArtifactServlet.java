@@ -52,7 +52,7 @@ public class ArtifactServlet extends HttpServlet {
 		 * @param data - content to store
 		 * @throws IllegalArgumentException - if data is invalid/corrupted, for example if key is considered a hash and does not match the content
 		 */
-		void putIfAbsent(String key, InputStream data);
+		void putIfAbsent(String key, String execution_id, InputStream data);
 	}
 
 	private final Repository repository;
@@ -97,7 +97,8 @@ public class ArtifactServlet extends HttpServlet {
 		// Dropped connection is treated by HTTP client libraries unfavorably 
 		try (ServletInputStream inputStream = req.getInputStream()) {
 			try {
-				repository.putIfAbsent(key, inputStream);
+				String execution_id = req.getParameter("execution_id");
+				repository.putIfAbsent(key, execution_id, inputStream);
 				if (!inputStream.isFinished()) {
 					resp.sendError(HttpServletResponse.SC_CONFLICT,
 							"A file " + key + " has been uploaded before");

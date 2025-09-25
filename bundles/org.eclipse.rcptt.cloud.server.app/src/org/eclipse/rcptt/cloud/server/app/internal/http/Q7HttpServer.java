@@ -29,10 +29,13 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
@@ -84,7 +87,8 @@ public class Q7HttpServer {
 	private URI serverFileUriPrefix;
 	private URI serverCacheUriPrefix;
 	private final WeakValueRepository<String, InputStream> cache;
-	private final ExecutionRegistry executions = new ExecutionRegistry(new ExecutionRegistryRepositoryCacheAdapter());
+	private final ExecutionRegistryRepositoryCacheAdapter executionsCache = new ExecutionRegistryRepositoryCacheAdapter();
+	private final ExecutionRegistry executions = new ExecutionRegistry(executionsCache);
 	ExecutionIndex execIndex = new ExecutionIndex(null, executions);
 	
 	private final IServerContext serverContext = new IServerContext() {
@@ -145,8 +149,12 @@ public class Q7HttpServer {
 		context.addServlet(new EclExecService(sessionProperties), "/api/exec");
 		final ArtifactServlet.Repository repository = new ArtifactServlet.Repository() {
 			@Override
-			public void putIfAbsent(String hash, InputStream data) {
-				cache.putIfAbsent(hash, data);
+			public void putIfAbsent(String key, String execution_id, InputStream data) {
+				HashCode hash = HashCode.fromString(key);
+				WeakValueRepository.Entry<InputStream> e = cache.putIfAbsent(hash.toString(), data);
+				executionsCache.listeners.forEach(l -> {
+					l.accept(hash, e::contents);
+				});
 			}
 			@Override
 			public Optional<ArtifactServlet.Entry> get(String hash) {
@@ -178,7 +186,7 @@ public class Q7HttpServer {
 	}
 
 	private final class ExecutionRegistryRepositoryCacheAdapter implements ExecutionRegistry.Repository {
-		
+		private final ListenerList<BiConsumer<HashCode, Entry>> listeners = new ListenerList<>();
 		@Override
 		public URI toServerUri(HashCode hash, String filename) {
 			return serverContext.toUri(hash.asBytes(), filename).get();
@@ -186,12 +194,19 @@ public class Q7HttpServer {
 		
 		@Override
 		public Entry put(HashCode hash, InputStream data) {
-			return cache.putIfAbsent(hash.toString(), data)::contents;
+			Entry result = cache.putIfAbsent(hash.toString(), data)::contents;
+			listeners.forEach(l -> l.accept(hash, result));
+			return result;
 		}
 		
 		@Override
 		public Optional<Entry> get(HashCode hash) {
 			return cache.get(hash.toString()).map(e -> e::contents);
+		}
+
+		@Override
+		public void listen(BiConsumer<HashCode, Entry> key) {
+			listeners.add(key);
 		}
 		
 	}
