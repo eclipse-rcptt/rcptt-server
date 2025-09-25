@@ -104,6 +104,7 @@ public final class ExecutionEntry {
 
 	
 	public interface Repository {
+		/** Never fails if any other methods succeeded for the same hash before **/
 		InputStream get(HashCode hash);
 		void put(HashCode hash, InputStream data);
 		boolean contains(HashCode hash);

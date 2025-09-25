@@ -13,26 +13,20 @@
 package org.eclipse.rcptt.cloud.server.app.internal;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
-import org.eclipse.core.runtime.ILog;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.EclServerApplication;
-import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.IServerContext;
-import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.RegisterAgentService;
 import org.eclipse.rcptt.cloud.server.ism.ISMCore;
-import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
-import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
 import org.eclipse.rcptt.util.NetworkUtils;
 
 public class ServerApplication extends EclServerApplication {
-	private static final ILog LOG = Platform.getLog(ServerApplication.class);
-
 	@Arg
 	public int httpPort = 5007;
 
@@ -40,8 +34,7 @@ public class ServerApplication extends EclServerApplication {
 	public String sitesDir = getDefaultSitesDir();
 
 	@Arg(isRequired = false, description = "Execution session artifacts location")
-	public String artifactsStore = CommonPlugin.getDefault().getStateLocation()
-			.append("artifacts").toOSString();
+	public String artifactsStore = CommonPlugin.getDefault().getStateLocation().append("artifacts").toOSString();
 
 	@Arg(isRequired = false, description = "Keep only N sessions")
 	public int keepSessions = 10000; // Keep no more then 100 sessions with
@@ -57,18 +50,24 @@ public class ServerApplication extends EclServerApplication {
 		return new File(url, "sites").getAbsolutePath();
 	}
 
-	private final Q7HttpServer server = new Q7HttpServer();
+	private final Q7HttpServer server;
+
+	public ServerApplication() throws IllegalStateException, IOException {
+		server = new Q7HttpServer(
+				Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache"),
+				Long.getLong(ServerApplication.class.getName() + ".cache_bytes", 10_000_000_000L));
+	}
 
 	@Override
 	public Object run() throws Exception {
 		NetworkUtils.initTimeouts();
 
 		ISMCore.initialize(new File(artifactsStore));
-		
+
 		RegisterAgentService.setServerInfo(agentServerName, httpPort);
 
 		server.start(httpPort, sitesDir, keepSessions, keepAUTArtifacts, agentServerName);
-		
+
 		setProperty(IServerContext.ID, server.getContext());
 		return super.run();
 	}

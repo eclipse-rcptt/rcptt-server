@@ -78,21 +78,12 @@ import com.google.common.hash.HashCode;
 
 public class Q7HttpServer {
 	private static final ILog LOG = Platform.getLog(Q7HttpServer.class);
-	private static final Path cacheRoot = Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache");
-	private final HashedFileRepository HASHED_REPOSITORY;
-	{
-		try {
-			HASHED_REPOSITORY = new HashedFileRepository(cacheRoot);
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
+	private final HashedFileRepository hashedFileRepository;
 	private final Server server = new Server();
 	private ServerConnector connector;
 	private URI serverFileUriPrefix;
 	private URI serverCacheUriPrefix;
-	private final WeakValueRepository<String, InputStream> cache = new WeakValueRepository<String, InputStream>(HASHED_REPOSITORY);
+	private final WeakValueRepository<String, InputStream> cache;
 	private final ExecutionRegistry executions = new ExecutionRegistry(new ExecutionRegistryRepositoryCacheAdapter());
 	ExecutionIndex execIndex = new ExecutionIndex(null, executions);
 	
@@ -123,6 +114,10 @@ public class Q7HttpServer {
 		private final WeakHashMap<Object, Object> gcMonitor = new WeakHashMap<>();
 	};
 
+	public Q7HttpServer(Path cacheDirectory, long maxCacheSizeBytes) throws IOException {
+		hashedFileRepository = new HashedFileRepository(cacheDirectory);
+		cache = new WeakValueRepository<String, InputStream>(hashedFileRepository, maxCacheSizeBytes);
+	}
 	public void start(int httpPort, String sitesDir, int keepSessions, int keepAUTArtifacts, String hostname)
 			throws IOException {
 		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);

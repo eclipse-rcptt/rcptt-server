@@ -56,10 +56,11 @@ public class ExecutionRegistry {
 	
 	public interface Repository {
 		public interface Entry {
+			/** Does not fail even if the entry is evicted from cache, actual removal will happen when Entry is garbage collected **/
 			InputStream contents();
 		}
 
-		/** @return - lazy artifact content, guaranteed to stay available while reachable **/
+		/** @return - lazy artifact content **/
 		public Optional<Entry> get(HashCode key);
 
 		public Entry put(HashCode hash, InputStream data);
@@ -258,6 +259,9 @@ public class ExecutionRegistry {
 
 		@Override
 		public URI toServerUri(HashCode hash, String filename) {
+			if (!contains(hash)) {
+				throw new IllegalArgumentException(hash.toString() + ", " + filename);
+			}
 			return repository.toServerUri(hash, filename);
 		}
 		
