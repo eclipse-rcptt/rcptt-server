@@ -33,7 +33,7 @@ public class AddAutService extends SingleCommandService<AddAut> {
 		AutInfo info = command.getAut();
 		info = suite.addAutForDownload(info, context::toUri);
 		if (info == null) {
-			throw new CoreException(new Status(IStatus.ERROR, CommonPlugin.PLUGIN_ID, "Failed to load AUT " + info));
+			throw new CoreException(Status.error("Failed to load AUT " + info));
 		}
 		return info;
 	}

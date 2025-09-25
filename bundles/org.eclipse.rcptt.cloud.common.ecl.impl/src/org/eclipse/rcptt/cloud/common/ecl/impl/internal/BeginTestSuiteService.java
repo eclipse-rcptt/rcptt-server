@@ -36,8 +36,7 @@ public class BeginTestSuiteService implements ICommandService {
 			CommonPlugin
 					.getDefault()
 					.getLog()
-					.log(new Status(IStatus.INFO, CommonPlugin.PLUGIN_ID,
-							"BeginTestSuite " + addTestSuite.getSuiteId()));
+					.log(Status.info("BeginTestSuite " + addTestSuite.getSuiteId()));
 			ISMHandleStore<SuiteStats> store = ISMCore.getInstance()
 					.getSuiteStore();
 			ISMHandle<SuiteStats> suiteHandle = store.getHandle(addTestSuite.getSuiteId());
