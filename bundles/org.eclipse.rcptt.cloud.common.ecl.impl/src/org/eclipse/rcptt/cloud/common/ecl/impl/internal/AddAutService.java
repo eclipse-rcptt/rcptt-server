@@ -13,15 +13,12 @@
 package org.eclipse.rcptt.cloud.common.ecl.impl.internal;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.rcptt.ecl.runtime.SingleCommandService;
-
-import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddAut;
 import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.ecl.runtime.SingleCommandService;
 
 public class AddAutService extends SingleCommandService<AddAut> {
 
@@ -36,7 +33,7 @@ public class AddAutService extends SingleCommandService<AddAut> {
 		AutInfo info = command.getAut();
 		info = suite.addAutForDownload(info);
 		if (info == null) {
-			throw new CoreException(new Status(IStatus.ERROR, CommonPlugin.PLUGIN_ID, "Failed to load AUT " + info));
+			throw new CoreException(Status.error("Failed to load AUT " + info));
 		}
 		return info;
 	}

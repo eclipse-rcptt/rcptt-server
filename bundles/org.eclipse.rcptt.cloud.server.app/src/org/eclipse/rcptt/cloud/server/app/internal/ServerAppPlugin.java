@@ -24,7 +24,7 @@ import org.osgi.framework.BundleContext;
 
 public class ServerAppPlugin extends Plugin {
 
-	public static final String PLUGIN_ID = "com.xored.q7.cloud.server.app";
+	public static final String PLUGIN_ID = "org.eclipse.rcptt.cloud.server.app";
 
 	private static ServerAppPlugin plugin;
 
