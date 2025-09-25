@@ -186,7 +186,7 @@ public class Q7ServerApi {
 		String fileName = FileUtil.getID(path.lastSegment()) + UriUtil.getFilenameExtension(path.lastSegment());
 
 		try {
-			HttpPost post = makePost("upload");
+			HttpPost post = makePost("api/upload");
 
 			post.setEntity(new FileEntity(new File(zipPath), ContentType.
 					create("application/q7-filedata")));
