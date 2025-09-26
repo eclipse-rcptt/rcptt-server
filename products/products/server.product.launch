@@ -2,7 +2,7 @@
 <launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
     <setAttribute key="additional_plugins">
         <setEntry value="org.eclipse.core.runtime:3.33.0.v20250206-0919:default:true:4:true"/>
-        <setEntry value="org.eclipse.equinox.common:3.20.0.v20250129-1348:default:true:2:true"/>
+        <setEntry value="org.eclipse.equinox.common:3.20.200.v20250628-0509:default:true:2:true"/>
     </setAttribute>
     <booleanAttribute key="append.args" value="true"/>
     <stringAttribute key="application" value="org.eclipse.rcptt.cloud.server.app.headless"/>

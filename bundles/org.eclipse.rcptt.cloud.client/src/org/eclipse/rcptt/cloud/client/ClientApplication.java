@@ -485,10 +485,9 @@ public class ClientApplication extends CommandLineApplication {
 			logInfo("Generate HTML report.");
 			createHtmlReport(summary, agentResDir);
 			logInfo("Execution Complete");
-			if (processed <= 0) {
-				return EXIT_ILLEGAL_ARGUMENT;
-			}
+			int testCount = 0;
 			for (Report report : summary) {
+				testCount++;
 				SimpleSeverity severity = ReportUtil.getStatus(report);
 				if (severity.equals(SimpleSeverity.ERROR)) {
 					return TEST_FAIL_EXIT_CODE;
@@ -496,6 +495,10 @@ public class ClientApplication extends CommandLineApplication {
 				if (severity.equals(SimpleSeverity.CANCEL)) {
 					return EXIT_ILLEGAL_ARGUMENT;
 				}
+			}
+			if (testCount <= 0) {
+				logInfo("No tests were executed");
+				return EXIT_ILLEGAL_ARGUMENT;
 			}
 		}
 		return null;

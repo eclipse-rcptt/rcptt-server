@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -105,7 +104,7 @@ public class Q7HttpServer {
 
 		@Override
 		public Optional<URI> toUri(byte[] hash, String name) {
-			URI uri = serverCacheUriPrefix.resolve(HashCode.fromBytes(hash).toString()).resolve(name);
+			URI uri = serverCacheUriPrefix.resolve(HashCode.fromBytes(hash).toString()+"/").resolve(name);
 			return getDataByHash(hash).
 					map(supplier -> {gcMonitor.put(uri, supplier); return uri; });
 		}
@@ -162,7 +161,7 @@ public class Q7HttpServer {
 			}
 		};
 		context.addServlet(new ArtifactServlet(repository), "/api/cache/*");
-		serverCacheUriPrefix = serverUri.resolve("api/cache");
+		serverCacheUriPrefix = serverUri.resolve("api/cache/");
 
 		setHandlers(sitesDir, context);
 
