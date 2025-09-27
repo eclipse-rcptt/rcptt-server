@@ -21,6 +21,9 @@ public final class CheckedExceptionWrapper extends RuntimeException {
 	
 	public CheckedExceptionWrapper(Exception e) {
 		super(e);
+		if (e instanceof RuntimeException iae) {
+			throw new IllegalArgumentException(iae);
+		}
 	}
 	
 	public interface ThrowingRunnable {

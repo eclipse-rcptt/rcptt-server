@@ -19,7 +19,10 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -59,22 +62,16 @@ public final class WeakValueRepository<K, V> {
 	public Entry<V> putIfAbsent(K key, V input) {
 		checkClosed();
 		try {
-			Entry<V> result = cache.get(key, () -> {
-				return weakMap.computeIfAbsent(key, k -> repository.putIfAbsent(k, input));
-			});
-			return result;
+			return computeCached(key, k -> repository.putIfAbsent(k, input));
 		} catch (ExecutionException e) {
-			throw new RuntimeException(e);
+			throw new CheckedExceptionWrapper(e);
 		}
 	}
 
 	public Optional<Entry<V>> get(K key) {
 		checkClosed();
 		try {
-			Optional<Entry<V>> result = Optional.of(cache.get(key, () -> {
-				return weakMap.computeIfAbsent(key, k -> repository.get(key).orElseThrow());
-			}));
-			return result;
+			return Optional.of(computeCached(key, k -> repository.get(key).orElseThrow()));
 		} catch (UncheckedExecutionException | ExecutionException e) {
 			if (e.getCause() instanceof NoSuchElementException) {
 				return Optional.empty();
@@ -92,6 +89,12 @@ public final class WeakValueRepository<K, V> {
 		if (closed.get()) {
 			throw new IllegalStateException("Storage is closed");
 		}
+	}
+	
+	private Entry<V> computeCached(K key, Function<K, Entry<V>> mapper) throws ExecutionException {
+		return cache.get(key, () -> {
+			return weakMap.computeIfAbsent(key, mapper);
+		});
 	}
 
 	private final ConcurrentWeakValueMap<K, Entry<V>> weakMap;

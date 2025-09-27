@@ -346,6 +346,7 @@ public class Q7HttpServer {
 	public void stop() {
 		try {
 			server.stop();
+			cache.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

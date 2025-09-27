@@ -50,6 +50,7 @@ final class ConcurrentWeakValueMap<K, V> {
 		return result.get();
 	}
 	
+	/** Cancel cleanup of entries added so far */
 	public void clear() {
 		map.clear();
 	}
