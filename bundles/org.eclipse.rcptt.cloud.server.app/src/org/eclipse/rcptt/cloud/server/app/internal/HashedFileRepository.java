@@ -19,6 +19,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,6 +74,8 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 				return Optional.<WeakValueRepository.Entry<InputStream>>empty();
 			}
 			return Optional.of(new EntryImplementation(hash, lock));
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		} finally {
 			lock.unlock();
 		}
@@ -110,11 +113,10 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 						Files.delete(file);
 					}
 				}
-
+				return new EntryImplementation(hash, locks.get(hash).readLock());
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				throw new UncheckedIOException(e);
 			}
-			return new EntryImplementation(hash, locks.get(hash).readLock());
 		});
 	}
 
@@ -165,10 +167,12 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 	private final class EntryImplementation implements WeakValueRepository.Entry<InputStream> {
 		private final HashCode hash;
 		private final Lock lock;
+		private final long size;
 
-		private EntryImplementation(HashCode hash, Lock lock) {
+		private EntryImplementation(HashCode hash, Lock lock) throws IOException {
 			this.hash = hash;
 			this.lock = lock;
+			this.size = Files.size(hashedDir.resolve(hash.toString()));
 		}
 
 		@Override
@@ -196,19 +200,7 @@ public class HashedFileRepository implements Repository<String, InputStream> {
 
 		@Override
 		public long size() {
-			lock.lock();
-			try {
-				if (!validate(hash)) {
-					// If wrapped in WeakValueRepository this should not happen
-					// It prevents removal of entries while they are reachable 
-					throw new FileNotFoundException(hash.toString());
-				}
-				return Files.size(hashedDir.resolve(hash.toString()));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} finally {
-				lock.unlock();
-			}
+			return size;
 		}
 	}
 
