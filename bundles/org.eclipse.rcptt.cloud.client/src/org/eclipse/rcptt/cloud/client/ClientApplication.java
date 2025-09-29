@@ -704,7 +704,7 @@ public class ClientApplication extends CommandLineApplication {
 			throw new InvalidCommandLineArgException(builder.toString(), "-import");
 		}
 		assert resourcesById.keySet().equals(resourceFilesById.keySet());
-		System.out.printf("Loaded %d artifacts", resourcesById.size());
+		System.out.printf("Loaded %d artifacts\n", resourcesById.size());
 	}
 
 	/**
