@@ -148,7 +148,7 @@ public class Q7HttpServer {
 		context.addServlet(new EclExecService(sessionProperties), "/api/exec");
 		final ArtifactServlet.Repository repository = new ArtifactServlet.Repository() {
 			@Override
-			public void putIfAbsent(String key, String execution_id, InputStream data) {
+			public void putIfAbsent(String key, InputStream data) {
 				HashCode hash = HashCode.fromString(key);
 				WeakValueRepository.Entry<InputStream> e = cache.putIfAbsent(hash.toString(), data);
 				executionsCache.listeners.forEach(l -> {
