@@ -18,12 +18,10 @@ import java.nio.file.Path;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.rcptt.cloud.commandline.Arg;
-import org.eclipse.rcptt.cloud.common.CommonPlugin;
 import org.eclipse.rcptt.cloud.common.EclServerApplication;
 import org.eclipse.rcptt.cloud.server.IServerContext;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.RegisterAgentService;
-import org.eclipse.rcptt.cloud.server.ism.ISMCore;
 import org.eclipse.rcptt.util.NetworkUtils;
 
 public class ServerApplication extends EclServerApplication {
@@ -33,17 +31,16 @@ public class ServerApplication extends EclServerApplication {
 	@Arg
 	public String sitesDir = getDefaultSitesDir();
 
-	@Arg(isRequired = false, description = "Execution session artifacts location")
-	public String artifactsStore = CommonPlugin.getDefault().getStateLocation().append("artifacts").toOSString();
-
 	@Arg(isRequired = false, description = "Keep only N sessions")
 	public int keepSessions = 10000; // Keep no more then 100 sessions with
 	// metadata.
-	@Arg(isRequired = false, description = "Keep AUT for N sessions")
-	public int keepAUTArtifacts = 5;
 
 	@Arg(isRequired = false, description = "Server name used by agents to download AUTS. Will be server IP if not specified")
 	public String agentServerName = null;
+	
+	@Arg(isRequired = false, description = "A size of artifact cache in gigabytes. Unused artifacts will be evicted and will have to be reuploaded before another use.")
+	public int artifactCacheSizeGb = 20;
+
 
 	private static String getDefaultSitesDir() {
 		String url = Platform.getInstallLocation().getURL().getPath();
@@ -55,18 +52,16 @@ public class ServerApplication extends EclServerApplication {
 	public ServerApplication() throws IllegalStateException, IOException {
 		server = new Q7HttpServer(
 				Path.of(ServerAppPlugin.getDefault().getStateLocation().toOSString()).resolve("cache"),
-				Long.getLong(ServerApplication.class.getName() + ".cache_bytes", 10_000_000_000L));
+				Long.getLong(ServerApplication.class.getName() + ".cache_bytes", 1024L * 1024 * 1024 * artifactCacheSizeGb));
 	}
 
 	@Override
 	public Object run() throws Exception {
 		NetworkUtils.initTimeouts();
 
-		ISMCore.initialize(new File(artifactsStore));
-
 		RegisterAgentService.setServerInfo(agentServerName, httpPort);
 
-		server.start(httpPort, sitesDir, keepSessions, keepAUTArtifacts, agentServerName);
+		server.start(httpPort, sitesDir, keepSessions, agentServerName);
 
 		setProperty(IServerContext.ID, server.getContext());
 		return super.run();

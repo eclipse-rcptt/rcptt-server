@@ -29,19 +29,6 @@ public class ISMCore {
 	private ISMCore() {
 	}
 
-	public synchronized static void initialize(File baseDir) {
-		ISMCore core = getInstance();
-		core.doInitialize(baseDir);
-	}
-
-	private void doInitialize(File baseDir) {
-		this.statsRoot = baseDir;
-		this.statsRoot.mkdirs();
-		this.agentStore = null;
-		this.suiteStore = null;
-		initialize();
-	}
-
 	private synchronized void initialize() {
 		if (agentStore == null || suiteStore == null) {
 			agentStore = new ISMHandleStore<AgentStats>(new File(

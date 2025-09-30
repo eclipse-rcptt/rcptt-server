@@ -121,7 +121,7 @@ public class Q7HttpServer {
 		hashedFileRepository = new HashedFileRepository(cacheDirectory);
 		cache = new WeakValueRepository<String, InputStream>(hashedFileRepository, maxCacheSizeBytes);
 	}
-	public void start(int httpPort, String sitesDir, int keepSessions, int keepAUTArtifacts, String hostname)
+	public void start(int httpPort, String sitesDir, int keepSessions, String hostname)
 			throws IOException {
 		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);
 		serverFileUriPrefix = URI.create(".");
@@ -135,7 +135,7 @@ public class Q7HttpServer {
 			LOG.log(status);
 		}
 		executions.addNewSuiteHook(() -> {
-			executions.removeOldExecutions(suiteStore.getHandles(), keepAUTArtifacts, keepSessions);
+			executions.removeOldExecutions(suiteStore.getHandles(), Integer.MAX_VALUE, keepSessions);
 		});
 
 		GetHTTPServerInfoService.setPort(httpPort);
