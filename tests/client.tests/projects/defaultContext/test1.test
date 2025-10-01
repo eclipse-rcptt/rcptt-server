@@ -1,0 +1,11 @@
+--- RCPTT testcase ---
+Format-Version: 1.0
+Element-Name: test1
+Element-Type: testcase
+Element-Version: 3.0
+External-Reference: 
+Id: _4kgawJ65EfCKA7dMQkd_6w
+Runtime-Version: 2.7.0.202507071809
+Save-Time: 10/1/25, 3:29 PM
+Testcase-Type: ecl
+

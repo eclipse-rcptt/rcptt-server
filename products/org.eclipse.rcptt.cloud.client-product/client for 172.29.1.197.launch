@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
+    <setAttribute key="additional_plugins">
+        <setEntry value="org.apache.felix.scr:2.2.12:default:true:2:true"/>
+        <setEntry value="org.eclipse.core.runtime:3.33.0.v20250206-0919:default:true:default:true"/>
+        <setEntry value="org.eclipse.equinox.common:3.20.200.v20250628-0509:default:true:2:true"/>
+        <setEntry value="org.eclipse.equinox.event:1.7.300.v20250518-0609:default:true:2:true"/>
+        <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.600.v20250606-0550:default:true:1:true"/>
+        <setEntry value="org.eclipse.rcptt.cloud.client:2.6.0.qualifier:default:true:2:true"/>
+    </setAttribute>
+    <booleanAttribute key="append.args" value="true"/>
+    <stringAttribute key="application" value="org.eclipse.rcptt.cloud.client.headless"/>
+    <booleanAttribute key="askclear" value="false"/>
+    <booleanAttribute key="automaticAdd" value="false"/>
+    <booleanAttribute key="automaticIncludeRequirements" value="true"/>
+    <booleanAttribute key="automaticValidate" value="true"/>
+    <stringAttribute key="bootstrap" value=""/>
+    <booleanAttribute key="clearConfig" value="true"/>
+    <booleanAttribute key="clearws" value="true"/>
+    <booleanAttribute key="clearwslog" value="false"/>
+    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/client for 172.29.1.197"/>
+    <booleanAttribute key="default" value="false"/>
+    <stringAttribute key="featureDefaultLocation" value="workspace"/>
+    <stringAttribute key="featurePluginResolution" value="workspace"/>
+    <booleanAttribute key="includeOptional" value="false"/>
+    <stringAttribute key="location" value="${workspace_loc}/../runtime-client.product"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
+    <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-23"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog&#10;-import&#10;/Users/vasiligulevich/git/dt-products-rcptt-tests/bpscheme/com._1c.g5.v8.dt.bp.scheme.q7&#10;-server http://172.29.1.197/&#10;-autVMArgs&#10;&quot;-DpreferHeavyControls=true -DtestAefSyncMode=true -DrefactoringWithoutConfirmation=true -DforceQueryWizardClose=true -DmigrationEnabled=true -DmigrationNotificationEnabled=false -De1c.dt.monitoring.host= -Xmx4g&quot;&#10;-autArgs&#10;\&quot;-clean\&quot;&#10;-auts&#10;&quot;win32.win32.x86_64|/Users/vasiligulevich/xored/1c/1cedt-2025.1.3-win32.win32.x86_64.zip&quot;&#10;-platforms&#10;win32.win32.x86_64&#10;-testSuiteName&#10;basilevs_source&#10;-agentResultsDir&#10;/tmp/agent_results"/>
+    <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.graphics.Resource.reportNonDisposed=true -XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts&#10;-Xmx1G&#10;-XX:+HeapDumpOnOutOfMemoryError&#10;-ea&#10;-Xlog:gc"/>
+    <stringAttribute key="pde.version" value="3.3"/>
+    <stringAttribute key="product" value="org.eclipse.rcptt.cloud.client.product"/>
+    <stringAttribute key="productFile" value="/org.eclipse.rcptt.cloud.client-product/client.product"/>
+    <stringAttribute key="productId" value="com.xored.q7.cloud.client.product"/>
+    <stringAttribute key="productName" value="Q7 Server client"/>
+    <stringAttribute key="productVersion" value="2.5.5.qualifier"/>
+    <setAttribute key="root_features"/>
+    <setAttribute key="selected_features">
+        <setEntry value="org.eclipse.emf.common:default"/>
+        <setEntry value="org.eclipse.emf.ecore:default"/>
+        <setEntry value="org.eclipse.emf.edit:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.client-feature:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.client.platform:default"/>
+    </setAttribute>
+    <setAttribute key="selected_target_bundles">
+        <setEntry value="com.google.gson@default:default"/>
+        <setEntry value="com.google.guava.failureaccess@default:default"/>
+        <setEntry value="com.google.guava@default:default"/>
+        <setEntry value="org.antlr.runtime@default:default"/>
+        <setEntry value="org.apache.commons.logging@default:default"/>
+        <setEntry value="org.apache.felix.scr*2.2.12@2:true"/>
+        <setEntry value="org.apache.httpcomponents.httpclient@default:default"/>
+        <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
+        <setEntry value="org.eclipse.core.commands@default:default"/>
+        <setEntry value="org.eclipse.core.contenttype@default:default"/>
+        <setEntry value="org.eclipse.core.databinding.observable@default:default"/>
+        <setEntry value="org.eclipse.core.databinding.property@default:default"/>
+        <setEntry value="org.eclipse.core.databinding@default:default"/>
+        <setEntry value="org.eclipse.core.expressions@default:default"/>
+        <setEntry value="org.eclipse.core.filesystem@default:default"/>
+        <setEntry value="org.eclipse.core.jobs@default:default"/>
+        <setEntry value="org.eclipse.core.resources@default:default"/>
+        <setEntry value="org.eclipse.core.runtime@default:true"/>
+        <setEntry value="org.eclipse.core.variables@default:default"/>
+        <setEntry value="org.eclipse.debug.core@default:default"/>
+        <setEntry value="org.eclipse.emf.common@default:default"/>
+        <setEntry value="org.eclipse.emf.ecore.change@default:default"/>
+        <setEntry value="org.eclipse.emf.ecore.xmi@default:default"/>
+        <setEntry value="org.eclipse.emf.ecore@default:default"/>
+        <setEntry value="org.eclipse.emf.edit@default:default"/>
+        <setEntry value="org.eclipse.emf.transaction@default:default"/>
+        <setEntry value="org.eclipse.emf.validation@default:default"/>
+        <setEntry value="org.eclipse.equinox.app@default:default"/>
+        <setEntry value="org.eclipse.equinox.common@2:true"/>
+        <setEntry value="org.eclipse.equinox.event@2:true"/>
+        <setEntry value="org.eclipse.equinox.http.service.api@default:default"/>
+        <setEntry value="org.eclipse.equinox.launcher@default:default"/>
+        <setEntry value="org.eclipse.equinox.preferences@default:default"/>
+        <setEntry value="org.eclipse.equinox.registry@default:default"/>
+        <setEntry value="org.eclipse.equinox.security@default:default"/>
+        <setEntry value="org.eclipse.equinox.simpleconfigurator@1:true"/>
+        <setEntry value="org.eclipse.jface.databinding@default:default"/>
+        <setEntry value="org.eclipse.jface@default:default"/>
+        <setEntry value="org.eclipse.osgi.services@default:default"/>
+        <setEntry value="org.eclipse.osgi@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.builder@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.ecl.core@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.ecl.formatter@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.ecl.highlighter@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.ecl.parser@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.ecl.scanner@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.launching@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.scenario@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.search@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core.swt@default:default"/>
+        <setEntry value="org.eclipse.rcptt.core@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.capability@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.debug@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.extensions@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.filesystem@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.group@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.parameters@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.preferences@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.resources@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.script@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.super@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ctx.workbench@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.client.tcp@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.core@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.data.apache.poi@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.data@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.debug.core@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.debug.runtime@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.dispatch@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.doc@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.filesystem@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.interop@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.operations@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.parser@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.perf@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.platform@default:default"/>
+        <setEntry value="org.eclipse.rcptt.ecl.server.tcp@default:default"/>
+        <setEntry value="org.eclipse.rcptt.expandbar@default:default"/>
+        <setEntry value="org.eclipse.rcptt.logging@default:default"/>
+        <setEntry value="org.eclipse.rcptt.reporting.html@default:default"/>
+        <setEntry value="org.eclipse.rcptt.reporting.util@default:default"/>
+        <setEntry value="org.eclipse.rcptt.reporting@default:default"/>
+        <setEntry value="org.eclipse.rcptt.resources@default:default"/>
+        <setEntry value="org.eclipse.rcptt.tesla.core.context@default:default"/>
+        <setEntry value="org.eclipse.rcptt.tesla.core@default:default"/>
+        <setEntry value="org.eclipse.rcptt.tesla.ecl@default:default"/>
+        <setEntry value="org.eclipse.rcptt.tesla.recording.core.ecl@default:default"/>
+        <setEntry value="org.eclipse.rcptt.tesla.recording.core@default:default"/>
+        <setEntry value="org.eclipse.rcptt.util.resources@default:default"/>
+        <setEntry value="org.eclipse.rcptt.util@default:default"/>
+        <setEntry value="org.eclipse.rcptt.verifications.log@default:default"/>
+        <setEntry value="org.eclipse.rcptt.verifications.resources@default:default"/>
+        <setEntry value="org.eclipse.rcptt.verifications.text@default:default"/>
+        <setEntry value="org.eclipse.rcptt.verifications.time@default:default"/>
+        <setEntry value="org.eclipse.rcptt.verifications.tree@default:default"/>
+        <setEntry value="org.eclipse.rcptt.verifications@default:default"/>
+        <setEntry value="org.eclipse.swt@default:default"/>
+        <setEntry value="org.osgi.service.cm@default:default"/>
+        <setEntry value="org.osgi.service.component@default:default"/>
+        <setEntry value="org.osgi.service.event@default:default"/>
+        <setEntry value="org.osgi.service.prefs@default:default"/>
+        <setEntry value="org.osgi.util.function@default:default"/>
+        <setEntry value="org.osgi.util.promise@default:default"/>
+    </setAttribute>
+    <setAttribute key="selected_workspace_bundles">
+        <setEntry value="org.eclipse.rcptt.cloud.client@default:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.commandline@default:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.common.ecl.model@default:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.common@default:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.model@default:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.server.ecl.model@default:default"/>
+        <setEntry value="org.eclipse.rcptt.cloud.util@default:default"/>
+        <setEntry value="org.eclipse.rcptt.launching.injection@default:default"/>
+    </setAttribute>
+    <booleanAttribute key="show_selected_only" value="false"/>
+    <stringAttribute key="timestamp" value="1752742598715"/>
+    <booleanAttribute key="useCustomFeatures" value="true"/>
+    <booleanAttribute key="useDefaultConfig" value="true"/>
+    <booleanAttribute key="useDefaultConfigArea" value="true"/>
+    <booleanAttribute key="useProduct" value="false"/>
+</launchConfiguration>
