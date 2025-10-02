@@ -12,6 +12,7 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.util;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.base.Throwables;
@@ -40,6 +41,22 @@ public final class CheckedExceptionWrapper extends RuntimeException {
 			} 
 		};
 	}
+
+	public interface ThrowingConsumer<T> {
+		void accept(T t) throws Exception;
+	}
+	
+	public static <T> Consumer<T> encode(ThrowingConsumer<T> throwing) {
+		return (arg) -> {
+			try {
+				throwing.accept(arg);
+			} catch (Exception e) {
+				Throwables.throwIfUnchecked(e);
+				throw new CheckedExceptionWrapper(e);
+			} 
+		};
+	}
+
 	
 	public interface ThrowingFunction<T, R> {
 		R apply(T t) throws Exception;
@@ -59,6 +76,11 @@ public final class CheckedExceptionWrapper extends RuntimeException {
 	
 	public <E extends Exception> void rethrow(Class<E> clazz) throws E {
 		Throwables.throwIfInstanceOf(getCause(), clazz);
+	}
+
+
+	public void rethrowUnchecked() {
+		Throwables.throwIfUnchecked(getCause());
 	}
 
 }

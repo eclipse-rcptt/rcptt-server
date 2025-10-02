@@ -15,7 +15,6 @@ package org.eclipse.rcptt.cloud.client;
 import static java.lang.Math.addExact;
 import static java.lang.Math.multiplyExact;
 import static java.lang.String.format;
-import static org.eclipse.core.runtime.Status.error;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -40,7 +39,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,7 +52,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
@@ -68,7 +65,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.client.AutTcpConnector.Aut;
-import org.eclipse.rcptt.cloud.client.Q7ArtifactLoader.ArtifactReferenceById;
+import org.eclipse.rcptt.cloud.client.Q7ArtifactLoader.ArtifactHandle;
 import org.eclipse.rcptt.cloud.client.Q7ServerApi.UploadResult;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
@@ -97,9 +94,7 @@ import org.eclipse.rcptt.cloud.server.serverCommands.ServerCommandsFactory;
 import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.cloud.util.HttpEclClient.ExecutionResult;
 import org.eclipse.rcptt.core.internal.builder.MigrateProjectsJob;
-import org.eclipse.rcptt.core.model.IQ7Element;
-import org.eclipse.rcptt.core.model.IQ7NamedElement;
-import org.eclipse.rcptt.core.model.IQ7Project;
+import org.eclipse.rcptt.core.model.IQ7Element.HandleType;
 import org.eclipse.rcptt.core.workspace.ProjectUtil;
 import org.eclipse.rcptt.ecl.core.BoxedValue;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
@@ -133,6 +128,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class ClientApplication extends CommandLineApplication {
@@ -217,8 +213,7 @@ public class ClientApplication extends CommandLineApplication {
 	private static final ILog LOG = Platform.getLog(ClientApplication.class);
 
 	private static final boolean DEBUG = false;
-	private final Map<String, IQ7NamedElement> resourceFilesById = new HashMap<>();
-	private final Map<String, Q7ArtifactRef> resourcesById = new HashMap<>();
+	private final Map<String, ArtifactHandle> resourcesById = new HashMap<>();
 
 	private TestSuite suite;
 
@@ -305,15 +300,13 @@ public class ClientApplication extends CommandLineApplication {
 		logInfo("Ensure Integrity");
 		ensureIntegrity();
 		
-		checkLicensing();
-		
-		
 		try {
 			autResult.get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof CheckedExceptionWrapper e2) {
 				e2.rethrow(CoreException.class);
 				e2.rethrow(InvalidCommandLineArgException.class);
+				e2.rethrowUnchecked();
 				throw e2;
 			}
 			throw e;
@@ -331,7 +324,7 @@ public class ClientApplication extends CommandLineApplication {
 
 		st = System.currentTimeMillis();
 		logInfo("Prepare list of artifacts required by server");
-		List<Q7ArtifactRef> missingResources = addTestSuite(suite);
+		List<ArtifactHandle> missingResources = addTestSuite(suite);
 		ed = System.currentTimeMillis();
 		System.out.println("Add suite complete:" + (ed - st));
 
@@ -343,24 +336,25 @@ public class ClientApplication extends CommandLineApplication {
 		int chunk = 0;
 		System.out.println("Preparing artifacts for sending...");
 		int processed = 0;
-		Collection<Q7ArtifactRef> values = resourcesById.values();
+		Collection<ArtifactHandle> values = resourcesById.values();
 		int total = values.size();
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
-		for (final Q7ArtifactRef ref : missingResources) {
+		for (final ArtifactHandle ref : missingResources) {
 			zout = new ZipOutputStream(bout);
 			processed++;
 			Q7Artifact artifact = getArtifact(ref);
-			if (!artifact.getId().equals(ref.getId())) {
-				throw new AssertionError("Requested: " + ref.getId() + ", received: " + artifact.getId());
+			String id = ref.id;
+			if (!artifact.getId().equals(ref.id)) {
+				throw new AssertionError("Requested: " + id + ", received: " + artifact.getId());
 			}
 			
-			System.out.printf("Compressing resource %s, %s, deps: %s, (%d of %d)\n", resourceFilesById.get(ref.getId()).getPath(), artifact.getId(), Joiner.on("; ").join(ref.getRefs()), processed, total);
+			System.out.printf("Compressing resource %s, %s, contexts: %s, verifications: %s (%d of %d)\n", ref.path, id, Joiner.on("; ").join(ref.contexts),Joiner.on("; ").join(ref.verifications),  processed, total);
 
 			ECLBinaryResourceImpl r = new ECLBinaryResourceImpl();
 			r.getContents().add(EcoreUtil.copy(artifact));
 
-			ZipEntry entry = new ZipEntry(ref.getId());
+			ZipEntry entry = new ZipEntry(id);
 			zout.putNextEntry(entry);
 			r.save(zout, null);
 			zout.closeEntry();
@@ -414,8 +408,7 @@ public class ClientApplication extends CommandLineApplication {
 		IPath location = ClientAppPlugin.getDefault().getStateLocation()
 				.append("session-" + ReportUtils.getID(testSuiteName));
 
-		LaunchConfigBuilder launchBuilder = new LaunchConfigBuilder(
-				resourceFilesById);
+		LaunchConfigBuilder launchBuilder = new LaunchConfigBuilder(Maps.transformValues(resourcesById, handle -> handle.path));
 
 		logInfo("Exec Test Suite");
 		execTestSuite(createTestOptions());
@@ -535,43 +528,6 @@ public class ClientApplication extends CommandLineApplication {
 		}
 	}
 
-	IProject getProject(Q7ArtifactRef ref) {
-		IQ7Element element = resourceFilesById.get(ref.getId());
-		while (element != null) {
-			if (element.getParent() == null)
-				throw new NullPointerException("Failed to get parent for " + element);
-			element = element.getParent();
-			if (element instanceof IQ7Project) {
-				return ((IQ7Project) element).getProject();
-			}
-		}
-		return null;
-	}
-
-	private void checkLicensing() throws CoreException {
-		Map<IProject, Set<Q7ArtifactRef>> allowedTests = new HashMap<>();
-		Iterator<Entry<String, Q7ArtifactRef>>  iterator = resourcesById.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Entry<String, Q7ArtifactRef> entry = iterator.next();
-			if (entry.getValue().getKind().equals(RefKind.SCENARIO)) {
-				iterator.remove();
-				IProject project = getProject(entry.getValue());
-				resourceFilesById.get(entry.getKey()).getParent();
-				Set<Q7ArtifactRef> set = allowedTests.get(project);
-				if (set == null)
-					allowedTests.put(project,
-							set = new HashSet<>());
-				set.add(entry.getValue());
-			}
-		}
-		for (Entry<IProject, Set<Q7ArtifactRef>> entry : allowedTests
-				.entrySet()) {
-			for (Q7ArtifactRef ref : entry.getValue()) {
-				resourcesById.put(ref.getId(), ref);
-			}
-		}
-	}
-
 	private List<AutInfo> autInformation;
 
 	private void updateAUTs() throws CoreException, InvalidCommandLineArgException {
@@ -682,36 +638,26 @@ public class ClientApplication extends CommandLineApplication {
 
 	private void loadArtifactRefs() throws CoreException, InterruptedException, InvalidCommandLineArgException {
 		Set<String> idsToRemove = new HashSet<>();
-		List<IQ7NamedElement> problemElements = new ArrayList<>();
-		loader.artifactRefs(suites).toList().forEach(entry-> {
-			String id = entry.references().getId();
-			if (entry.element() == null)
-				throw new NullPointerException("Null IQ7NamedElement for id " + id);
-			if (resourceFilesById.containsKey(id)) {
+		List<ArtifactHandle> problemElements = new ArrayList<>();
+		loader.artifactRefs(suites).forEachOrdered(entry-> {
+			String id = entry.id;
+			if (resourcesById.containsKey(id)) {
 				idsToRemove.add(id);
-				problemElements.add(entry.element());
-				problemElements.add(resourceFilesById.get(id));
+				problemElements.add(entry);
+				problemElements.add(resourcesById.get(id));
 				return;// If already registered
 			}
-			resourceFilesById.put(id, entry.element());
-			resourcesById.put(id, entry.references());
-
-			for (String refId : entry.references().getRefs()) {
-				assert refId != null;
-			}
+			resourcesById.put(id, entry);
 		});
 		if (problemElements.size() > 0) {
 			StringBuilder builder = new StringBuilder();
-			for (IQ7NamedElement iq7NamedElement : problemElements) {
-				String id = iq7NamedElement.getID();
-				resourceFilesById.remove(id);
-				resourcesById.remove(id);
-				builder.append(String.format("Resource %s has duplicate ID: %s\n", iq7NamedElement.getPath(), id));
+			for (ArtifactHandle iq7NamedElement : problemElements) {
+				String id = iq7NamedElement.id;
+				builder.append(String.format("Resource %s has duplicate ID: %s\n", iq7NamedElement.path, id));
 			}
 			throw new InvalidCommandLineArgException(builder.toString(), "-import");
 		}
-		assert resourcesById.keySet().equals(resourceFilesById.keySet());
-		System.out.printf("Loaded %d artifacts", resourcesById.size());
+		System.out.printf("Loaded %d artifacts\n", resourcesById.size());
 	}
 
 	/**
@@ -725,59 +671,44 @@ public class ClientApplication extends CommandLineApplication {
 		StringBuilder errorMessage = new StringBuilder();
 		while (found) {
 			found = false;
-			for (Entry<String, Q7ArtifactRef> entry : resourcesById.entrySet()) {
-				Q7ArtifactRef ref = entry.getValue();
+			for (Entry<String, ArtifactHandle> entry : resourcesById.entrySet()) {
+				ArtifactHandle ref = entry.getValue();
 				String id = entry.getKey();
+				assert id.equals(ref.id);
 				if (resourcesToExclude.contains(id)) {
 					continue;
 				}
 				
-				List<String> subRefs = List.copyOf(ref.getRefs());
+				List<String> subRefs = Stream.concat(ref.verifications.stream(), ref.contexts.stream()).toList();
 				List<String> artifactRefs = getArtifact(ref).getRefs().stream().flatMap(r -> Stream.concat(Stream.of(r.getId()), r.getRefs().stream()) ).toList();
 				
-				if (!subRefs.equals(artifactRefs)) {
-					throw new CoreException(error(format("Inconsistent reference index for %s:\nOriginal: %s\nCurrent:  %s", id, subRefs, artifactRefs)));
-				}
+				assert subRefs.equals(artifactRefs) : format("Inconsistent reference index for %s:\nOriginal: %s\nCurrent:  %s", id, subRefs, artifactRefs);
 				
-				for (String refId : ref.getRefs()) {
+				for (String refId : subRefs) {
 					
 					if (Strings.isNullOrEmpty(refId) || "null".equals(refId))
 						throw new NullPointerException("Broken artifact: " + ref);
 					if (!resourcesById.containsKey(refId)
 							|| resourcesToExclude.contains(refId)) {
-						String type = ref.getKind().toString().toLowerCase();
-						String location = resourceFilesById.get(id).getPath()
-								.toPortableString();
-						IQ7NamedElement refFile = resourceFilesById.get(id);
-						String refLocation = refFile == null ? "<undefined location>"
-								: refFile.getPath().toPortableString();
+						String type = ref.kind.toString().toLowerCase();
+						String location = resourcesById.get(id).path;
 
-						errorMessage.append(String
-								.format("%s '%s' refers to missing resource %s '%s'\n",
-										type, location, refId, refLocation));
-
+						errorMessage.append(format("%s '%s' refers to missing resource %s\n",
+										type, location, refId));
 						resourcesToExclude.add(id);
 						found = true;
 					}
 				}
 			}
-		}
-		for (String id : resourcesToExclude) {
-			resourcesById.remove(id);
-			resourceFilesById.remove(id);
-		}
-		if (!resourcesById.keySet().equals(resourceFilesById.keySet())) {
-			throw new AssertionError("Index mismatch: differences " + Sets.symmetricDifference(resourcesById.keySet(), resourceFilesById.keySet()));
-		}
-		
+		}		
 		if (!resourcesToExclude.isEmpty()) {
 			throw new InvalidCommandLineArgException(errorMessage.toString(), "-import");
 		}
 		if (DEBUG) {
 			StringBuilder output = new StringBuilder();
 			output.append("Following artifacts were found:\n");
-			for (Map.Entry<String, IQ7NamedElement> i: resourceFilesById.entrySet()) {
-				output.append(i.getValue().getPath());
+			for (Map.Entry<String, ArtifactHandle> i: resourcesById.entrySet()) {
+				output.append(i.getValue().path);
 				output.append(" ");
 				output.append(i.getKey());
 				output.append("\n");
@@ -786,23 +717,13 @@ public class ClientApplication extends CommandLineApplication {
 		}
 	}
 
-	private Q7Artifact getArtifact(Q7ArtifactRef ref) throws CoreException {
-		IQ7NamedElement file = resourceFilesById.get(ref.getId());
-		if (file == null) {
-			throw ClientAppPlugin.createException(String.format(
-					"Requested resource %s is not found", ref.getId()));
-		}
-		Q7Artifact result = Q7ArtifactLoader.getArtifact(file, new ArtifactReferenceById() {
-			@Override
-			public Q7ArtifactRef apply(String id) throws CoreException {
-				Q7ArtifactRef eObject = resourcesById.get(id);
-				if (eObject == null) {
-					throw new CoreException(new Status(IStatus.ERROR, getClass(), EFS.ERROR_NOT_EXISTS, "A resource with ID " + id + " is not found", null));
-				}
-				return EcoreUtil.copy(eObject);
-			}
-		});
-		assert Arrays.equals(Hash.hash(result.getContent()), ref.getHash());
+	private Q7Artifact getArtifact(ArtifactHandle ref) throws CoreException {
+		Q7Artifact result = ModelFactory.eINSTANCE.createQ7Artifact();
+		result.setContent(ref.getContent());
+		result.setId(ref.id);
+		result.getRefs().addAll(ref.contexts.stream().map(this::toContextRef).toList());
+		result.getRefs().addAll(ref.verifications.stream().map(this::toVerificationRef).toList());
+		assert Arrays.equals(Hash.hash(result.getContent()), ref.hash.asBytes());
 		return result;
 	}
 
@@ -1245,7 +1166,7 @@ public class ClientApplication extends CommandLineApplication {
 		return line;
 	}
 
-	private List<Q7ArtifactRef> addTestSuite(TestSuite newSuite) throws IOException,
+	private List<ArtifactHandle> addTestSuite(TestSuite newSuite) throws IOException,
 			UnknownHostException, CoreException, InterruptedException {
 		AddTestSuite addTestSuite = CommonCommandsFactory.eINSTANCE
 				.createAddTestSuite();
@@ -1263,9 +1184,25 @@ public class ClientApplication extends CommandLineApplication {
 	private TestSuite createTestSuite() throws CoreException {
 		TestSuite rv = ModelFactory.eINSTANCE.createTestSuite();
 		rv.setId(testSuiteName);
-		ModelUtil.setRefs(rv,
-				new ArrayList<>(resourcesById.values()));
+		ModelUtil.setRefs(rv, resourcesById.values().stream().map(this::toRef).toList()  );
 		return rv;
+	}
+	
+	private Q7ArtifactRef toRef(ArtifactHandle handle) {
+		Q7ArtifactRef result = ModelFactory.eINSTANCE.createQ7ArtifactRef();
+		result.setHash(handle.hash.asBytes());
+		result.setId(handle.id);
+		result.setKind(toModel(handle.kind));
+		return result;
+	}
+
+	private RefKind toModel(HandleType kind) {
+		return switch (kind) {
+			case Context -> RefKind.CONTEXT;
+			case TestCase -> RefKind.SCENARIO;
+			case Verification -> RefKind.VERIFICATION;
+			default -> throw new IllegalArgumentException("Unexpected value: " + kind);
+		};
 	}
 
 	private List<Aut> autsData;
@@ -1356,6 +1293,36 @@ public class ClientApplication extends CommandLineApplication {
 		root.getChildren().add(scenarioNode);
 
 		return report;
+	}
+
+	private Q7ArtifactRef toContextRef(String id) {
+		Q7ArtifactRef result = ModelFactory.eINSTANCE.createQ7ArtifactRef();
+		result.setId(id);
+		final ArtifactHandle context = resourcesById.get(id);
+		if (context == null) {
+			throw new IllegalArgumentException("Context wih ID " + id + " is not found");
+		}
+		if (context.kind != HandleType.Context) {
+			throw new IllegalArgumentException("Object wih ID " + id + " is not a context");
+		}
+		result.setHash(context.hash.asBytes());
+		result.setKind(RefKind.CONTEXT);
+		return result;
+	}
+	
+	private Q7ArtifactRef toVerificationRef(String id) {
+		Q7ArtifactRef result = ModelFactory.eINSTANCE.createQ7ArtifactRef();
+		result.setId(id);
+		final ArtifactHandle verification = resourcesById.get(id);
+		if (verification == null) {
+			throw new IllegalArgumentException("Verification wih ID " + id + " is not found");
+		}
+		if (verification.kind != HandleType.Verification) {
+			throw new IllegalArgumentException("Object wih ID " + id + " is not a verification");
+		}
+		result.setHash(verification.hash.asBytes());
+		result.setKind(RefKind.VERIFICATION);
+		return result;
 	}
 
 }

@@ -29,14 +29,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class LaunchConfigBuilder {
-	public LaunchConfigBuilder(Map<String, IQ7NamedElement> resourcesById)
+	public LaunchConfigBuilder(Map<String, String> pathById)
 			throws ParserConfigurationException {
-		this.resourcesById = resourcesById;
+		this.pathById = pathById;
 		this.builder = DocumentBuilderFactory.newInstance()
 				.newDocumentBuilder();
 		this.agents = new ArrayList<String>();
@@ -44,7 +43,7 @@ public class LaunchConfigBuilder {
 	}
 
 	private final DocumentBuilder builder;
-	private final Map<String, IQ7NamedElement> resourcesById;
+	private final Map<String, String> pathById;
 
 	private final List<String> agents;
 	private final Map<String, List<String>> agentsfileList;
@@ -56,9 +55,8 @@ public class LaunchConfigBuilder {
 			files = new ArrayList<String>();
 			agentsfileList.put(agentName, files);
 		}
-		if (resourcesById.containsKey(artifactId)) {
-			files.add(resourcesById.get(artifactId).getPath()
-					.toPortableString());
+		if (pathById.containsKey(artifactId)) {
+			files.add(pathById.get(artifactId));
 		}
 	}
 
