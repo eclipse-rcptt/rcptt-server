@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.rcptt.cloud.client.Q7ArtifactLoader.ElementAndReferences;
 import org.junit.Rule;
 import org.junit.Test;
 import org.osgi.framework.FrameworkUtil;
