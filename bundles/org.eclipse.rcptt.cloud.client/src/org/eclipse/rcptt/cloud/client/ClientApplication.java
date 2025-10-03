@@ -639,7 +639,7 @@ public class ClientApplication extends CommandLineApplication {
 	private void loadArtifactRefs() throws CoreException, InterruptedException, InvalidCommandLineArgException {
 		Set<String> idsToRemove = new HashSet<>();
 		List<ArtifactHandle> problemElements = new ArrayList<>();
-		loader.artifactRefs(suites).forEachOrdered(entry-> {
+		loader.findArtifacts(suites).forEachOrdered(entry-> {
 			String id = entry.id;
 			if (resourcesById.containsKey(id)) {
 				idsToRemove.add(id);

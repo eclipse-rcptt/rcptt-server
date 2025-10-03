@@ -12,8 +12,10 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.util;
 
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.base.Throwables;
 
@@ -50,6 +52,17 @@ public final class CheckedExceptionWrapper extends RuntimeException {
 		return (arg) -> {
 			try {
 				throwing.accept(arg);
+			} catch (Exception e) {
+				Throwables.throwIfUnchecked(e);
+				throw new CheckedExceptionWrapper(e);
+			} 
+		};
+	}
+	
+	public static <T> Supplier<T> encode(Callable<T> throwing) {
+		return () -> {
+			try {
+				return throwing.call();
 			} catch (Exception e) {
 				Throwables.throwIfUnchecked(e);
 				throw new CheckedExceptionWrapper(e);

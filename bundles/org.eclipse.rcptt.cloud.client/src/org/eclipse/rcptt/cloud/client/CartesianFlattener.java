@@ -22,26 +22,32 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-/** Expands sequences of symbols including groups and variations into sequences of terminal entries. Each resulting sequence is annotated by names of expanded variations. **/ 
+/** 
+ *  Expands a sequence of symbols producing a sample for every combination of variants.
+ *  Expands sequences of symbols including sub and variations into sequences of terminal entries.
+ *  Each resulting sequence is annotated by names of expanded variations.
+ * 
+ **/ 
 public final class CartesianFlattener {
 	private final Map<String, Entry> entriesById = new HashMap<>();
 	
+	/** @param name a list of super selections - for each expanded records a name of an element expanded to **/ 
 	public record NamedSequence(List<String> name, List<String> sequence) {
 		
 	}
 	
 	/** Group is expanded to a sequence of other entries **/
-	public void putGroup(String id, String name, List<String> children) {
-		Entry result = entriesById.putIfAbsent(id, new Group(name, children));
+	public void putSequence(String id, String name, List<String> children) {
+		Entry result = entriesById.putIfAbsent(id, new Sequence(name, children));
 		if (result != null) {
 			throw new IllegalStateException("Id " + id + " is registered multiple times");
 		}
  	}
 	
-	/** Super expand a sequence it appears in into multiple copies, where it is replaced with one of its children
+	/** Variant expands a sequence it appears in into multiple copies, where it is replaced with one of its children
 	 *  For a given sequence, the resulting set is a Cartesian product of all of its discovered supers. 
 	 **/
-	public void putSuper(String id, String name, List<String> children) {
+	public void putVariant(String id, String name, List<String> children) {
 		Entry result = entriesById.putIfAbsent(id, new Super(name, children));
 		if (result != null) {
 			throw new IllegalStateException("Id " + id + " is registered multiple times");
@@ -56,17 +62,26 @@ public final class CartesianFlattener {
 		}
 	}
 	
+	/**
+	 * @param ids - a sequence of symbols to expand
+	 * @param origin - caller's name for error messages
+	 * @return a sequence of terminal symbols, labeled with variant choice, if no variants are present, only one result is returned. 
+	 */
 	public Stream<NamedSequence> resolve(List<String> ids, String origin) {
 		// TODO: add loop detection
-		final List<Supplier<Stream<NamedSequence>>> list = ids.stream()
-				.map(id -> requireNonNull(entriesById.get(id), origin + " is referencing an uresolved id " + id))
-				.<Supplier<Stream<NamedSequence>>>map( e -> e::resolve).toList();
-		return cartesianProduct(list).map(sequences -> 
-			new NamedSequence(
-					sequences.stream().map(NamedSequence::name).flatMap(List::stream).toList(),
-					sequences.stream().map(NamedSequence::sequence).flatMap(List::stream).toList()
-			)
-		);
+		try {
+			final List<Supplier<Stream<NamedSequence>>> list = ids.stream()
+					.map(id -> requireNonNull(entriesById.get(id), origin + " is referencing an uresolved id " + id))
+					.<Supplier<Stream<NamedSequence>>>map( e -> e::resolve).toList();
+			return cartesian(list).map(sequences -> 
+				new NamedSequence(
+						sequences.stream().map(NamedSequence::name).flatMap(List::stream).toList(),
+						sequences.stream().map(NamedSequence::sequence).flatMap(List::stream).toList()
+				)
+			);
+		} catch (Exception e) {
+			throw new IllegalStateException("Unable to resolve " + ids.toString() + " for " + origin, e);
+		}
 	}
 
 	private abstract class Entry {
@@ -76,6 +91,10 @@ public final class CartesianFlattener {
 			this.name = name;
 		}
 		abstract Stream<NamedSequence> resolve();
+		@Override
+		public String toString() {
+			return name;
+		}
 	}
 	
 	private final class Terminal extends Entry {
@@ -102,10 +121,9 @@ public final class CartesianFlattener {
 		}
 		
 		@Override
-		public java.util.stream.Stream<NamedSequence> resolve() {
-			//TODO add a better error message instead of ClassCastException
+		public Stream<NamedSequence> resolve() {
 			return children.stream().map(this::getById).flatMap(child -> 
-				child.resolve().map(sequence -> new NamedSequence(prepend(child.name, sequence.name()), sequence.sequence()))
+				child.resolve().map(sequence -> new NamedSequence(withHead(child.name, sequence.name()), sequence.sequence()))
 			);
 		}
 		
@@ -119,10 +137,10 @@ public final class CartesianFlattener {
 
 	}
 
-	private final class Group extends Entry {
+	private final class Sequence extends Entry {
 		public final List<String> children;
 
-		public Group(String name, List<String> children) {
+		public Sequence(String name, List<String> children) {
 			super(name);
 			this.children = List.copyOf(children);
 		}
@@ -133,21 +151,21 @@ public final class CartesianFlattener {
 		}
 	}
 
-	private <T> Stream<List<T>>  cartesianProduct(List<Supplier<Stream<T>>> input) {
-		if (input.size() < 1) {
-			throw new IllegalArgumentException(""+input.size());
+	private static <T> Stream<List<T>>  cartesian(List<Supplier<Stream<T>>> streams) {
+		if (streams.size() < 1) {
+			return Stream.of(List.of());
 		}
-		if (input.size() == 1) {
-			return input.getFirst().get().map(List::of);
+		if (streams.size() == 1) {
+			return streams.getFirst().get().map(List::of);
 		}
-		List<Supplier<Stream<T>>> tail = input.subList(1, 0);
-		return input.getFirst().get().flatMap(first -> cartesianProduct(tail).map(t ->   prepend(first, t))  );
+		List<Supplier<Stream<T>>> rest = streams.subList(1, streams.size());
+		return streams.getFirst().get().flatMap(first -> cartesian(rest).map(t ->   withHead(first, t))  );
 	}
 
-	private static <T> List<T> prepend(T first, List<T> list) {
-		List<T> result = new ArrayList<>(list.size() + 1);
-		result.add(first);
-		result.addAll(list);
+	private static <T> List<T> withHead(T head, List<T> rest) {
+		List<T> result = new ArrayList<>(rest.size() + 1);
+		result.add(head);
+		result.addAll(rest);
 		return Collections.unmodifiableList(result);
 	}
 

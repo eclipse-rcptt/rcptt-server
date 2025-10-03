@@ -21,6 +21,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -105,9 +106,9 @@ public final class Q7ArtifactLoader {
 		private NamedElement patch(NamedElement namedElement) throws ModelException {
 			assert ! (namedElement instanceof SuperContext);
 			assert ! (namedElement instanceof GroupContext);
+			namedElement.setName(name);
 			if (namedElement instanceof Scenario scenario) {
 				scenario.setId(id);
-				scenario.setName(name);
 				scenario.getContexts().clear();
 				scenario.getContexts().addAll(contexts);
 				scenario.getVerifications().clear();
@@ -115,7 +116,6 @@ public final class Q7ArtifactLoader {
 				return scenario;
 			}
 			assert namedElement.getId().equals(id);
-			assert namedElement.getName().equals(name);
 			if (namedElement instanceof WorkspaceContext el) {
 				ContextType type = ((IContext)element).getType();
 				if (type != null) {
@@ -135,7 +135,7 @@ public final class Q7ArtifactLoader {
 		this.skipTags = skipTags;
 	}
 	
-	public Stream<ArtifactHandle> artifactRefs(String... suites)
+	public Stream<ArtifactHandle> findArtifacts(String... suites)
 			throws CoreException, InterruptedException {
 		ModelManager.getModelManager().getIndexManager()
 		.waitUntilReady(new NullProgressMonitor());
@@ -171,9 +171,9 @@ public final class Q7ArtifactLoader {
 					String id = context.getId();
 					String name = context.getName();
 					if (context instanceof GroupContext g) {
-						flattener.putGroup(id, name, g.getContextReferences());
+						flattener.putSequence(id, name, g.getContextReferences());
 					} else if (context instanceof SuperContext s) {
-						flattener.putSuper(id, name, s.getContextReferences());
+						flattener.putVariant(id, name, s.getContextReferences());
 					} else {
 						flattener.putTerminal(id, name);
 					}
@@ -182,7 +182,7 @@ public final class Q7ArtifactLoader {
 		
 			return elements.parallelStream().flatMap(e -> {
 				try {
-					return collectArtifactsRefs(e, flattener);
+					return convertToHandles(e, flattener);
 				} catch (CoreException e1) {
 					throw new CheckedExceptionWrapper(e1);
 				}
@@ -199,7 +199,7 @@ public final class Q7ArtifactLoader {
 		if (contextVariant.isEmpty()) {
 			return id;
 		}
-		return Joiner.on("_").join(new Object[]{"_", contextVariant}).replace(":", "").replace(" ", ""); 
+		return Stream.concat(Stream.of(id), contextVariant.stream()).collect(Collectors.joining("_")).replace(":", "").replace(" ", ""); 
 	}
 
 	private String formatExecutionName(String test, List<String> contextVariant) {
@@ -209,35 +209,44 @@ public final class Q7ArtifactLoader {
 		return test + " (" + Joiner.on(", ").join(contextVariant) + ")";
 	}
 	
-	private Stream<ArtifactHandle> collectArtifactsRefs(IQ7NamedElement base, CartesianFlattener flattener) throws CoreException {
+	private Stream<ArtifactHandle> convertToHandles(IQ7NamedElement base, CartesianFlattener flattener) throws CoreException {
 		IQ7NamedElement element = base
 				.getIndexingWorkingCopy(new NullProgressMonitor());
 		try {
-			if (element instanceof ITestCase
-					&& isSkipExecuton((ITestCase) element)) {
-				return Stream.empty();
-			}
-			if (element instanceof ITestCase testcase) {
-				IContext[] contexts = RcpttCore.getInstance().getContexts(testcase, WorkspaceFinder.getInstance(), false);
-				String name = testcase.getName();
-				Stream<CartesianFlattener.NamedSequence> variants = flattener.resolve(Arrays.stream(contexts).map(encode(IContext::getID)).toList(),name);
-				return variants.map(encode((CartesianFlattener.NamedSequence s) -> new ArtifactHandle(formatExecutionId(testcase.getID(), s.name()),  formatExecutionName(name, s.name()), getVerifications(testcase), s.sequence(), base)));
-			} else if (element instanceof IContext) {
+			try {
 				NamedElement namedElement = element.getNamedElement();
-				if (namedElement instanceof GroupContext) {
+				String id = namedElement.getId();
+				String name = namedElement.getName();
+				if (element instanceof ITestCase
+						&& isSkipExecuton((ITestCase) element)) {
 					return Stream.empty();
 				}
-				if (namedElement instanceof SuperContext) {
-					return Stream.empty();
+				if (element instanceof ITestCase testcase) {
+					IContext[] contexts = RcpttCore.getInstance().getContexts(testcase, WorkspaceFinder.getInstance(), false);
+					Stream<CartesianFlattener.NamedSequence> variants = flattener.resolve(Arrays.stream(contexts).filter(c -> ! RcpttCore.DEFAULT_WORKBENCH_CONTEXT_ID.equals(encode(c::getID).get())).map(encode(IContext::getID)).toList(), name);
+					return variants.map(encode((CartesianFlattener.NamedSequence s) -> new ArtifactHandle(formatExecutionId(id, s.name()),  formatExecutionName(name, s.name()), getVerifications(testcase), s.sequence(), base)));
+				} else if (element instanceof IContext) {
+					if (namedElement instanceof GroupContext) {
+						return Stream.empty();
+					}
+					if (namedElement instanceof SuperContext) {
+						return Stream.empty();
+					}
+					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base));
+				} else if (element instanceof IVerification) {
+					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base));
 				}
-				return Stream.of(new ArtifactHandle(namedElement.getId(), element.getName(), List.of(), List.of(), element));
-			} else if (element instanceof IVerification) {
-				return Stream.of(new ArtifactHandle(element.getID(), element.getName(), List.of(), List.of(), element));
+			} catch (CheckedExceptionWrapper e) {
+				e.rethrow(CoreException.class);
+				e.rethrowUnchecked();
+				throw e;
 			}
 			
 			throw new IllegalArgumentException("Unknown artifact type: " + element.getPath());
 		} catch (CoreException e) {
 			throw new CoreException(new MultiStatus(getClass(), 0, new IStatus[] {e.getStatus()},  "Processing " + element.getElementName(), e));
+		} catch (Exception e) {
+			throw new CoreException(Status.error("Can't process " + base.getPath().toPortableString(), e));
 		} finally {
 			element.discardWorkingCopy();
 		}

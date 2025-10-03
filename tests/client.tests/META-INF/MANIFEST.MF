@@ -8,6 +8,12 @@ Require-Bundle: org.eclipse.rcptt.cloud.client;bundle-version="2.7.0",
  org.eclipse.core.resources,
  org.eclipse.core.runtime;bundle-version="3.33.0",
  com.google.guava,
- org.eclipse.rcptt.cloud.util
+ org.eclipse.rcptt.cloud.util,
+ org.eclipse.rcptt.ctx.workbench;bundle-version="2.7.0",
+ org.eclipse.rcptt.core.scenario,
+ org.eclipse.rcptt.core;bundle-version="2.7.0",
+ org.eclipse.rcptt.verifications.log;bundle-version="2.7.0",
+ org.eclipse.rcptt.ctx.super;bundle-version="2.7.0",
+ org.eclipse.rcptt.ctx.group;bundle-version="2.7.0"
 Automatic-Module-Name: org.eclipse.rcptt.cloud.client.tests
 Bundle-RequiredExecutionEnvironment: JavaSE-21

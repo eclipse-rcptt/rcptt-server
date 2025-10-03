@@ -1,0 +1,18 @@
+--- RCPTT testcase ---
+Format-Version: 1.0
+Context-Type: org.eclipse.rcptt.ctx.parameters
+Element-Name: p4
+Element-Type: context
+Element-Version: 2.0
+Id: _OZLYMJ-PEfCxSNB-5UOilw
+Runtime-Version: 2.7.0.qualifier
+Save-Time: 10/2/25, 4:57 PM
+
+------=_.parameters.context-2e023de5-3294-36a9-ac1d-6701f05a40ee
+Content-Type: text/properties
+Entry-Name: .parameters.context
+
+#Thu Oct 02 16:57:11 GET 2025
+p4=4
+
+------=_.parameters.context-2e023de5-3294-36a9-ac1d-6701f05a40ee--
