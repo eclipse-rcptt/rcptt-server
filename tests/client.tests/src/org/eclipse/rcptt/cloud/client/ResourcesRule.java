@@ -29,10 +29,10 @@ public final class ResourcesRule extends ExternalResource {
 			throw new IllegalArgumentException("Path shoulfd be realtive: " + path);
 		}
 		URL descriptionUrl = bundle.getEntry(path+"/.project");
+		requireNonNull(descriptionUrl, "Failed to resolve bundle resource " + path + "/.project");
 		IProject project;
 		IProjectDescription description;
 		{
-			requireNonNull(descriptionUrl);
 			try (final InputStream is = descriptionUrl.openStream()) {
 				description = workspace.loadProjectDescription(is);
 			}
