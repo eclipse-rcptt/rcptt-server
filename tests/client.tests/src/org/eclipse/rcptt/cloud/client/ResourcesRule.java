@@ -42,10 +42,8 @@ public final class ResourcesRule extends ExternalResource {
 		workspace.run((ICoreRunnable)(monitor -> {
 				project.create(description, null);
 				project.open(null);
-				System.out.println(project.getName());
 				String prefixToRemove = "/" + path;
 				for (URL entry: (Iterable<URL>)(bundle.findEntries(path+"/", "*", true)::asIterator)) {
-					System.out.println(entry);
 					if (entry.equals(descriptionUrl)) {
 						continue;
 					}
@@ -54,7 +52,6 @@ public final class ResourcesRule extends ExternalResource {
 						throw new AssertionError("Unexpected search result: " + entry);
 					}
 					entryPath = entryPath.substring(prefixToRemove.length());
-					System.out.println(entryPath);
 					// TODO: support creation of missing parent folders
 					if (entryPath.endsWith("/")) {
 						IFolder resource = project.getFolder(entryPath);
