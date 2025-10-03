@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="RCPTT Server" uid="org.eclipse.rcptt.cloud.server.product" application="org.eclipse.rcptt.cloud.server.app.headless" version="2.6.0.qualifier" type="features" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="RCPTT Server" uid="org.eclipse.rcptt.cloud.server.product" application="org.eclipse.rcptt.cloud.server.app.headless" version="2.6.1.qualifier" type="features" includeLaunchers="true" autoIncludeRequirements="true">
 
    <configIni use="default">
    </configIni>
