@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Automatic-Module-Name: org.eclipse.rcptt.cloud.server.app
 Bundle-Name: Q7 cloud server application
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.server.app;singleton:=true
-Bundle-Version: 2.7.0.qualifier
+Bundle-Version: 2.8.0.qualifier
 Bundle-Activator: org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin
 Bundle-Vendor: Eclipse RCP Testing Tool Project
 Require-Bundle: org.eclipse.core.runtime,

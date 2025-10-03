@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Command line support for headless applications
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.commandline
-Bundle-Version: 2.7.0.qualifier
+Bundle-Version: 2.8.0.qualifier
 Bundle-Vendor: Eclipse RCP Testing Tool Project
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.eclipse.rcptt.cloud.commandline
