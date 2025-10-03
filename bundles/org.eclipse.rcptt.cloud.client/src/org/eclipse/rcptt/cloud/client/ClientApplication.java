@@ -1193,6 +1193,8 @@ public class ClientApplication extends CommandLineApplication {
 		result.setHash(handle.hash.asBytes());
 		result.setId(handle.id);
 		result.setKind(toModel(handle.kind));
+		result.getRefs().addAll(handle.contexts);
+		result.getRefs().addAll(handle.verifications);
 		return result;
 	}
 

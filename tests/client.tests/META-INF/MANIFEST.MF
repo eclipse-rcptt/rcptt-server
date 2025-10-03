@@ -1,6 +1,5 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Tests
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.client.tests
 Bundle-Version: 1.0.0.qualifier
 Require-Bundle: org.eclipse.rcptt.cloud.client;bundle-version="2.7.0",

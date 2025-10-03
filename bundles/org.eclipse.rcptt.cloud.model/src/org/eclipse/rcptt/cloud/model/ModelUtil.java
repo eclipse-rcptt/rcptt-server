@@ -89,6 +89,7 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static TestSuite setRefs(TestSuite suite, List<Q7ArtifactRef> refs) {
+		refs = new ArrayList<>(refs);
 		Collections.sort(refs, new Comparator<Q7ArtifactRef>() {
 
 			@Override
