@@ -32,7 +32,7 @@ public class Q7ArtifactLoaderTest {
 	
 	@Test
 	public void superContexts() throws CoreException, IOException, InterruptedException {
-		resources.importProject(FrameworkUtil.getBundle(getClass()), "projects/superCOntexts");
+		resources.importProject(FrameworkUtil.getBundle(getClass()), "projects/superContexts");
 		Q7ArtifactLoader subject = createSubject();
 		List<ArtifactHandle> handles = subject.findArtifacts().filter(h -> h.id.startsWith("_Oxf8IJ-QEfCxSNB-5UOilw")).toList();
 		assertEquals(3, handles.size());
