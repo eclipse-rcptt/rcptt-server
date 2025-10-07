@@ -679,7 +679,7 @@ public class ClientApplication extends CommandLineApplication {
 					continue;
 				}
 				
-				List<String> subRefs = Stream.concat(ref.verifications.stream(), ref.contexts.stream()).toList();
+				List<String> subRefs = Stream.concat(ref.contexts.stream(), ref.verifications.stream()).toList();
 				List<String> artifactRefs = getArtifact(ref).getRefs().stream().flatMap(r -> Stream.concat(Stream.of(r.getId()), r.getRefs().stream()) ).toList();
 				
 				assert subRefs.equals(artifactRefs) : format("Inconsistent reference index for %s:\nOriginal: %s\nCurrent:  %s", id, subRefs, artifactRefs);
