@@ -17,7 +17,7 @@ Make sure to update:
 ## Server
 Server is a daemon that runs in a cloud infrastructure. It accepts client's requests, splits them into chunks and sends chunks to agents. It does no testing by itself and acts as a load balancer. It also manages AUT downloads and distribution.
 ### Usage
-Download and unzip a server and run the command:
+[Download](https://repo.eclipse.org/content/repositories/rcptt-releases/org/eclipse/rcptt/cloud/agent-server-products/2.6.0/) and unzip a server and run the command:
 
     eclipse -consoleLog -port 5009  &
 
@@ -27,7 +27,7 @@ Server also has a web interface on port 5007. Run seerver with `--help` argument
 ## Agent
 Agent is a daemon that runs on multiple instances in cloud infrastructure. It runs in UI context, deploys an AUT and executes tests on it per server's request. It can be thought of as a remotely controlled RCPTT Runner. The count of agents connected to a server is limited only by available cloud resources and therefore, a particular RCPTT project can be executed very quickly as load is spread across a multitude of executors.
 ### Usage
-Download and unzip an agent and run the command, replacing server.local with a hostname or IP address of the host running the server:
+[Download](https://repo.eclipse.org/content/repositories/rcptt-releases/org/eclipse/rcptt/cloud/agent-server-products/2.6.0/) and unzip an agent and run the command, replacing server.local with a hostname or IP address of the host running the server:
 
     eclipse -consoleLog -data /tmp/ws_agent -serverHost server.local -serverPort 5009
 
