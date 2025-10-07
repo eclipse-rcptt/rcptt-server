@@ -34,10 +34,6 @@ Contributors:
          id="org.eclipse.rcptt.core"
          version="0.0.0"/>
 
-   <includes
-         id="org.eclipse.rcptt.launching"
-         version="0.0.0"/>
-
    <requires>
       <import feature="org.eclipse.equinox.p2.core.feature"/>
    </requires>
