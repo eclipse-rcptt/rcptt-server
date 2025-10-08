@@ -99,7 +99,7 @@ public final class Q7ArtifactLoader {
 				// This might corrupt the result with some unloading procedure. Assert below may help to debug then. 
 				workingCopy.discardWorkingCopy();
 			}
-			assert HashCode.fromBytes(Hash.hash(result)).equals(hash);
+			assert HashCode.fromBytes(Hash.hash(result)).equals(hash) : result;
 			return result;		
 		}
 		

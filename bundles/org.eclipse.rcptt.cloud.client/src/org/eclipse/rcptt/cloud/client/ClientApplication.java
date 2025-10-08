@@ -1304,6 +1304,8 @@ public class ClientApplication extends CommandLineApplication {
 		if (context == null) {
 			throw new IllegalArgumentException("Context wih ID " + id + " is not found");
 		}
+		assert context.contexts.isEmpty();
+		assert context.verifications.isEmpty();
 		if (context.kind != HandleType.Context) {
 			throw new IllegalArgumentException("Object wih ID " + id + " is not a context");
 		}
@@ -1319,6 +1321,8 @@ public class ClientApplication extends CommandLineApplication {
 		if (verification == null) {
 			throw new IllegalArgumentException("Verification wih ID " + id + " is not found");
 		}
+		assert verification.contexts.isEmpty();
+		assert verification.verifications.isEmpty();
 		if (verification.kind != HandleType.Verification) {
 			throw new IllegalArgumentException("Object wih ID " + id + " is not a verification");
 		}
