@@ -344,7 +344,9 @@ public class ClientApplication extends CommandLineApplication {
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
 		for (final Q7ArtifactRef ref : values) {
-			zout = new ZipOutputStream(bout);
+			if (zout == null) {
+				zout = new ZipOutputStream(bout);
+			}
 			processed++;
 			Q7Artifact artifact = getArtifact(ref);
 			if (!artifact.getId().equals(ref.getId())) {
