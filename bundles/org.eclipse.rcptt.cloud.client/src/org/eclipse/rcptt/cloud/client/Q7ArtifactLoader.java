@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.core.ContextType;
@@ -82,25 +83,29 @@ public final class Q7ArtifactLoader {
 				this.kind = workingCopy.getElementType();
 				this.path = workingCopy.getPath().toPortableString();
 				assert EnumSet.of(HandleType.Context, HandleType.TestCase, HandleType.Verification).contains(kind);
-				this.hash = HashCode.fromBytes(Hash.hash(patch(workingCopy.getNamedElement())));
+				this.hash = HashCode.fromBytes(Hash.hash(getContentInternal()));
 			} finally {
 				workingCopy.discardWorkingCopy();
 			}
 		}
 
 		public NamedElement getContent() throws ModelException {
+			NamedElement result = getContentInternal();
+			assert HashCode.fromBytes(Hash.hash(result)).equals(hash) : result;
+			return result;		
+		}
+
+		private NamedElement getContentInternal() throws ModelException {
 			NamedElement result;
 			IQ7NamedElement workingCopy = element
 					.getIndexingWorkingCopy(new NullProgressMonitor());
 			try {
-				// copy the object before closing the working copy?
-				result = patch(workingCopy.getNamedElement());
+				result = patch(EcoreUtil.copy(workingCopy.getNamedElement()));
 			} finally {
 				// This might corrupt the result with some unloading procedure. Assert below may help to debug then. 
 				workingCopy.discardWorkingCopy();
 			}
-			assert HashCode.fromBytes(Hash.hash(result)).equals(hash) : result;
-			return result;		
+			return result;
 		}
 		
 		private NamedElement patch(NamedElement namedElement) throws ModelException {
