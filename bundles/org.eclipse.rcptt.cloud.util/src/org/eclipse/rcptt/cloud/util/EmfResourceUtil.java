@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 
 public class EmfResourceUtil {
@@ -97,7 +98,7 @@ public class EmfResourceUtil {
 		FutureTask<Void> task = new FutureTask<>(() -> {
 			try {
 				Resource r = createResource();
-				r.getContents().add(obj);
+				r.getContents().add(EcoreUtil.copy(obj));
 				r.save(sink, null);
 				return null;
 			} finally {

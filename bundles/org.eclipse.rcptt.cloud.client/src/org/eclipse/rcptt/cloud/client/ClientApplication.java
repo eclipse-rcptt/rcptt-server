@@ -349,7 +349,7 @@ public class ClientApplication extends CommandLineApplication {
 				throw new AssertionError("Requested: " + id + ", received: " + artifact.getId());
 			}
 			
-			System.out.printf("Compressing resource %s, %s, contexts: %s, verifications: %s (%d of %d)\n", ref.path, id, Joiner.on("; ").join(ref.contexts),Joiner.on("; ").join(ref.verifications),  processed, total);
+			System.out.printf("Compressing resource %s, (%s, %s), contexts: %s, verifications: %s (%d of %d)\n", ref.path, id, ref.hash, Joiner.on("; ").join(ref.contexts),Joiner.on("; ").join(ref.verifications),  processed, total);
 
 			ECLBinaryResourceImpl r = new ECLBinaryResourceImpl();
 			r.getContents().add(EcoreUtil.copy(artifact));
@@ -367,9 +367,9 @@ public class ClientApplication extends CommandLineApplication {
 				byte[] sending = bout.toByteArray();
 				System.out.println("");
 				logInfo(String
-						.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d from %d artifacts.",
+						.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d of %d artifacts.",
 								Integer.valueOf(sending.length / (1024 * 1024)), Integer.valueOf(chunk), Integer.valueOf(index),
-								Integer.valueOf(resourcesById.size())));
+								Integer.valueOf(missingResources.size())));
 				String chunkName =  "artifacts" + ch + ".zip";
 				upload = CompletableFuture.runAsync(() -> {
 					try {
