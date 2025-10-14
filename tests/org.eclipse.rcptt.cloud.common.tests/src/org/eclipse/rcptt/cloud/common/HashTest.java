@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.DigestInputStream;
+import java.security.MessageDigest;
 
 import org.eclipse.rcptt.cloud.util.EmfResourceUtil;
 import org.eclipse.rcptt.ecl.core.CoreFactory;
@@ -42,12 +43,18 @@ public class HashTest {
 	public void binaryStreamMatchesEObject() throws IOException {
 		final EclString eclString = CoreFactory.eINSTANCE.createEclString();
 		eclString.setValue("blah");
+		final String expected = HashCode.fromBytes(Hash.hash(eclString)).toString();
 		try (InputStream is = EmfResourceUtil.toInputStream(eclString);
 			DigestInputStream dis = new DigestInputStream(is, Hash.createDigest());
 			OutputStream os = OutputStream.nullOutputStream()) {
 			dis.transferTo(OutputStream.nullOutputStream());
-			assertEquals(HashCode.fromBytes(Hash.hash(eclString)).toString(), HashCode.fromBytes(dis.getMessageDigest().digest()).toString());
+			assertEquals(expected, HashCode.fromBytes(dis.getMessageDigest().digest()).toString());
 		}
+		try (InputStream is = EmfResourceUtil.toInputStream(eclString)) {
+				MessageDigest digest = Hash.createDigest();
+				digest.update(is.readAllBytes());
+				assertEquals(expected, HashCode.fromBytes(digest.digest()).toString());
+			}
 		
 	}
 

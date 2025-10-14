@@ -92,9 +92,9 @@ public class AddTestResourceService implements ICommandService {
 						} catch (Exception e) {
 							StringBuilder message = new StringBuilder();
 							message.append("Failed to store artifact ").append(artifact.getId())
-							.append("hash: ").append(HashCode.fromBytes(Hash.hash(artifact.getContent())))
+							.append(", hash: ").append(HashCode.fromBytes(Hash.hash(artifact.getContent())))
 							.append(", from entry ").append(entry.getName())
-							.append(" of size ").append(entry.getSize()).append("\n");
+							.append("\n");
 							final String dump = artifact.getContent().toString();
 							message.append(dump.substring(0, Math.min(10000, dump.length())));
 							throw new IOException(message.toString(), e);
