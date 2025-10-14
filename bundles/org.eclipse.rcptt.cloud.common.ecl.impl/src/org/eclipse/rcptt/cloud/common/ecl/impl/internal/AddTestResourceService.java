@@ -67,29 +67,35 @@ public class AddTestResourceService implements ICommandService {
 			} else if (cmd.getArtifactsPath() != null) {
 				File artifactName = new File(executions
 					.getRoot().toURI().resolve(URI.create(cmd.getArtifactsPath())));
-				ZipInputStream zin = new ZipInputStream(
+				try (ZipInputStream zin = new ZipInputStream(
 						new BufferedInputStream(new FileInputStream(
-								artifactName)));
-				while (true) {
-					ZipEntry entry = zin.getNextEntry();
-					if (entry == null) {
-						break;
-					}
-					ECLBinaryResourceImpl res = new ECLBinaryResourceImpl();
-					try {
-						res.load(zin, null);
-					} catch (Exception e) {
-						CommonPlugin.error(
-								"Cannot load resource from " + entry.getName(),
-								e);
-						continue;
-					}
-					Q7Artifact artifact = (Q7Artifact) res.getContents().get(0);
-					try (InputStream inputStream = EmfResourceUtil.toInputStream(artifact.getContent())) {
-						handle.addArtifact(inputStream);
+								artifactName)))) {
+					while (true) {
+						ZipEntry entry = zin.getNextEntry();
+						if (entry == null) {
+							break;
+						}
+						ECLBinaryResourceImpl res = new ECLBinaryResourceImpl();
+						try {
+							res.load(zin, null);
+						} catch (Exception e) {
+							CommonPlugin.error(
+									"Cannot load resource from " + entry.getName(),
+									e);
+							continue;
+						}
+						Q7Artifact artifact = (Q7Artifact) res.getContents().get(0);
+						try (InputStream inputStream = EmfResourceUtil.toInputStream(artifact.getContent())) {
+							handle.addArtifact(inputStream);
+						} catch (Exception e) {
+							StringBuilder message = new StringBuilder();
+							message.append("Failed to store artifact ").append(artifact.getId()).append(" from entry ").append(entry.getName()).append("\n");
+							final String dump = artifact.getContent().toString();
+							message.append(dump.substring(0, Math.min(10000, dump.length())));
+							throw new IOException(message.toString(), e);
+						}
 					}
 				}
-				zin.close();
 				// Delete zip artifact
 				artifactName.delete();
 				// Also remove .md5 file
