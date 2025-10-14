@@ -12,6 +12,7 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.common.ecl.impl.internal;
 
+import com.google.common.hash.HashCode;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,6 +27,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.rcptt.cloud.common.CommonPlugin;
+import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
 import org.eclipse.rcptt.cloud.model.Q7Artifact;
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
@@ -89,7 +91,10 @@ public class AddTestResourceService implements ICommandService {
 							handle.addArtifact(inputStream);
 						} catch (Exception e) {
 							StringBuilder message = new StringBuilder();
-							message.append("Failed to store artifact ").append(artifact.getId()).append(" from entry ").append(entry.getName()).append("\n");
+							message.append("Failed to store artifact ").append(artifact.getId())
+							.append("hash: ").append(HashCode.fromBytes(Hash.hash(artifact.getContent())))
+							.append(", from entry ").append(entry.getName())
+							.append(" of size ").append(entry.getSize()).append("\n");
 							final String dump = artifact.getContent().toString();
 							message.append(dump.substring(0, Math.min(10000, dump.length())));
 							throw new IOException(message.toString(), e);
