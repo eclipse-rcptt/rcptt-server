@@ -679,14 +679,7 @@ public class ClientApplication extends CommandLineApplication {
 				}
 				
 				List<String> subRefs = Stream.concat(ref.contexts.stream(), ref.verifications.stream()).toList();
-				final Q7Artifact artifact = getArtifact(ref);
-				if (!Arrays.equals(Hash.hash(artifact.getContent()), ref.hash.asBytes())) {
-					throw new InvalidCommandLineArgException("File " + ref.path + " has been changed on disk. Do not modify files in imported projects until resource upload in done", "-import");
-				}
-				List<String> artifactRefs = artifact.getRefs().stream().flatMap(r -> Stream.concat(Stream.of(r.getId()), r.getRefs().stream()) ).toList();
-
 				
-				assert subRefs.equals(artifactRefs) : format("Inconsistent reference index for %s:\nOriginal: %s\nCurrent:  %s", id, subRefs, artifactRefs);
 				
 				for (String refId : subRefs) {
 					

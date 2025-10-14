@@ -34,9 +34,11 @@ import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.core.ContextType;
 import org.eclipse.rcptt.core.model.IContext;
+import org.eclipse.rcptt.core.model.IQ7Element;
 import org.eclipse.rcptt.core.model.IQ7Element.HandleType;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.eclipse.rcptt.core.model.ITestCase;
+import org.eclipse.rcptt.core.model.ITestSuite;
 import org.eclipse.rcptt.core.model.IVerification;
 import org.eclipse.rcptt.core.model.ModelException;
 import org.eclipse.rcptt.core.model.Q7Status;
@@ -148,7 +150,15 @@ public final class Q7ArtifactLoader {
 		if (suites.length == 0) {
 			collector = new NamedElementCollector(HandleType.Context, HandleType.Verification, HandleType.TestCase);
 		} else {
-			collector = new TestSuiteElementCollector(Arrays.asList(suites), true);
+			collector = new TestSuiteElementCollector(Arrays.asList(suites), true) {
+			@Override
+			public boolean visit(IQ7Element element) {
+				if (!(element instanceof ITestSuite)) {
+					return !(element instanceof IQ7NamedElement);
+				}
+				return super.visit(element);
+			}	
+			};
 		}
 		ModelManager.getModelManager().getModel().accept(collector);
 		List<IQ7NamedElement> elements = collector.getElements();
