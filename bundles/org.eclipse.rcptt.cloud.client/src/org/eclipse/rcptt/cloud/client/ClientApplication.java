@@ -332,7 +332,7 @@ public class ClientApplication extends CommandLineApplication {
 		long time1 = System.currentTimeMillis();
 		int chunkBytes = multiplyExact(chunkSize, 1024 * 1024);
 		ByteArrayOutputStream bout = new ByteArrayOutputStream(addExact(chunkBytes, 1024 * 1024));
-		ZipOutputStream zout = null;
+		ZipOutputStream zout =  new ZipOutputStream(bout);
 		int chunk = 0;
 		System.out.println("Preparing artifacts for sending...");
 		int processed = 0;
@@ -341,7 +341,6 @@ public class ClientApplication extends CommandLineApplication {
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
 		for (final ArtifactHandle ref : missingResources) {
-			zout = new ZipOutputStream(bout);
 			processed++;
 			Q7Artifact artifact = getArtifact(ref);
 			String id = ref.id;
@@ -381,23 +380,23 @@ public class ClientApplication extends CommandLineApplication {
 						throw new RuntimeException(e);
 					}
 				});
-				zout = null;
 				bout.reset();
+				zout = new ZipOutputStream(bout);
 				chunk = 0;
 				ch++;
 			}
 		}
-		if (zout != null) {
-			zout.close();
-		}
+		zout.close();
 
 		waitFor(upload);
 		// Send last fragment
-		System.out.println("Sending last resources chunk (" + chunk
+		if (chunk > 0) {
+			System.out.println("Sending last resources chunk (" + chunk
 				+ " artifacts).");
-		URI uploadedRoot = api.uploadDataAsFile(suiteID,
-				bout.toByteArray(), "artifacts" + ch + ".zip", false);
-		addTestResource(uploadedRoot);
+			URI uploadedRoot = api.uploadDataAsFile(suiteID,
+					bout.toByteArray(), "artifacts" + ch + ".zip", false);
+			addTestResource(uploadedRoot);
+		}
 		zout = null;
 		bout = null;
 
