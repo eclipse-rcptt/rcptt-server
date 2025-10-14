@@ -94,12 +94,14 @@ public class EmfResourceUtil {
 
 	@SuppressWarnings("resource")
 	public static InputStream toInputStream(EObject obj) {
+		EObject copy = EcoreUtil.copy(obj);
+		obj = null; 
 		CompletableFuture<Void> completionFlag = new CompletableFuture<Void>();
 		PipedOutputStream sink = new PipedOutputStream();
 		FutureTask<Void> task = new FutureTask<>(() -> {
 			try {
 				Resource r = createResource();
-				r.getContents().add(EcoreUtil.copy(obj));
+				r.getContents().add(copy);
 				r.save(sink, null);
 			} catch (Throwable e) {
 				completionFlag.completeExceptionally(e);
