@@ -734,7 +734,10 @@ public class ClientApplication extends CommandLineApplication {
 		cmd.setSuiteId(suiteID);
 		cmd.setArtifactsPath(artifactsFile.toASCIIString());
 		try {
-			api.execute(cmd);
+			ExecutionResult result = api.execute(cmd, Q7ServerApi.DEFAULT_TIMEOUT * 8);
+			if (result.status.matches(IStatus.ERROR | IStatus.CANCEL)) {
+				throw new CoreException(result.status);
+			}
 		} catch (ConnectException e) {
 			throw new CoreException(Status.error("Server is unavilable", e));
 		}

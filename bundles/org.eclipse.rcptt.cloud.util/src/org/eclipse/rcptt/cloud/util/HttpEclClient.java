@@ -29,6 +29,7 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.BasicInternalEList;
 import org.eclipse.emf.ecore.util.InternalEList;
@@ -80,11 +81,12 @@ public class HttpEclClient {
 						.loadEObject());
 				InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
 						InternalEObject.class);
-				ein.loadEObjects(results);
-	
+				IStatus status2 = Status.OK_STATUS;
+				if (!status1.matches(IStatus.ERROR | IStatus.CANCEL)) { 
+					ein.loadEObjects(results);
+					status2 = statusConverter.fromEObject((ProcessStatus) results.remove(results.size() - 1));
+				}
 				EntityUtils.consume(responseEntity);
-				
-				IStatus status2 = statusConverter.fromEObject((ProcessStatus) results.remove(results.size() - 1));
 				
 				IStatus status = status1;
 				if (!status1.isOK() && !status2.isOK()) {
