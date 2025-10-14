@@ -94,16 +94,23 @@ public class EmfResourceUtil {
 
 	@SuppressWarnings("resource")
 	public static InputStream toInputStream(EObject obj) {
+		CompletableFuture<Void> completionFlag = new CompletableFuture<Void>();
 		PipedOutputStream sink = new PipedOutputStream();
 		FutureTask<Void> task = new FutureTask<>(() -> {
 			try {
 				Resource r = createResource();
 				r.getContents().add(EcoreUtil.copy(obj));
 				r.save(sink, null);
-				return null;
+			} catch (Throwable e) {
+				completionFlag.completeExceptionally(e);
 			} finally {
+				completionFlag.complete(null); // If completed after close(),  PipedInputStream.close() can't distinguish normal input exhaustion and early close().
 				sink.close();
 			}
+			return null;
+		});
+		completionFlag.whenComplete((e, r) -> {
+			task.cancel(true);
 		});
 		PipedInputStream result;
 		try {
@@ -112,8 +119,8 @@ public class EmfResourceUtil {
 				public void close() throws IOException {
 					super.close();
 					try {
-						task.cancel(true);
-						task.get();
+						task.cancel(true); // on early PipedInputStream close, free up resources
+						completionFlag.get(); // on normal completion check for writing errors
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 						throw new IOException(e);
@@ -129,7 +136,13 @@ public class EmfResourceUtil {
 			// Already connected error can not happen
 			throw new AssertionError(e);
 		}
-		CompletableFuture.runAsync(task);
+		CompletableFuture.runAsync(task).whenComplete((result2, error) -> {
+			if (error == null) {
+				completionFlag.complete(result2);
+			} else {
+				completionFlag.completeExceptionally(error);
+			}
+		});
 		return result;
 	}
 }

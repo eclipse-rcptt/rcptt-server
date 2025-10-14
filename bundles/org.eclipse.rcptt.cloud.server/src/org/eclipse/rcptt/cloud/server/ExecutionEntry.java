@@ -376,6 +376,7 @@ public final class ExecutionEntry {
 			return false;
 		}
 		repository.put(hash, new ByteArrayInputStream(bytes));
+		assert repository.contains(hash);
 		missingHashes.remove(hash);
 		return true;
 	}
