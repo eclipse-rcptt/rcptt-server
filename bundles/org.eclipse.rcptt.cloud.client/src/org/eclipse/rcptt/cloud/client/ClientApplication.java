@@ -281,11 +281,12 @@ public class ClientApplication extends CommandLineApplication {
 		}
 		this.loader = new Q7ArtifactLoader(skipTags);
 
-		ProjectUtil.importProjects(projectDirFiles, System.out);
-		new MigrateProjectsJob(workspace.getRoot())
-				.runSync();
-		
-		for (var p: ModelManager.getModelManager().getModel().getProjects()) {
+		workspace.run(monitor -> {
+			ProjectUtil.importProjects(projectDirFiles, System.out);
+			new MigrateProjectsJob(workspace.getRoot()).runSync();
+		}, workspace.getRoot(), IWorkspace.AVOID_UPDATE, null);
+
+		for (var p : ModelManager.getModelManager().getModel().getProjects()) {
 			checkProjectReferences(p.getProject());
 		}
 
