@@ -28,6 +28,8 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 
+import com.google.common.hash.HashCode;
+
 public final class Hash {
 	public static final byte[] hash(Path file) throws IOException {
 		try (ReadableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
@@ -54,7 +56,7 @@ public final class Hash {
 		}
 	}
 	
-	public static byte[] hash(EObject obj) {
+	public static HashCode hash(EObject obj) {
 		Resource r = new ECLBinaryResourceImpl();
 		r.getContents().add(EcoreUtil.copy(obj));
 		MessageDigest md = createDigest();
@@ -64,7 +66,7 @@ public final class Hash {
 			// shoudn't happen, in-memory operation
 			throw new RuntimeException(e);
 		}
-		return md.digest();
+		return HashCode.fromBytes(md.digest());
 	}
 
 	

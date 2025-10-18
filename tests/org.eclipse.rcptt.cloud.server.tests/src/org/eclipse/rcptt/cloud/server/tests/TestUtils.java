@@ -532,7 +532,7 @@ public class TestUtils {
 
 			Q7ArtifactRef ref = ModelFactory.eINSTANCE.createQ7ArtifactRef();
 			ref.setId(uid);
-			ref.setHash(Hash.hash(scenario));
+			ref.setHash(Hash.hash(scenario).asBytes());
 			ref.setKind(RefKind.SCENARIO);
 
 			refs.add(ref);
@@ -544,7 +544,7 @@ public class TestUtils {
 
 			testSuiteRef = ModelFactory.eINSTANCE.createQ7ArtifactRef();
 			testSuiteRef.setId(testSuiteName);
-			testSuiteRef.setHash(Hash.hash(suite));
+			testSuiteRef.setHash(Hash.hash(suite).asBytes());
 			testSuiteRef.setKind(RefKind.TEST_SUITE);
 		}
 

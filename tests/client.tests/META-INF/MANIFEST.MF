@@ -1,3 +1,4 @@
+Fragment-Host: org.eclipse.rcptt.cloud.client;bundle-version="2.2.0"
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.client.tests
@@ -13,6 +14,20 @@ Require-Bundle: org.eclipse.rcptt.cloud.client;bundle-version="2.7.0",
  org.eclipse.rcptt.core;bundle-version="2.7.0",
  org.eclipse.rcptt.verifications.log;bundle-version="2.7.0",
  org.eclipse.rcptt.ctx.super;bundle-version="2.7.0",
- org.eclipse.rcptt.ctx.group;bundle-version="2.7.0"
+ org.eclipse.rcptt.ctx.group;bundle-version="2.7.0",
+ org.eclipse.rcptt.cloud.common,
+ org.eclipse.rcptt.verifications.resources;bundle-version="2.7.1",
+ org.eclipse.rcptt.verifications.text;bundle-version="2.7.1",
+ org.eclipse.rcptt.verifications.time;bundle-version="2.7.1",
+ org.eclipse.rcptt.verifications.tree;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.capability;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.debug;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.filesystem;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.parameters;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.preferences;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.resources;bundle-version="2.7.1",
+ org.eclipse.rcptt.ctx.script;bundle-version="2.7.1",
+ org.eclipse.emf.ecore.xmi,
+ org.eclipse.emf.ecore
 Automatic-Module-Name: org.eclipse.rcptt.cloud.client.tests
 Bundle-RequiredExecutionEnvironment: JavaSE-21

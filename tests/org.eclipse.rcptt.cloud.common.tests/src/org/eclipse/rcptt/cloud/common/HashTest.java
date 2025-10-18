@@ -33,9 +33,9 @@ public class HashTest {
 	public void hashSimpleObject() {
 		final EclString eclString = CoreFactory.eINSTANCE.createEclString();
 		eclString.setValue("blah");
-		assertEquals("d9c876d7ff7e58b5c46460cbb506d6a8d5371770cca3519272827f94eca76360", HashCode.fromBytes(Hash.hash(eclString)).toString() );
+		assertEquals("d9c876d7ff7e58b5c46460cbb506d6a8d5371770cca3519272827f94eca76360", Hash.hash(eclString).toString() );
 		eclString.setValue("bleh");
-		assertEquals("0f8b942dfae6c92dc22197e577d7693d0802ff49d57bd50cb08c321a78ad82a3", HashCode.fromBytes(Hash.hash(eclString)).toString());
+		assertEquals("0f8b942dfae6c92dc22197e577d7693d0802ff49d57bd50cb08c321a78ad82a3", Hash.hash(eclString).toString());
 	}
 	
 	@SuppressWarnings("resource")
@@ -43,7 +43,7 @@ public class HashTest {
 	public void binaryStreamMatchesEObject() throws IOException {
 		final EclString eclString = CoreFactory.eINSTANCE.createEclString();
 		eclString.setValue("blah");
-		final String expected = HashCode.fromBytes(Hash.hash(eclString)).toString();
+		final String expected = Hash.hash(eclString).toString();
 		try (InputStream is = EmfResourceUtil.toInputStream(eclString);
 			DigestInputStream dis = new DigestInputStream(is, Hash.createDigest());
 			OutputStream os = OutputStream.nullOutputStream()) {

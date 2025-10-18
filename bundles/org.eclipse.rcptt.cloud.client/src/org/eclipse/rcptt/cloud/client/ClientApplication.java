@@ -70,7 +70,6 @@ import org.eclipse.rcptt.cloud.client.Q7ServerApi.UploadResult;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
 import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
-import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddAut;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
@@ -712,6 +711,14 @@ public class ClientApplication extends CommandLineApplication {
 				output.append("\n");
 			}
 			System.out.println(output);
+		}
+		try {
+			resourcesById.values().stream().parallel().forEach(CheckedExceptionWrapper.encode(h -> {h.getContent();}));
+		} catch (CheckedExceptionWrapper e) {
+			e.rethrow(CoreException.class);
+			e.rethrow(InvalidCommandLineArgException.class);
+			e.rethrowUnchecked();
+			throw e;
 		}
 	}
 

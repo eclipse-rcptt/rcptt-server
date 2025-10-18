@@ -85,7 +85,7 @@ public final class Q7ArtifactLoader {
 				this.kind = workingCopy.getElementType();
 				this.path = workingCopy.getPath().toPortableString();
 				assert EnumSet.of(HandleType.Context, HandleType.TestCase, HandleType.Verification).contains(kind);
-				this.hash = HashCode.fromBytes(Hash.hash(getContentInternal()));
+				this.hash = Hash.hash(getContentInternal());
 			} finally {
 				workingCopy.discardWorkingCopy();
 			}
@@ -93,14 +93,15 @@ public final class Q7ArtifactLoader {
 
 		public NamedElement getContent() throws ModelException {
 			NamedElement result = getContentInternal();
-			assert HashCode.fromBytes(Hash.hash(result)).equals(hash) : result;
-			return result;		
+			assert Hash.hash(result).equals(hash) : result;
+			return result;
 		}
 
-		private NamedElement getContentInternal() throws ModelException {
+		NamedElement getContentInternal() throws ModelException {
 			NamedElement result;
 			IQ7NamedElement workingCopy = element
 					.getIndexingWorkingCopy(new NullProgressMonitor());
+			assert workingCopy.exists();
 			try {
 				result = patch(EcoreUtil.copy(workingCopy.getNamedElement()));
 			} finally {
@@ -113,6 +114,8 @@ public final class Q7ArtifactLoader {
 		private NamedElement patch(NamedElement namedElement) throws ModelException {
 			assert ! (namedElement instanceof SuperContext);
 			assert ! (namedElement instanceof GroupContext);
+			assert name.contains(namedElement.getName()) : name +" should contain " + namedElement.getName();
+			assert id.contains(namedElement.getId()) : id +" should contain " + namedElement.getId();
 			namedElement.setName(name);
 			if (namedElement instanceof Scenario scenario) {
 				scenario.setId(id);

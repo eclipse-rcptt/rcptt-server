@@ -12,7 +12,6 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.common.ecl.impl.internal;
 
-import com.google.common.hash.HashCode;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -92,7 +91,7 @@ public class AddTestResourceService implements ICommandService {
 						} catch (Exception e) {
 							StringBuilder message = new StringBuilder();
 							message.append("Failed to store artifact ").append(artifact.getId())
-							.append(", hash: ").append(HashCode.fromBytes(Hash.hash(artifact.getContent())))
+							.append(", hash: ").append(Hash.hash(artifact.getContent()))
 							.append(", from entry ").append(entry.getName())
 							.append("\n");
 							final String dump = artifact.getContent().toString();
