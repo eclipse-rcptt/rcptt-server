@@ -150,6 +150,7 @@ public class Q7ServerApi {
 	public UploadResult uploadHashedFile(java.nio.file.Path file) throws CoreException {
 		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
 				DEFAULT_TIMEOUT);
+		URI uri = null;
 		try {
 			MessageDigest md = MessageDigest.getInstance(HASH_TYPE);
 			try (DigestInputStream is = new DigestInputStream(Files.newInputStream(file), md);
@@ -158,7 +159,7 @@ public class Q7ServerApi {
 			}
 			byte[] byteHash = md.digest();
 			String hash = HashCode.fromBytes(byteHash).toString();
-			URI uri = URI.create("api/cache/" + hash + "/" + file.getFileName().toString());
+			uri = URI.create("api/cache/" + hash + "/" + file.getFileName().toString());
 			
 			HttpPut request = new HttpPut(url.resolve(uri));
 			request.setEntity(new FileEntity(file.toFile(), ContentType.APPLICATION_OCTET_STREAM));
@@ -172,7 +173,7 @@ public class Q7ServerApi {
 				throw new CoreException(error("Failed to upload " + file + ". HTTP status code: " + status));
 			}
 		} catch (Exception e) {
-			throw new CoreException(error("Failed to upload " + file, e));
+			throw new CoreException(error("Failed to upload " + file + " to " + uri,  e));
 		}
 	}
 	
