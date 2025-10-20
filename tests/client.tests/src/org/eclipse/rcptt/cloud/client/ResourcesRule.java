@@ -40,6 +40,7 @@ import org.junit.rules.ExternalResource;
 import org.osgi.framework.Bundle;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Iterators;
 
 public final class ResourcesRule extends ExternalResource {
 	public final IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -56,9 +57,9 @@ public final class ResourcesRule extends ExternalResource {
 	
 	public void copyProject(Bundle bundle, String path) throws CoreException, IOException {
 		if (path.startsWith("/")) {
-			throw new IllegalArgumentException("Path shoulfd be realtive: " + path);
+			throw new IllegalArgumentException("Path should be realtive: " + path);
 		}
-		URL descriptionUrl = bundle.getEntry(path + "/.project");
+		URL descriptionUrl = Iterators.getOnlyElement(bundle.findEntries(path + "/", ".project", true).asIterator());
 		requireNonNull(descriptionUrl, "Failed to resolve bundle resource " + path + "/.project");
 		IProject project;
 		IProjectDescription description;
