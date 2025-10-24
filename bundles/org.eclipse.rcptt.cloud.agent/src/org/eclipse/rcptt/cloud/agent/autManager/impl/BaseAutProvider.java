@@ -181,6 +181,8 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 
 			start = System.currentTimeMillis();
 			
+			autBaseDir.mkdirs();
+			
 			try {
 				unarchive(autFile, autBaseDir);
 			} catch (InterruptedException e) {
