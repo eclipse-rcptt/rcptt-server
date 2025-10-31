@@ -73,7 +73,12 @@ public final class WeakValueRepository<K, V> {
 	public Entry<V> putIfAbsent(K key, V input) {
 		checkClosed();
 		try {
-			return computeCached(key, k -> repository.putIfAbsent(k, input));
+			try {
+				return computeCached(key, k -> repository.putIfAbsent(k, input));
+			} catch (Throwable e) {
+				repository.remove(key);
+				throw e;
+			}
 		} catch (ExecutionException e) {
 			throw new CheckedExceptionWrapper(e);
 		}
