@@ -125,8 +125,9 @@ public class WeakValueRepositoryTests {
 	
 	@Test
 	public void doNotRemoveAnythingAfterDisposal() {
-		WeakValueRepository<String, Object> subject = new WeakValueRepository<String, Object>(repository, 3);
+		WeakValueRepository<String, Object> subject = new WeakValueRepository<String, Object>(repository, G);
 		noise(subject);
+		assertEquals(3, repository.oldestKeys().count());
 		subject.close();
 		subject = null;
 		try (var c = gc()) {
