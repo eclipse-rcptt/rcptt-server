@@ -12,7 +12,7 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal;
 
-import static java.lang.Math.min;
+import static java.lang.Math.max;
 import static java.lang.Math.toIntExact;
 import static org.eclipse.core.runtime.Platform.getLog;
 
@@ -52,9 +52,11 @@ public final class WeakValueRepository<K, V> {
 		super();
 		this.repository = repository;
 		weakMap = new ConcurrentWeakValueMap<>(repository::remove);
+		// Weighter can not store sizes larger than 2G due to int return value, so we downscale them
+		long scale = 1024;
 		cache = CacheBuilder.newBuilder()
-			.<K, Entry<V>>weigher((ignored, entry) -> toIntExact(min(Integer.MAX_VALUE, entry.size())))
-			.maximumWeight(maxSize)
+			.<K, Entry<V>>weigher((ignored, entry) -> clampWeight(entry.size()/scale))
+			.maximumWeight(max(1, maxSize/scale))
 			.build();
 		// This will hash the whole cache causing slow startup
 		CompletableFuture.runAsync(() -> {
@@ -104,6 +106,17 @@ public final class WeakValueRepository<K, V> {
 		return cache.get(key, () -> {
 			return weakMap.computeIfAbsent(key, mapper);
 		});
+	}
+
+	private static int clampWeight(long weight) {
+		if (weight > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException("Entry is too large");
+		}
+		if (weight < 0) {
+			throw new IllegalArgumentException("Entry can not have negative size");
+		}
+		// Cache would store infinite count of entries with zero weights, do not allow them
+		return toIntExact(max(1, weight));
 	}
 
 	private static final ILog LOG = getLog(WeakValueRepository.class);
