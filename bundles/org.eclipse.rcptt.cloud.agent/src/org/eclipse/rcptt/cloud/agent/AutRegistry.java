@@ -40,7 +40,6 @@ import org.eclipse.rcptt.cloud.util.IOUtil.HttpsSrc;
 import org.eclipse.rcptt.cloud.util.IOUtil.IDownloadMonitor;
 import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 import org.eclipse.rcptt.internal.launching.aut.BaseAutManager;
-import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformInitializer.Q7Info;
 import org.eclipse.rcptt.launching.Aut;
 import org.eclipse.rcptt.launching.AutLaunch;
@@ -157,7 +156,7 @@ public class AutRegistry {
 					if (!aut.isIgnoreOtherInjections()) {
 						injectionConfiguration = InjectionUtil.merge(injectionConfiguration, createInjectionConfiguration(new NullProgressMonitor(), q7Info, versions));
 					} else {
-						injectionConfiguration = InjectionUtil.merge(injectionConfiguration, Q7TargetPlatformInitializer.getAspectJInjection(q7Info, progressMonitor));
+						injectionConfiguration = InjectionUtil.merge(injectionConfiguration, getAspectJInjection(q7Info));
 					}
 					
 					if (aut.getInjection() != null) {
@@ -319,6 +318,14 @@ public class AutRegistry {
 				}
 			}
 		}
+	}
+	
+	private static InjectionConfiguration getAspectJInjection(Q7Info q7Info) throws CoreException {
+		InjectionConfiguration injectionConfiguration = InjectionFactory.eINSTANCE.createInjectionConfiguration();
+		UpdateSite aspectsSite = InjectionFactory.eINSTANCE.createUpdateSite();
+		aspectsSite.setUri(q7Info.aspectj.toString());
+		injectionConfiguration.getEntries().add(aspectsSite);
+		return injectionConfiguration;
 	}
 
 }

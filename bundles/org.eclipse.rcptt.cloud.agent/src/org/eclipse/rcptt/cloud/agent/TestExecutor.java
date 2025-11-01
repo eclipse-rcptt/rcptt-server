@@ -825,7 +825,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			}
 			Optional<IVMInstall> result = suitableVm(environment);
 			IVMInstall install = result.orElseThrow(() -> new CoreException(Status.error("Can't find an installed JVM strictly compatible with execution environment " + ee)));
-			VmInstallMetaData metadata = VmInstallMetaData.adapt(install).orElseThrow(() -> new CoreException(Status.error("Can't detect architecture of " + install.getInstallLocation())));
+			VmInstallMetaData metadata = VmInstallMetaData.adapt(install).findFirst().orElseThrow(() -> new CoreException(Status.error("Can't detect architecture of " + install.getInstallLocation())));
 			return Optional.of(metadata);
 		}
 
@@ -847,7 +847,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 		}
 		System.out.println("Trying to use VM from application's ini file: "
 				+ vmFromIni);
-		return Optional.of(VmInstallMetaData.register(vmFromIni));
+		return VmInstallMetaData.register(vmFromIni).findFirst();
 	}
 
 }

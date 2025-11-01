@@ -213,9 +213,17 @@ public class AutRegistryTests {
 		}
 
 		@Override
-		public Set<String> getIncompatibleExecutionEnvironments() {
-			return Collections.emptySet();
+		public String findCompatibilityProblems(Set<String> providedExecutionEnvironemnts) {
+			// TODO Auto-generated method stub
+			return null;
 		}
+
+		@Override
+		public String explainJvmRequirements() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
 	}
 
 	private static final File baseLocation = new File(new File(Activator.getContext().getStateLocation().toOSString()), "auts");
