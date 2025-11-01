@@ -50,6 +50,7 @@ import org.eclipse.debug.core.model.IFlushableStreamMonitor;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IStreamMonitor;
 import org.eclipse.debug.core.model.IStreamsProxy;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
@@ -95,7 +96,7 @@ import com.google.common.io.Closer;
 
 @SuppressWarnings("restriction")
 public class TestExecutor implements ITestExecutor.Closeable {
-	private AutInfo aut;
+	private final AutInfo aut;
 	private AutRegistry auts = AgentPlugin.getDefault().getAutRegistry();
 	private AutFileUtil autFiles = AgentPlugin.getDefault().getAutFiles();
 	private IQ7Monitor logMonitor;
@@ -103,7 +104,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 
 
 	public TestExecutor(AutInfo aut) throws CoreException {
-		this.aut = aut;
+		this.aut = EcoreUtil.copy(aut);
 		this.logMonitor = Q7LoggingManager.get("test-executor");
 		logMonitor.log("############## text-executor-session:" + aut.getId()
 				+ " uri:" + aut.getUri(), null);

@@ -25,6 +25,7 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
 import org.eclipse.rcptt.cloud.server.ExecutionEntry;
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.EclServerImplPlugin;
@@ -39,7 +40,8 @@ public class TerminateSessionHandle extends Handler.Abstract {
 		int cancel = 0;
 		if (queryString != null) {
 
-			ExecutionEntry suiteHandle = ContextEscape.getExecutionRegistry(getServer()).getSuiteHandle(queryString);
+			final ExecutionRegistry executionRegistry = ContextEscape.getExecutionRegistry(getServer());
+			ExecutionEntry suiteHandle = executionRegistry.getSuiteHandle(queryString);
 			if (suiteHandle != null) {
 				IExecutionProfiler profiler = (IExecutionProfiler) suiteHandle
 						.getProfiler();
@@ -47,6 +49,8 @@ public class TerminateSessionHandle extends Handler.Abstract {
 					cancel = profiler.testsLeftCount();
 					profiler.cancel(new Status(IStatus.CANCEL, PLUGIN_ID, "Cancelled on web client request from "
 							+ Request.getRemoteAddr(request)));
+				} else {
+					executionRegistry.removeSuiteHandle(suiteHandle.getSuiteId());
 				}
 				EclServerImplPlugin
 						.getDefault()

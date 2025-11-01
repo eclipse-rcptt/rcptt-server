@@ -95,6 +95,7 @@ public class ExecutionRegistry {
 	
 	public synchronized ExecutionEntry beginNewSuite(ISMHandle<SuiteStats> suite) throws CoreException {
 		hooks.forEach(Runnable::run);
+		cleanup();
 		final ISMHandleStore<Execution> executionStore = getExecutions(suite);
 		ISMHandle<Execution> handle = suite
 				.commit(suiteStats -> {
@@ -239,6 +240,11 @@ public class ExecutionRegistry {
 		return new String[] {executionId.substring(0, pos), executionId.substring(pos+1, executionId.length())};
 	}
 	
+	public List<ExecutionEntry> getEntries() {
+		cleanup();
+		return List.copyOf(runningSuites.values());
+	}
+
 	private final class EntryRepository implements ExecutionEntry.Repository {
 		private final Map<HashCode, Repository.Entry> capturedReferences = Collections.synchronizedMap(new HashMap<>());
 		private final Set<HashCode> cacheMisses = Collections.synchronizedSet(new HashSet<>()); 
@@ -306,6 +312,11 @@ public class ExecutionRegistry {
 		public int compareTo(ExecutionStart o) {
 			return Long.compare(start(), o.start());
 		}
+	}
+
+
+	private void cleanup() {
+		runningSuites.values().removeIf(not(ExecutionEntry::isActive));
 	}
 
 

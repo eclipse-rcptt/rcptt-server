@@ -13,12 +13,15 @@
 package org.eclipse.rcptt.cloud.server.app.internal.http.handlers;
 
 import java.io.IOException;
-
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-
+import org.eclipse.rcptt.cloud.server.ExecutionEntry;
+import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.EclServerImplPlugin;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.flow.TaskQueue;
@@ -53,8 +56,9 @@ public class IndexHandler extends Q7AbstractHandler {
 		buffer.append(th("Actions"));
 		java.util.Collection<TaskSuiteDescriptor> suites = getTaskQueue()
 				.getSuiteDescriptors();
+		Set<String> listed = new HashSet<>();
 		for (TaskSuiteDescriptor suite : suites) {
-
+			listed.add(suite.getSuiteId());
 			String terminateURI = TerminateSessionHandle.URI + "?" + suite.getSuiteId();
 			buffer.append("<tr>")
 					.append(td(suite.getSuiteId()))
@@ -66,6 +70,23 @@ public class IndexHandler extends Q7AbstractHandler {
 					.append(td(" <a href=\"" + terminateURI
 							+ "\">Terminate</a>")).append("</tr>");
 		}
+		final ExecutionRegistry executionRegistry = ContextEscape.getExecutionRegistry(getServer());
+		for (ExecutionEntry suite : executionRegistry.getEntries()) {
+			if (listed.contains(suite.getSuiteId())) {
+				continue;
+			}
+			String terminateURI = TerminateSessionHandle.URI + "?" + suite.getSuiteId();
+			buffer.append("<tr>")
+					.append(td(suite.getSuiteId()))
+					.append(td(""))
+					.append(td(""))
+					.append(td(""))
+					.append(td(""))
+					.append(td(""))
+					.append(td(" <a href=\"" + terminateURI
+							+ "\">Terminate</a>")).append("</tr>");
+		}
+
 		buffer.append("</table></div></div>");
 
 		writeMenuAndContent(response, declaredContent, buffer);

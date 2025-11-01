@@ -29,13 +29,16 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 import org.eclipse.rcptt.core.ContextType;
 import org.eclipse.rcptt.core.model.IContext;
+import org.eclipse.rcptt.core.model.IQ7Element;
 import org.eclipse.rcptt.core.model.IQ7Element.HandleType;
 import org.eclipse.rcptt.core.model.IQ7NamedElement;
 import org.eclipse.rcptt.core.model.ITestCase;
+import org.eclipse.rcptt.core.model.ITestSuite;
 import org.eclipse.rcptt.core.model.IVerification;
 import org.eclipse.rcptt.core.model.ModelException;
 import org.eclipse.rcptt.core.model.Q7Status;
@@ -82,30 +85,37 @@ public final class Q7ArtifactLoader {
 				this.kind = workingCopy.getElementType();
 				this.path = workingCopy.getPath().toPortableString();
 				assert EnumSet.of(HandleType.Context, HandleType.TestCase, HandleType.Verification).contains(kind);
-				this.hash = HashCode.fromBytes(Hash.hash(patch(workingCopy.getNamedElement())));
+				this.hash = Hash.hash(getContentInternal());
 			} finally {
 				workingCopy.discardWorkingCopy();
 			}
 		}
 
 		public NamedElement getContent() throws ModelException {
+			NamedElement result = getContentInternal();
+			assert Hash.hash(result).equals(hash) : result;
+			return result;
+		}
+
+		NamedElement getContentInternal() throws ModelException {
 			NamedElement result;
 			IQ7NamedElement workingCopy = element
 					.getIndexingWorkingCopy(new NullProgressMonitor());
+			assert workingCopy.exists();
 			try {
-				// copy the object before closing the working copy?
-				result = patch(workingCopy.getNamedElement());
+				result = patch(EcoreUtil.copy(workingCopy.getNamedElement()));
 			} finally {
 				// This might corrupt the result with some unloading procedure. Assert below may help to debug then. 
 				workingCopy.discardWorkingCopy();
 			}
-			assert HashCode.fromBytes(Hash.hash(result)).equals(hash);
-			return result;		
+			return result;
 		}
 		
 		private NamedElement patch(NamedElement namedElement) throws ModelException {
 			assert ! (namedElement instanceof SuperContext);
 			assert ! (namedElement instanceof GroupContext);
+			assert name.contains(namedElement.getName()) : name +" should contain " + namedElement.getName();
+			assert id.contains(namedElement.getId()) : id +" should contain " + namedElement.getId();
 			namedElement.setName(name);
 			if (namedElement instanceof Scenario scenario) {
 				scenario.setId(id);
@@ -143,7 +153,15 @@ public final class Q7ArtifactLoader {
 		if (suites.length == 0) {
 			collector = new NamedElementCollector(HandleType.Context, HandleType.Verification, HandleType.TestCase);
 		} else {
-			collector = new TestSuiteElementCollector(Arrays.asList(suites), true);
+			collector = new TestSuiteElementCollector(Arrays.asList(suites), true) {
+			@Override
+			public boolean visit(IQ7Element element) {
+				if (!(element instanceof ITestSuite)) {
+					return !(element instanceof IQ7NamedElement);
+				}
+				return super.visit(element);
+			}	
+			};
 		}
 		ModelManager.getModelManager().getModel().accept(collector);
 		List<IQ7NamedElement> elements = collector.getElements();

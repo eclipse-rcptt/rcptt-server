@@ -14,7 +14,9 @@ package org.eclipse.rcptt.cloud.server.app.internal;
 
 import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Entry;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository.Repository;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.common.io.Closer;
@@ -45,6 +48,7 @@ public class WeakValueRepositoryTests {
 	private final Repository<String, Object> repository = new RepositoryMock();
 	private static final Object VALUE = new Object();
 	private static final Object BAD_VALUE = new Object();
+	private static final int G = 1024 * 1024 * 1024;
 	private final Closer closer = Closer.create();
 	
 	@After
@@ -121,8 +125,9 @@ public class WeakValueRepositoryTests {
 	
 	@Test
 	public void doNotRemoveAnythingAfterDisposal() {
-		WeakValueRepository<String, Object> subject = new WeakValueRepository<String, Object>(repository, 3);
+		WeakValueRepository<String, Object> subject = new WeakValueRepository<String, Object>(repository, G);
 		noise(subject);
+		assertEquals(3, repository.oldestKeys().count());
 		subject.close();
 		subject = null;
 		try (var c = gc()) {
@@ -168,7 +173,15 @@ public class WeakValueRepositoryTests {
 		}
 	}
 	
-	
+	@Test
+	public void doNotStoreTooLargeEntries() {
+		WeakValueRepository<String, Object> subject = new WeakValueRepository<String, Object>(repository, 3);
+		long VERY_LARGE = 4L * 1024 * G;
+		Assert.assertThrows(IllegalArgumentException.class, () -> {
+			subject.putIfAbsent("x", VERY_LARGE);
+		});
+		assertFalse(repository.get("x").isPresent());
+	}
 
 	private void noise(WeakValueRepository<String, Object> subject) {
 		subject.putIfAbsent("1", BAD_VALUE);
@@ -188,11 +201,11 @@ public class WeakValueRepositoryTests {
 		long stop = currentTimeMillis() + 1000;
 		while (currentTimeMillis() < stop) {
 			if (condition.getAsBoolean()) {
-				break;
+				return;
 			}
 			Thread.yield();
 		}
-		assertTrue(condition.getAsBoolean());
+		fail();
 	}
 
 	private static class RepositoryMock implements Repository<String, Object> {
@@ -235,6 +248,10 @@ public class WeakValueRepositoryTests {
 
 			@Override
 			public long size() {
+				Object value = delegate.getOrDefault(key, 1L);
+				if (value instanceof Long l) {
+					return l;
+				}
 				return 1;
 			}
 		}

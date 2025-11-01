@@ -107,6 +107,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.hash.HashCode;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
 
@@ -728,7 +729,7 @@ public class ExecutionProfiler implements IExecutionProfiler {
 
 				Set<Q7ArtifactRef> unresolved = handle.getUnresolvedReferences();
 				if (!unresolved.isEmpty()) {
-					throw new IllegalStateException("Following artifacts were not uploaded: " + unresolved.stream().map(Q7ArtifactRef::getId).toList());
+					throw new IllegalStateException("Following artifacts were not uploaded: " + unresolved.stream().map(ref -> ref.getId() + " ("+HashCode.fromBytes(ref.getHash())+")").toList());
 				}
 						
 				createSuites();

@@ -85,7 +85,7 @@ public class P2MirrorTool {
 		List<IInstallableUnit> unitsToInstall = new ArrayList<IInstallableUnit>();
 
 		// Query for all entries and then choose required.
-		IQuery<IInstallableUnit> finalQuery = P2Utils.createQuery(site);
+		IQuery<IInstallableUnit> finalQuery = P2Utils.createQuery(site.isAllUnits() ? Set.of() : site.getUnits());
 
 		if (logMonitor != null) {
 			logMonitor.log("Query for required features");

@@ -12,16 +12,19 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal;
 
-import static java.lang.Math.min;
+import static java.lang.Math.max;
 import static java.lang.Math.toIntExact;
+import static org.eclipse.core.runtime.Platform.getLog;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.rcptt.cloud.util.CheckedExceptionWrapper;
 
 import com.google.common.cache.Cache;
@@ -49,20 +52,33 @@ public final class WeakValueRepository<K, V> {
 		super();
 		this.repository = repository;
 		weakMap = new ConcurrentWeakValueMap<>(repository::remove);
+		// Weighter can not store sizes larger than 2G due to int return value, so we downscale them
+		long scale = 1024;
 		cache = CacheBuilder.newBuilder()
-				.<K, Entry<V>>weigher((ignored, entry) -> toIntExact(min(Integer.MAX_VALUE, entry.size())))
-				.maximumWeight(maxSize)
-				.build();
-		try (Stream<K> keys = repository.oldestKeys()) {
-			// This will hash the whole cache causing slow startup 
-			keys.parallel().forEachOrdered(this::get);
-		}
+			.<K, Entry<V>>weigher((ignored, entry) -> clampWeight(entry.size()/scale))
+			.maximumWeight(max(1, maxSize/scale))
+			.build();
+		// This will hash the whole cache causing slow startup
+		CompletableFuture.runAsync(() -> {
+			try {
+				try (Stream<K> keys = repository.oldestKeys()) {
+					keys.takeWhile(ignored -> !closed.get()).forEachOrdered(this::get);
+				}
+			} catch (Exception e) {
+				LOG.error("Failed to index offline artifact storage", e);
+			}
+		});
 	}
 
 	public Entry<V> putIfAbsent(K key, V input) {
 		checkClosed();
 		try {
-			return computeCached(key, k -> repository.putIfAbsent(k, input));
+			try {
+				return computeCached(key, k -> repository.putIfAbsent(k, input));
+			} catch (Throwable e) {
+				repository.remove(key);
+				throw e;
+			}
 		} catch (ExecutionException e) {
 			throw new CheckedExceptionWrapper(e);
 		}
@@ -97,6 +113,18 @@ public final class WeakValueRepository<K, V> {
 		});
 	}
 
+	private static int clampWeight(long weight) {
+		if (weight > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException("Entry is too large");
+		}
+		if (weight < 0) {
+			throw new IllegalArgumentException("Entry can not have negative size");
+		}
+		// Cache would store infinite count of entries with zero weights, do not allow them
+		return toIntExact(max(1, weight));
+	}
+
+	private static final ILog LOG = getLog(WeakValueRepository.class);
 	private final ConcurrentWeakValueMap<K, Entry<V>> weakMap;
 	private final Repository<K, V> repository;
 	private final Cache<K, Entry<V>> cache;

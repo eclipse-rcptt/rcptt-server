@@ -70,7 +70,6 @@ import org.eclipse.rcptt.cloud.client.Q7ServerApi.UploadResult;
 import org.eclipse.rcptt.cloud.commandline.Arg;
 import org.eclipse.rcptt.cloud.commandline.CommandLineApplication;
 import org.eclipse.rcptt.cloud.commandline.InvalidCommandLineArgException;
-import org.eclipse.rcptt.cloud.common.Hash;
 import org.eclipse.rcptt.cloud.common.ReportUtil;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddAut;
 import org.eclipse.rcptt.cloud.common.commonCommands.AddTestResource;
@@ -281,11 +280,12 @@ public class ClientApplication extends CommandLineApplication {
 		}
 		this.loader = new Q7ArtifactLoader(skipTags);
 
-		ProjectUtil.importProjects(projectDirFiles, System.out);
-		new MigrateProjectsJob(workspace.getRoot())
-				.runSync();
-		
-		for (var p: ModelManager.getModelManager().getModel().getProjects()) {
+		workspace.run(monitor -> {
+			ProjectUtil.importProjects(projectDirFiles, System.out);
+			new MigrateProjectsJob(workspace.getRoot()).runSync();
+		}, workspace.getRoot(), IWorkspace.AVOID_UPDATE, null);
+
+		for (var p : ModelManager.getModelManager().getModel().getProjects()) {
 			checkProjectReferences(p.getProject());
 		}
 
@@ -332,7 +332,7 @@ public class ClientApplication extends CommandLineApplication {
 		long time1 = System.currentTimeMillis();
 		int chunkBytes = multiplyExact(chunkSize, 1024 * 1024);
 		ByteArrayOutputStream bout = new ByteArrayOutputStream(addExact(chunkBytes, 1024 * 1024));
-		ZipOutputStream zout = null;
+		ZipOutputStream zout =  new ZipOutputStream(bout);
 		int chunk = 0;
 		System.out.println("Preparing artifacts for sending...");
 		int processed = 0;
@@ -341,7 +341,6 @@ public class ClientApplication extends CommandLineApplication {
 		int ch = 0;
 		CompletableFuture<Void> upload = null;
 		for (final ArtifactHandle ref : missingResources) {
-			zout = new ZipOutputStream(bout);
 			processed++;
 			Q7Artifact artifact = getArtifact(ref);
 			String id = ref.id;
@@ -349,7 +348,7 @@ public class ClientApplication extends CommandLineApplication {
 				throw new AssertionError("Requested: " + id + ", received: " + artifact.getId());
 			}
 			
-			System.out.printf("Compressing resource %s, %s, contexts: %s, verifications: %s (%d of %d)\n", ref.path, id, Joiner.on("; ").join(ref.contexts),Joiner.on("; ").join(ref.verifications),  processed, total);
+			System.out.printf("Compressing resource %s, (%s, %s), contexts: %s, verifications: %s (%d of %d)\n", ref.path, id, ref.hash, Joiner.on("; ").join(ref.contexts),Joiner.on("; ").join(ref.verifications),  processed, total);
 
 			ECLBinaryResourceImpl r = new ECLBinaryResourceImpl();
 			r.getContents().add(EcoreUtil.copy(artifact));
@@ -367,9 +366,9 @@ public class ClientApplication extends CommandLineApplication {
 				byte[] sending = bout.toByteArray();
 				System.out.println("");
 				logInfo(String
-						.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d from %d artifacts.",
+						.format("Sending %dMB resources chunk (%d artifacts). Processed resources %d of %d artifacts.",
 								Integer.valueOf(sending.length / (1024 * 1024)), Integer.valueOf(chunk), Integer.valueOf(index),
-								Integer.valueOf(resourcesById.size())));
+								Integer.valueOf(missingResources.size())));
 				String chunkName =  "artifacts" + ch + ".zip";
 				upload = CompletableFuture.runAsync(() -> {
 					try {
@@ -381,23 +380,23 @@ public class ClientApplication extends CommandLineApplication {
 						throw new RuntimeException(e);
 					}
 				});
-				zout = null;
 				bout.reset();
+				zout = new ZipOutputStream(bout);
 				chunk = 0;
 				ch++;
 			}
 		}
-		if (zout != null) {
-			zout.close();
-		}
+		zout.close();
 
 		waitFor(upload);
 		// Send last fragment
-		System.out.println("Sending last resources chunk (" + chunk
+		if (chunk > 0) {
+			System.out.println("Sending last resources chunk (" + chunk
 				+ " artifacts).");
-		URI uploadedRoot = api.uploadDataAsFile(suiteID,
-				bout.toByteArray(), "artifacts" + ch + ".zip", false);
-		addTestResource(uploadedRoot);
+			URI uploadedRoot = api.uploadDataAsFile(suiteID,
+					bout.toByteArray(), "artifacts" + ch + ".zip", false);
+			addTestResource(uploadedRoot);
+		}
 		zout = null;
 		bout = null;
 
@@ -679,10 +678,8 @@ public class ClientApplication extends CommandLineApplication {
 					continue;
 				}
 				
-				List<String> subRefs = Stream.concat(ref.verifications.stream(), ref.contexts.stream()).toList();
-				List<String> artifactRefs = getArtifact(ref).getRefs().stream().flatMap(r -> Stream.concat(Stream.of(r.getId()), r.getRefs().stream()) ).toList();
+				List<String> subRefs = Stream.concat(ref.contexts.stream(), ref.verifications.stream()).toList();
 				
-				assert subRefs.equals(artifactRefs) : format("Inconsistent reference index for %s:\nOriginal: %s\nCurrent:  %s", id, subRefs, artifactRefs);
 				
 				for (String refId : subRefs) {
 					
@@ -715,6 +712,14 @@ public class ClientApplication extends CommandLineApplication {
 			}
 			System.out.println(output);
 		}
+		try {
+			resourcesById.values().stream().parallel().forEach(CheckedExceptionWrapper.encode(h -> {h.getContent();}));
+		} catch (CheckedExceptionWrapper e) {
+			e.rethrow(CoreException.class);
+			e.rethrow(InvalidCommandLineArgException.class);
+			e.rethrowUnchecked();
+			throw e;
+		}
 	}
 
 	private Q7Artifact getArtifact(ArtifactHandle ref) throws CoreException {
@@ -723,7 +728,6 @@ public class ClientApplication extends CommandLineApplication {
 		result.setId(ref.id);
 		result.getRefs().addAll(ref.contexts.stream().map(this::toContextRef).toList());
 		result.getRefs().addAll(ref.verifications.stream().map(this::toVerificationRef).toList());
-		assert Arrays.equals(Hash.hash(result.getContent()), ref.hash.asBytes());
 		return result;
 	}
 
@@ -734,7 +738,10 @@ public class ClientApplication extends CommandLineApplication {
 		cmd.setSuiteId(suiteID);
 		cmd.setArtifactsPath(artifactsFile.toASCIIString());
 		try {
-			api.execute(cmd);
+			ExecutionResult result = api.execute(cmd, Q7ServerApi.DEFAULT_TIMEOUT * 8);
+			if (result.status.matches(IStatus.ERROR | IStatus.CANCEL)) {
+				throw new CoreException(result.status);
+			}
 		} catch (ConnectException e) {
 			throw new CoreException(Status.error("Server is unavilable", e));
 		}
@@ -1304,6 +1311,8 @@ public class ClientApplication extends CommandLineApplication {
 		if (context == null) {
 			throw new IllegalArgumentException("Context wih ID " + id + " is not found");
 		}
+		assert context.contexts.isEmpty();
+		assert context.verifications.isEmpty();
 		if (context.kind != HandleType.Context) {
 			throw new IllegalArgumentException("Object wih ID " + id + " is not a context");
 		}
@@ -1319,6 +1328,8 @@ public class ClientApplication extends CommandLineApplication {
 		if (verification == null) {
 			throw new IllegalArgumentException("Verification wih ID " + id + " is not found");
 		}
+		assert verification.contexts.isEmpty();
+		assert verification.verifications.isEmpty();
 		if (verification.kind != HandleType.Verification) {
 			throw new IllegalArgumentException("Object wih ID " + id + " is not a verification");
 		}

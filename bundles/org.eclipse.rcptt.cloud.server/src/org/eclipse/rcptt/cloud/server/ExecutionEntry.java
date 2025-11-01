@@ -89,8 +89,9 @@ public final class ExecutionEntry {
 	public static final String ERROR_MONITOR = "errors";
 	private Map<ExecutionEntry.MonitorMetaInfo, IQ7Monitor> monitors = Collections.synchronizedMap(new HashMap<>());
 	private final String suiteId;
-	public final Instant created = Instant.now();
+	public final Instant created = now();
 	private final ISMHandle<Execution> handle;
+	private Instant lastActivity = now();
 
 	private Object profiler;
 	private final PrepareTaskQueue pendingQueue = new PrepareTaskQueue();
@@ -178,6 +179,13 @@ public final class ExecutionEntry {
 	public String getSuiteId() {
 		return suiteId + "-" + handle.getFileName();
 	}
+	
+	public boolean isActive() {
+		if (getProfiler() != null || lastActivity.plus(Duration.ofHours(2)).isAfter(now())) {
+			return true;
+		}
+		return false;
+	}
 
 	public static File getArtifactByName(ISMHandle<Execution> handle,
 			final String fileName) {
@@ -227,9 +235,11 @@ public final class ExecutionEntry {
 	}
 	
 	public AutInfo addAutForDownload(final AutInfo info, Function<File, URI> fileToServerUri) throws CoreException {
+		markActive();
 		final IQ7Monitor downloadMonitor = getMonitor(DOWNLOAD_MONITOR);
 		try {
 			downloadAut(info, fileToServerUri, downloadMonitor);
+			markActive();
 
 			InjectionConfiguration injection = info.getInjection();
 			// Process update sites
@@ -253,6 +263,7 @@ public final class ExecutionEntry {
 	}
 
 	public void setProfiler(Object profiler) {
+		markActive();
 		this.profiler = profiler;
 	}
 
@@ -260,6 +271,7 @@ public final class ExecutionEntry {
 
 	public File recieveAUT(InputStream stream, String fileName, String unZip)
 			throws IOException {
+		markActive();
 		if (stream != null) {
 			File outputFile = getArtifactName(fileName);
 			File outputMD5File = getArtifactName(fileName + ".md5");
@@ -364,6 +376,7 @@ public final class ExecutionEntry {
 	}
 	
 	public boolean addArtifact(InputStream data) throws IOException {
+		markActive();
 		MessageDigest md = Hash.createDigest();
 		byte[] bytes = data.readAllBytes();
 		md.update(bytes);
@@ -376,11 +389,13 @@ public final class ExecutionEntry {
 			return false;
 		}
 		repository.put(hash, new ByteArrayInputStream(bytes));
+		assert repository.contains(hash);
 		missingHashes.remove(hash);
 		return true;
 	}
 
 	public synchronized void setTestSuite(TestSuite suite) {
+		markActive();
 		Set<HashCode> allHashes = suite.getRefs().stream()
 				.map(Q7ArtifactRef::getHash)
 				.map(HashCode::fromBytes).collect(Collectors.toSet());
@@ -416,6 +431,7 @@ public final class ExecutionEntry {
 	}
 
 	public Q7Artifact resolveArtifact(Q7ArtifactRef reference) throws IOException {
+		markActive();
 		Q7Artifact art = ModelFactory.eINSTANCE.createQ7Artifact();
 		art.setId(reference.getId());
 		art.getRefs().addAll(reference.getRefs().stream().map(referencesById::get).peek(Objects::requireNonNull).map(EcoreUtil::copy).toList());
@@ -427,6 +443,7 @@ public final class ExecutionEntry {
 	
 	private void downloadAut(final AutInfo info, Function<File, URI> fileToServerUri, final IQ7Monitor downloadMonitor)
 			throws CoreException {
+		markActive();
 		byte[] requestedHash = info.getHash();
 		if (requestedHash != null && requestedHash.length == 32) {
 			String filename = Path.forPosix(URI.create(info.getUri()).getPath()).lastSegment();
@@ -482,7 +499,7 @@ public final class ExecutionEntry {
 			});
 	
 			final AutInfo originalInfo = EcoreUtil.copy(info);
-	
+			markActive();
 			getPrepareQueue().addTask(new IPrepareRunnable() {
 	
 				@Override
@@ -660,5 +677,13 @@ public final class ExecutionEntry {
 
 	private PrepareTaskQueue getPrepareQueue() {
 		return pendingQueue;
+	}
+	
+	private void markActive() {
+		lastActivity = now();
+	}
+
+	private Instant now() {
+		return Instant.now();
 	}
 }

@@ -16,6 +16,8 @@ import static org.eclipse.rcptt.cloud.util.internal.UtilPlugin.createException;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,6 +34,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.rcptt.ecl.core.util.ECLBinaryResourceImpl;
 
 public class EmfResourceUtil {
@@ -91,44 +94,16 @@ public class EmfResourceUtil {
 		return result.toString();
 	}
 
-	@SuppressWarnings("resource")
 	public static InputStream toInputStream(EObject obj) {
-		PipedOutputStream sink = new PipedOutputStream();
-		FutureTask<Void> task = new FutureTask<>(() -> {
-			try {
-				Resource r = createResource();
-				r.getContents().add(obj);
-				r.save(sink, null);
-				return null;
-			} finally {
-				sink.close();
-			}
-		});
-		PipedInputStream result;
-		try {
-			result = new PipedInputStream(sink) {
-				@Override
-				public void close() throws IOException {
-					super.close();
-					try {
-						task.cancel(true);
-						task.get();
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-						throw new IOException(e);
-					} catch (ExecutionException e) {
-						if (e.getCause() instanceof IOException checked) {
-							throw checked;
-						}
-						throw new IOException(e.getCause());
-					}
-				}	
-			};
+		EObject copy = EcoreUtil.copy(obj);
+		obj = null; 
+		Resource r = createResource();
+		r.getContents().add(copy);
+		try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			r.save(os, null);
+			return new ByteArrayInputStream(os.toByteArray());
 		} catch (IOException e) {
-			// Already connected error can not happen
-			throw new AssertionError(e);
+			throw new AssertionError("In-memory operation should not throw IO errors", e);
 		}
-		CompletableFuture.runAsync(task);
-		return result;
 	}
 }
