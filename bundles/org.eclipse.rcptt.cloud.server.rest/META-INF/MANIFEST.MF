@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Automatic-Module-Name: org.eclipse.rcptt.cloud.server.rest
 Bundle-Name: Rest
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.server.rest;singleton:=true
-Bundle-Version: 2.7.0.qualifier
+Bundle-Version: 2.7.1.qualifier
 Bundle-Vendor: Eclipse RCP Testing Tool Project
 Require-Bundle: org.eclipse.core.runtime,
  com.google.gson,

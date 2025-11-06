@@ -3,9 +3,9 @@
     <setAttribute key="additional_plugins">
         <setEntry value="org.apache.felix.scr:2.2.12:default:true:2:true"/>
         <setEntry value="org.eclipse.core.runtime:3.33.0.v20250206-0919:default:true:default:true"/>
-        <setEntry value="org.eclipse.equinox.common:3.20.200.v20250628-0509:default:true:2:true"/>
+        <setEntry value="org.eclipse.equinox.common:3.20.300.v20250907-1347:default:true:2:true"/>
         <setEntry value="org.eclipse.equinox.event:1.7.300.v20250518-0609:default:true:2:true"/>
-        <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.600.v20250606-0550:default:true:1:true"/>
+        <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.700.v20250921-0614:default:true:1:true"/>
         <setEntry value="org.eclipse.rcptt.cloud.client:2.7.0.qualifier:default:true:2:true"/>
     </setAttribute>
     <booleanAttribute key="append.args" value="true"/>
