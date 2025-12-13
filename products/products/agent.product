@@ -60,6 +60,9 @@ Contributors:
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="4" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+      <property name="p2.httpRule" value="allow" />
+      <property name="tycho.p2.httptransport.type" value="JavaUrl" />
+      <property name="tycho.localArtifacts" value="ignore" />
    </configurations>
 
 </product>
