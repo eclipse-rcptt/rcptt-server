@@ -124,7 +124,6 @@ public class Q7HttpServer {
 	public void start(int httpPort, String sitesDir, int keepSessions, String hostname)
 			throws IOException {
 		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);
-		serverFileUriPrefix = URI.create(".");
 		Map<String, Object> sessionProperties = Collections.singletonMap(IServerContext.ID, serverContext);
 		sessionProperties.forEach(server::setAttribute);
 
@@ -167,6 +166,8 @@ public class Q7HttpServer {
 
 		try {
 			server.start();
+			// Server.getURI() returns the path of a random ContextHandler, ignore it, as we need to access a specific one 
+			serverFileUriPrefix = server.getURI().resolve("/artifacts/");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
