@@ -283,6 +283,7 @@ public class Q7HttpServer {
 
 	private static ResourceHandler initializeSitesStore(String sitesDir) {
 		ResourceHandler rh = new ResourceHandler();
+		rh.setUseFileMapping(false);
 		rh.setDirAllowed(true);
 		rh.setWelcomeFiles(new String[] { "index.html" });
 		File dir = new File(sitesDir);
@@ -302,6 +303,7 @@ public class Q7HttpServer {
 	
 	private static ResourceHandler initializeLogFileStore() {
 		ResourceHandler resource_handler = new ResourceHandler();
+		resource_handler.setUseFileMapping(false);
 		resource_handler.setDirAllowed(true);
 		resource_handler.setWelcomeFiles(new String[] { "index.html" });
 		resource_handler.setMimeTypes(createMimeTypes());
@@ -312,6 +314,7 @@ public class Q7HttpServer {
 
 	private ResourceHandler initializeArtifactsFileStore() {
 		ResourceHandler resource_handler = new ResourceHandler();
+		resource_handler.setUseFileMapping(false);
 		resource_handler.setDirAllowed(true);
 		resource_handler.setWelcomeFiles(new String[] { "index.html" });
 		resource_handler.setBaseResourceAsString(executions.getRoot().toString());
@@ -325,6 +328,7 @@ public class Q7HttpServer {
 			URL url = FileLocator.resolve(entry);
 
 			ResourceHandler resource_handler = new ResourceHandler();
+			resource_handler.setUseFileMapping(false);
 			resource_handler.setDirAllowed(false);
 			resource_handler.setWelcomeFiles(new String[] { "/" });
 			resource_handler.setBaseResourceAsString(url.toString());
