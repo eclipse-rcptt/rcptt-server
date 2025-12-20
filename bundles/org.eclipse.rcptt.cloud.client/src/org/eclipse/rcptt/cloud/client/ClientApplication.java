@@ -60,6 +60,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.EObject;
@@ -740,7 +741,7 @@ public class ClientApplication extends CommandLineApplication {
 		try {
 			ExecutionResult result = api.execute(cmd, Q7ServerApi.DEFAULT_TIMEOUT * 8);
 			if (result.status.matches(IStatus.ERROR | IStatus.CANCEL)) {
-				throw new CoreException(result.status);
+				throw new CoreException(new MultiStatus(getClass(), result.status.getCode(), new IStatus[] {result.status}, "Failed to upload " + artifactsFile, null));
 			}
 		} catch (ConnectException e) {
 			throw new CoreException(Status.error("Server is unavilable", e));
