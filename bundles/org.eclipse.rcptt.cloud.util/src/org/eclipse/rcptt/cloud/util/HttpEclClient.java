@@ -12,6 +12,8 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.util;
 
+import static java.lang.System.currentTimeMillis;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -22,6 +24,8 @@ import java.util.HashMap;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.ByteArrayEntity;
@@ -54,10 +58,8 @@ public class HttpEclClient {
 	public ExecutionResult execute(Command command, int timeout) throws ConnectException {
 		HttpResponse response = null;
 		byte[] bs = null;
+		long stop = currentTimeMillis() + timeout;
 		try {
-			client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
-					timeout);
-
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			EObjectOutputStream eout = new EObjectOutputStream(out,
 					new HashMap<Object, Object>());
@@ -69,8 +71,24 @@ public class HttpEclClient {
 			ByteArrayEntity entity = new ByteArrayEntity(out.toByteArray());
 			entity.setContentType("application/q7-eclcommand");
 			post.setEntity(entity);
-
-			response = client.execute(post);
+			RequestConfig.Builder config = RequestConfig.custom();
+			
+			for (;;) {
+				try {
+					int attemptTimeout = Math.clamp(stop - currentTimeMillis(), 1, timeout);
+					config
+						.setConnectTimeout(attemptTimeout)
+						.setSocketTimeout(attemptTimeout)
+						.setConnectionRequestTimeout(attemptTimeout);
+					post.setConfig(config.build());
+					response = client.execute(post);
+					break;
+				} catch (ConnectException e) {
+					if (stop < currentTimeMillis()) {
+						throw e;
+					}
+				}
+			}
 			HttpEntity responseEntity = response.getEntity();
 
 			try (InputStream responseContent = responseEntity.getContent()) {
