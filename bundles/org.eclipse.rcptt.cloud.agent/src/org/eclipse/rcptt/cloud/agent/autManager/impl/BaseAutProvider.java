@@ -251,7 +251,7 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 			TarArchiveEntry entry;
 
 			while ((entry = tarInput.getNextEntry()) != null) {
-				java.nio.file.Path outputFile = outputDir.resolve(entry.getName());
+				java.nio.file.Path outputFile = resolveEntryPath(outputDir, entry);
 				if (entry.isDirectory()) {
 					if (!isDirectory(outputFile)) {
 						Files.createDirectories(outputFile);
@@ -267,6 +267,27 @@ public abstract class BaseAutProvider implements IAutProvider, Closeable {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Resolve a TarArchiveEntry name against the output directory and ensure
+	 * that the resulting path stays within the output directory, protecting
+	 * against directory traversal ("Zip Slip") attacks.
+	 */
+	private static java.nio.file.Path resolveEntryPath(java.nio.file.Path outputDir, TarArchiveEntry entry) throws IOException {
+		String name = entry.getName();
+		if (name == null || name.isEmpty()) {
+			throw new IOException("Invalid tar entry name");
+		}
+
+		java.nio.file.Path normalizedOutputDir = outputDir.toAbsolutePath().normalize();
+		java.nio.file.Path target = normalizedOutputDir.resolve(name).normalize();
+
+		if (!target.startsWith(normalizedOutputDir)) {
+			throw new IOException("Entry is outside of the target dir: " + name);
+		}
+
+		return target;
 	}
 	
 	private static void applyUnixPermissions(TarArchiveEntry entry, java.nio.file.Path path) throws IOException {
