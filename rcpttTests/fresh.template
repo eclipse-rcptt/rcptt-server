@@ -1,0 +1,25 @@
+--- RCPTT testcase ---
+Format-Version: 1.0
+Element-Name: fresh
+Element-Type: testcase
+Element-Version: 3.0
+External-Reference: 
+Id: _QhY4gOQEEfCw4455cuAIHw
+Runtime-Version: 2.8.0.202512040252
+Save-Time: 12/28/25, 7:48 PM
+Testcase-Type: ecl
+
+------=_.description-216f885c-d591-38ce-8ea2-e4f8cb4d6ffa
+Content-Type: text/plain
+Entry-Name: .description
+
+This test is updated externally before an upload to server to ensure that artifact upload pipline is not broken.
+The update is needed because cached artifacts with known content are skipped during upload.
+------=_.description-216f885c-d591-38ce-8ea2-e4f8cb4d6ffa--
+------=_.content-0a7243a0-75d3-3d5f-9791-539de0e5b7ac
+Content-Type: text/ecl
+Entry-Name: .content
+
+// This line is replaced by a system test every time to ensure the test content is unknown to server
+trace "${maven.build.timestamp}"
+------=_.content-0a7243a0-75d3-3d5f-9791-539de0e5b7ac--
