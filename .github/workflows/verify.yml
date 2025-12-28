@@ -34,9 +34,9 @@ jobs:
           name: maven_results
           include-hidden-files: true
           path: |
-            **/target/work/**/*.log
-            **/target/work/**/*.info
-            **/target/work/**/*.ini
+            **/target/**/*.log
+            **/target/**/*.info
+            **/target/**/*.ini
             **/target/results/**
             **/*.hrpof
             tests/*/target/*-reports/*.xml
