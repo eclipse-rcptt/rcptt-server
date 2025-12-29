@@ -126,6 +126,12 @@ Contributors:
                 </features>
               </injection>
               -->
+							<injection>
+								<site>https://download.eclipse.org/nebula/archive/releases/3.1.1/</site>
+								<features>
+									<feature>org.eclipse.nebula.widgets.grid</feature>
+								</features>
+							</injection>
 						</injections>
 
 						<!-- additional AUT args (besides taken in its ini-file)
