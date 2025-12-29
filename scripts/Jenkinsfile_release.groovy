@@ -13,19 +13,9 @@
 
 
 pipeline {
-   agent {
-      // Remove implicit -V Maven argument. See https://gitlab.eclipse.org/eclipsefdn/helpdesk/-/issues/6398
-      kubernetes {
-        inheritFrom 'basic'
-        yaml '''
-            spec:
-                volumes:
-                - emptyDir:
-                    medium: ""
-                  name: "m2-dir"
-            '''
-      }
-   }
+  agent {
+    label 'ubuntu-latest'
+  }
 
   options {
      timestamps()
@@ -42,8 +32,10 @@ pipeline {
   stages {
     stage('Maven') {
       steps {
-		sh 'scripts/remove-snapshot.sh'
-        sh 'mvn clean deploy -P linux'
+        sh 'scripts/remove-snapshot.sh'
+        xvnc(useXauthority: true) {
+          sh 'mvn clean deploy -P linux'
+        }
       }
       post {
         always {
