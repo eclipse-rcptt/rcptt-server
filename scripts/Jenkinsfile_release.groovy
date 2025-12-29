@@ -16,7 +16,7 @@ pipeline {
   agent {
     label 'ubuntu-latest'
   }
-
+  
   options {
      timestamps()
      buildDiscarder(logRotator(numToKeepStr: '30', daysToKeepStr: '30', artifactNumToKeepStr: '1'))
@@ -40,7 +40,7 @@ pipeline {
       post {
         always {
           junit "tests/*/target/*-reports/*.xml"
-          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log'
+          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log, rcpttTests/target/results/** '
         }
       }
     }
