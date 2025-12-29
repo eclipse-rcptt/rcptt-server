@@ -527,9 +527,7 @@ public final class ExecutionEntry {
 					downloadMonitor.log("AUT download is complete.");
 				}
 			}, "Download AUT");
-	
-			// Add update site mirroring process.
-	
+			
 			info.setUri(fileToServerUri.apply(autFile).toASCIIString());
 		}
 	}

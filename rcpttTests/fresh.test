@@ -13,7 +13,7 @@ Testcase-Type: ecl
 Content-Type: text/plain
 Entry-Name: .description
 
-This test is updated externally before an upload to server to ensure that artifact upload pipline is not broken.
+This test is updated externally before an upload to server to ensure that artifact upload pipeline is not broken.
 The update is needed because cached artifacts with known content are skipped during upload.
 ------=_.description-216f885c-d591-38ce-8ea2-e4f8cb4d6ffa--
 ------=_.content-0a7243a0-75d3-3d5f-9791-539de0e5b7ac

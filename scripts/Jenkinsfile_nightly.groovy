@@ -13,8 +13,9 @@
 
 
 pipeline {
-  agent any
-
+  agent {
+    label 'ubuntu-latest'
+  }
   options {
      timestamps()
      buildDiscarder(logRotator(numToKeepStr: '30', daysToKeepStr: '30', artifactNumToKeepStr: '1'))
@@ -30,12 +31,14 @@ pipeline {
   stages {
     stage('Maven') {
       steps {
-        sh 'mvn clean deploy -Dlicensecheck.skip=true'
+        xvnc(useXauthority: true) {
+          sh 'mvn clean deploy -P linux  -Dlicensecheck.skip=true'
+        }
       }
       post {
         always {
           junit "tests/*/target/*-reports/*.xml"
-          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log'
+          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log, rcpttTests/target/results/** '
         }
       }
     }

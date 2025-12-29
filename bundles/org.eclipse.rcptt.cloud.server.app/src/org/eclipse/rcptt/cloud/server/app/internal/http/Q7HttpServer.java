@@ -99,7 +99,10 @@ public class Q7HttpServer {
 
 		@Override
 		public URI toUri(File file) {
-			return  serverFileUriPrefix.resolve(executions.makeRelativePath(file));
+			return executions.makeRelativePath(file).map(relative ->  {
+				assert !relative.isAbsolute() : relative;
+				return serverFileUriPrefix.resolve("/artifacts/").resolve(relative);
+			}).orElseThrow(() -> new IllegalArgumentException("File is not in a recognized published location: " + file));
 		}
 
 		@Override
@@ -124,7 +127,6 @@ public class Q7HttpServer {
 	public void start(int httpPort, String sitesDir, int keepSessions, String hostname)
 			throws IOException {
 		URI serverUri = URI.create("server://" + hostname + ":" + httpPort);
-		serverFileUriPrefix = URI.create(".");
 		Map<String, Object> sessionProperties = Collections.singletonMap(IServerContext.ID, serverContext);
 		sessionProperties.forEach(server::setAttribute);
 
@@ -167,6 +169,8 @@ public class Q7HttpServer {
 
 		try {
 			server.start();
+			// Server.getURI() returns the path of a random ContextHandler, ignore it, as we need to access a specific one 
+			serverFileUriPrefix = server.getURI().resolve("/");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
