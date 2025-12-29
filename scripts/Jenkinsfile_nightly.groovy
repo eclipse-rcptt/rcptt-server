@@ -38,7 +38,7 @@ pipeline {
       post {
         always {
           junit "tests/*/target/*-reports/*.xml"
-          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log'
+          archiveArtifacts allowEmptyArchive: false, artifacts: '**/*.hrpof, **/*.log, rcpttTests/target/results/** '
         }
       }
     }
