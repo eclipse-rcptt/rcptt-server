@@ -19,6 +19,7 @@ import static java.util.function.Predicate.not;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -208,8 +209,16 @@ public class ExecutionRegistry {
 				.getParent(), ".temp");
 	}
 
-	public URI makeRelativePath(File file) {
-		return getRoot().toURI().relativize(file.toURI());
+	public Optional<URI> makeRelativePath(File file) {
+		try {
+			final URI relative = getRoot().toURI().relativize(file.toURI());
+			if (relative.isAbsolute()) {
+				return Optional.empty();
+			}
+			return Optional.of(relative);
+		} catch (IllegalArgumentException e) {
+			return Optional.empty();
+		}
 	}
 
 	public IStatus onStart(ISMHandle<SuiteStats> s) {
