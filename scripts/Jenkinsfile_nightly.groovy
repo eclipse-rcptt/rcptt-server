@@ -16,6 +16,7 @@ pipeline {
   agent {
     label 'ubuntu-latest'
   }
+  
   options {
      timestamps()
      buildDiscarder(logRotator(numToKeepStr: '30', daysToKeepStr: '30', artifactNumToKeepStr: '1'))
