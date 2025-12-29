@@ -41,7 +41,7 @@ Contributors:
 	</pluginRepositories>
 
 	<properties>
-		<rcptt-maven-version>2.8.0-SNAPSHOT</rcptt-maven-version>
+		<rcptt-maven-version>${project.version}</rcptt-maven-version>
 		<autName>eclipse-java-2024-03-R-linux-gtk-x86_64.tar.gz</autName>
 		<autClassifier>linux.gtk.x86_64</autClassifier>
 		<autHash>973c94a0a029c29d717823a53c3a65f99fa53d51f605872c5dd854620e16cd4cb2c2ff8a5892cd550a70ab19e1a0a0d2e792661e936bd3d2bef4532bc533048b</autHash>
@@ -337,14 +337,14 @@ Contributors:
 				<dependency>
 					<groupId>org.eclipse.rcptt.cloud</groupId>
 					<artifactId>agent-server-products</artifactId>
-					<version>${project.version}</version>
+					<version>${rcptt-maven-version}</version>
 					<classifier>server-${autClassifier}</classifier>
 					<type>zip</type>
 				</dependency>
 				<dependency>
 					<groupId>org.eclipse.rcptt.cloud</groupId>
 					<artifactId>agent-server-products</artifactId>
-					<version>${project.version}</version>
+					<version>${rcptt-maven-version}</version>
 					<classifier>agent-${autClassifier}</classifier>
 					<type>zip</type>
 				</dependency>
