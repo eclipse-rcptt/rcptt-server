@@ -28,9 +28,8 @@ import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.IServerContext;
 
-@SuppressWarnings("serial")
 public class Q7SessionUploadService extends HttpServlet {
-
+	private static final long serialVersionUID = -2428089214664215537L;
 	private final IServerContext context;
 
 	public Q7SessionUploadService(IServerContext context) {
@@ -41,25 +40,32 @@ public class Q7SessionUploadService extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 
-		PrintWriter outp = resp.getWriter();
+		try (PrintWriter outp = resp.getWriter()) {
+			String suiteID = req.getHeader("suiteid");
+			String unZip = req.getHeader("unzip");
+			String fileName = req.getHeader("filename");
+			String contentType = req.getContentType();
 
-		String suiteID = req.getHeader("suiteid");
-
-		String unZip = req.getHeader("unzip");
-
-		String fileName = req.getHeader("filename");
-		String contentType = req.getContentType();
-		if (!"application/q7-filedata".equals(contentType)) {
-			outp.write("fail");
-			return;
-		}
-		ExecutionEntry artifacts = context.getExecutionRegistry().getSuiteHandle(suiteID);
-		if (artifacts == null) {
-			outp.print("No suite " + suiteID);
-		} else {
-			ServletInputStream stream = req.getInputStream();
-			URI location = context.toUri(artifacts.recieveAUT(stream, fileName, unZip));
-			outp.print(location);
+			if (!"application/q7-filedata".equals(contentType)) {
+				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE or otherwise a proper error 
+				return;
+			}
+			
+			final ExecutionRegistry executions = context.getExecutionRegistry();
+			ExecutionEntry artifacts = executions.getSuiteHandle(suiteID);
+			if (artifacts == null) {
+				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND or otherwise a proper error
+				outp.print("No suite " + suiteID);
+			} else {
+				try (ServletInputStream stream = req.getInputStream()) {
+					URI location = executions.makeRelativePath(artifacts.recieveAUT(stream, fileName, unZip));
+					// TODO: in 2.8.0 add prefix "artifacts" here, remove from client
+					// Client should not be aware of server layout and should be provided with complete URLs
+					// In other words, partial URLs should not be used in network communication
+					// @see org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer.initializeArtifactsFileStore()
+					outp.print(location);
+				}
+			}
 		}
 	}
 
