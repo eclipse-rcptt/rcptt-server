@@ -47,21 +47,26 @@ public class Q7SessionUploadService extends HttpServlet {
 			String contentType = req.getContentType();
 
 			if (!"application/q7-filedata".equals(contentType)) {
-				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE or otherwise a proper error 
+				// @see https://github.com/eclipse-rcptt/rcptt-server/issues/40
+				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE or otherwise a proper error
+				// Ensure client fails with exception on this error
 				return;
 			}
 			
 			final ExecutionRegistry executions = context.getExecutionRegistry();
 			ExecutionEntry artifacts = executions.getSuiteHandle(suiteID);
 			if (artifacts == null) {
+				// @see https://github.com/eclipse-rcptt/rcptt-server/issues/40
 				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND or otherwise a proper error
+				// Ensure client fails with exception on this error
 				outp.print("No suite " + suiteID);
 			} else {
 				try (ServletInputStream stream = req.getInputStream()) {
-					URI location = executions.makeRelativePath(artifacts.recieveAUT(stream, fileName, unZip));
+					URI location = executions.makeRelativePath(artifacts.recieveAUT(stream, fileName, unZip)).get();
 					// TODO: in 2.8.0 add prefix "artifacts" here, remove from client
 					// Client should not be aware of server layout and should be provided with complete URLs
 					// In other words, partial URLs should not be used in network communication
+					// @see https://github.com/eclipse-rcptt/rcptt-server/issues/39
 					// @see org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer.initializeArtifactsFileStore()
 					outp.print(location);
 				}

@@ -56,8 +56,6 @@ public class ExecTestSuiteService implements ICommandService {
 		}
 
 		ExecutionRegistry executions = ExecutionRegistry.getInstance(context);
-		ExecutionEntry handle = executions.getSuiteHandle(
-				cmd.getSuiteId());
 
 		try {
 			IExecutionProfiler profiler = new ExecutionProfiler(
@@ -65,8 +63,11 @@ public class ExecTestSuiteService implements ICommandService {
 					cmd.getOptions(), cmd.getMetadata(), executions);
 			File reportFile = profiler.getReportFile();
 
+			// TODO: add artifacts prefix, remove from client 
+			// @see org.eclipse.rcptt.cloud.client.Q7ServerApi.downloadFile(URI, File)
+			// @see https://github.com/eclipse-rcptt/rcptt-server/issues/39
 			URI location = executions.makeRelativePath(
-					reportFile);
+					reportFile).get();
 
 			context.getOutput().write(BoxedValues.box(location.toASCIIString()));
 		} catch (IOException e) {
