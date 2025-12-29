@@ -43,7 +43,7 @@ pipeline {
     stage('Maven') {
       steps {
 		sh 'scripts/remove-snapshot.sh'
-        sh 'mvn clean deploy'
+        sh 'mvn clean deploy -P linux'
       }
       post {
         always {
