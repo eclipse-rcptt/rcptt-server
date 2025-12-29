@@ -355,28 +355,6 @@ Contributors:
 						<version>3.6.3</version>
 						<executions>
 							<execution>
-								<id>server</id>
-								<phase>process-resources</phase>
-								<goals>
-									<goal>exec</goal>
-								</goals>
-								<configuration>
-									<executable>${project.build.directory}/dependency/agent-server-products-server-${autClassifier}/${eclipseExecutable}</executable>
-									<async>true</async>
-									<inheritIo>true</inheritIo>
-									<arguments>
-										<argument>-data</argument>
-										<argument>
-											${project.build.directory}/server_data</argument>
-										<argument>-consoleLog</argument>
-										<argument>-port</argument>
-										<argument>5009</argument>
-										<argument>-keepSessions</argument>
-										<argument>10</argument>
-									</arguments>
-								</configuration>
-							</execution>
-							<execution>
 								<id>agent</id>
 								<phase>process-resources</phase>
 								<goals>
@@ -395,6 +373,28 @@ Contributors:
 										<argument>5009</argument>
 										<argument>-serverHost</argument>
 										<argument>localhost</argument>
+									</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>server</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>${project.build.directory}/dependency/agent-server-products-server-${autClassifier}/${eclipseExecutable}</executable>
+									<async>true</async>
+									<inheritIo>true</inheritIo>
+									<arguments>
+										<argument>-data</argument>
+										<argument>
+											${project.build.directory}/server_data</argument>
+										<argument>-consoleLog</argument>
+										<argument>-port</argument>
+										<argument>5009</argument>
+										<argument>-keepSessions</argument>
+										<argument>10</argument>
 									</arguments>
 								</configuration>
 							</execution>
