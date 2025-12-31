@@ -74,45 +74,50 @@ public class HttpEclClient {
 			RequestConfig.Builder config = RequestConfig.custom();
 			
 			for (;;) {
-				try {
-					int attemptTimeout = Math.clamp(stop - currentTimeMillis(), 1, timeout);
-					config
-						.setConnectTimeout(attemptTimeout)
-						.setSocketTimeout(attemptTimeout)
-						.setConnectionRequestTimeout(attemptTimeout);
-					post.setConfig(config.build());
-					response = client.execute(post);
-					break;
-				} catch (ConnectException e) {
-					if (stop < currentTimeMillis()) {
-						throw e;
+				for (;;) {
+					try {
+						int attemptTimeout = Math.clamp(stop - currentTimeMillis(), 1, timeout);
+						config
+							.setConnectTimeout(attemptTimeout)
+							.setSocketTimeout(attemptTimeout)
+							.setConnectionRequestTimeout(attemptTimeout);
+						post.setConfig(config.build());
+						response = client.execute(post);
+						break;
+					} catch (ConnectException e) {
+						if (stop < currentTimeMillis()) {
+							throw e;
+						}
 					}
 				}
-			}
-			HttpEntity responseEntity = response.getEntity();
-
-			try (InputStream responseContent = responseEntity.getContent()) {
-				bs = IOUtil.getStreamContent(responseContent);
-				EObjectInputStream ein = new EObjectInputStream(
-						new ByteArrayInputStream(bs), new HashMap<Object, Object>());
-				IStatus status1 = statusConverter.fromEObject((ProcessStatus) ein
-						.loadEObject());
-				InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
-						InternalEObject.class);
-				IStatus status2 = Status.OK_STATUS;
-				if (!status1.matches(IStatus.ERROR | IStatus.CANCEL)) { 
-					ein.loadEObjects(results);
-					status2 = statusConverter.fromEObject((ProcessStatus) results.remove(results.size() - 1));
+				HttpEntity responseEntity = response.getEntity();
+	
+				try (InputStream responseContent = responseEntity.getContent()) {
+					bs = IOUtil.getStreamContent(responseContent);
+					EObjectInputStream ein = new EObjectInputStream(
+							new ByteArrayInputStream(bs), new HashMap<Object, Object>());
+					IStatus status1 = statusConverter.fromEObject((ProcessStatus) ein
+							.loadEObject());
+					InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
+							InternalEObject.class);
+					IStatus status2 = Status.OK_STATUS;
+					if (!status1.matches(IStatus.ERROR | IStatus.CANCEL)) { 
+						ein.loadEObjects(results);
+						status2 = statusConverter.fromEObject((ProcessStatus) results.remove(results.size() - 1));
+					}
+					EntityUtils.consume(responseEntity);
+					
+					IStatus status = status1;
+					if (!status1.isOK() && !status2.isOK()) {
+						status = new MultiStatus(getClass(), 0, new IStatus[] {status1, status2}, "Multiple errors reported by HTTP ECL server", null);
+					} else if (!status2.isOK()) {
+						status = status2;
+					}
+					if (status.getCode() == StatusCodes.NOT_READY && currentTimeMillis() < stop) {
+						continue;
+					}
+					return new ExecutionResult(status, results. toArray());
 				}
-				EntityUtils.consume(responseEntity);
-				
-				IStatus status = status1;
-				if (!status1.isOK() && !status2.isOK()) {
-					status = new MultiStatus(getClass(), 0, new IStatus[] {status1, status2}, "Multiple errors reported by HTTP ECL server", null);
-				} else if (!status2.isOK()) {
-					status = status2;
-				}
-				return new ExecutionResult(status, results. toArray());
 			}
 		} catch (SocketTimeoutException e) {
 			ConnectException e1 = new ConnectException(e.getLocalizedMessage());

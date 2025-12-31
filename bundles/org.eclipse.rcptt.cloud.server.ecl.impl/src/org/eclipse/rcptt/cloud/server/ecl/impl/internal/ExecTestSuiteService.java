@@ -36,6 +36,7 @@ import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.ExecutionProfiler;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.IExecutionProfiler;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecTestSuite;
+import org.eclipse.rcptt.cloud.util.StatusCodes;
 
 public class ExecTestSuiteService implements ICommandService {
 
@@ -98,7 +99,7 @@ public class ExecTestSuiteService implements ICommandService {
 				"No agents are suitable for '%s' classifier(s).",
 				invalid.toString());
 
-		return EclServerImplPlugin.createErr(msg, null);
+		return new Status(IStatus.ERROR, getClass(), StatusCodes.NOT_READY, msg, null);
 
 	}
 
