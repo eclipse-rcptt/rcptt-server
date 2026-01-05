@@ -33,6 +33,7 @@ pipeline {
     stage('Maven') {
       steps {
         xvnc(useXauthority: true) {
+          sh 'mvn clean install --file maven -Dlicensecheck.skip=true'
           sh 'mvn clean deploy -P linux  -Dlicensecheck.skip=true'
         }
       }
