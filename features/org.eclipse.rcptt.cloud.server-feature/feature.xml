@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.rcptt.cloud.server-feature"
       label="RCPTT server"
-      version="2.7.1.qualifier"
+      version="2.7.2.qualifier"
       provider-name="Eclipse RCP Testing Tool Project">
 
    <description>

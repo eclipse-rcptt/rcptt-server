@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Automatic-Module-Name: org.eclipse.rcptt.cloud.agent
 Bundle-Name: Agent for Q7 Cloud
 Bundle-SymbolicName: org.eclipse.rcptt.cloud.agent;singleton:=true
-Bundle-Version: 2.7.1.qualifier
+Bundle-Version: 2.7.2.qualifier
 Bundle-Activator: org.eclipse.rcptt.cloud.agent.AgentPlugin
 Bundle-Vendor: Eclipse RCP Testing Tool Project
 Require-Bundle: org.eclipse.core.runtime,
