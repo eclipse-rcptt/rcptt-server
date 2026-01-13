@@ -2,11 +2,11 @@
 <launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
     <setAttribute key="additional_plugins">
         <setEntry value="org.apache.felix.scr:2.2.12:default:true:2:true"/>
-        <setEntry value="org.eclipse.core.runtime:3.33.0.v20250206-0919:default:true:default:true"/>
-        <setEntry value="org.eclipse.equinox.common:3.20.300.v20250907-1347:default:true:2:true"/>
+        <setEntry value="org.eclipse.core.runtime:3.33.100.v20250516-0931:default:true:default:true"/>
+        <setEntry value="org.eclipse.equinox.common:3.20.100.v20250506-0427:default:true:2:true"/>
         <setEntry value="org.eclipse.equinox.event:1.7.300.v20250518-0609:default:true:2:true"/>
-        <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.700.v20250921-0614:default:true:1:true"/>
-        <setEntry value="org.eclipse.rcptt.cloud.client:2.7.0.qualifier:default:true:2:true"/>
+        <setEntry value="org.eclipse.equinox.simpleconfigurator:1.5.500.v20250306-1127:default:true:1:true"/>
+        <setEntry value="org.eclipse.rcptt.cloud.client:2.7.2.qualifier:default:true:2:true"/>
     </setAttribute>
     <booleanAttribute key="append.args" value="true"/>
     <stringAttribute key="application" value="org.eclipse.rcptt.cloud.client.headless"/>
