@@ -47,19 +47,15 @@ public class Q7SessionUploadService extends HttpServlet {
 			String contentType = req.getContentType();
 
 			if (!"application/q7-filedata".equals(contentType)) {
-				// @see https://github.com/eclipse-rcptt/rcptt-server/issues/40
-				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE or otherwise a proper error
-				// Ensure client fails with exception on this error
+				resp.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, "Can't processs content type " + contentType);
 				return;
 			}
 			
 			final ExecutionRegistry executions = context.getExecutionRegistry();
 			ExecutionEntry artifacts = executions.getSuiteHandle(suiteID);
 			if (artifacts == null) {
-				// @see https://github.com/eclipse-rcptt/rcptt-server/issues/40
-				// TODO: in 2.8.0 return jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND or otherwise a proper error
-				// Ensure client fails with exception on this error
-				outp.print("No suite " + suiteID);
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Execution " + suiteID + " is not found");
+				return;
 			} else {
 				try (ServletInputStream stream = req.getInputStream()) {
 					URI location = executions.makeRelativePath(artifacts.recieveAUT(stream, fileName, unZip)).get();

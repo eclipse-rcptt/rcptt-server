@@ -34,6 +34,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -72,11 +73,12 @@ public class Q7ServerApi {
 	public static final int DEFAULT_TIMEOUT = 60 * 1000;
 	private static final String HASH_TYPE = "SHA-256";
 
-	private URI url;
+	private final URI url;
 
 	private DefaultHttpClient client;
 	private SSLSocketFactory socketFactory;
 	private HttpEclClient eclClient;
+	private final RequestConfig config = RequestConfig.custom().setSocketTimeout(DEFAULT_TIMEOUT).setConnectTimeout(DEFAULT_TIMEOUT).build();
 
 	public Q7ServerApi(URI url) {
 		this.url = url;
@@ -128,11 +130,11 @@ public class Q7ServerApi {
 		eclClient = new HttpEclClient(url + "api/exec", client);
 	}
 
-	public HttpPost makePost(String subUrl) {
+	public HttpPost makePost(URI subUrl) {
 		return new HttpPost(url.resolve(subUrl));
 	}
 
-	public HttpGet makeGet(String subUrl) {
+	public HttpGet makeGet(URI subUrl) {
 		return new HttpGet(url.resolve(subUrl));
 	}
 	
@@ -148,8 +150,6 @@ public class Q7ServerApi {
 
 	public record UploadResult(byte[] hash, URI serverPath) {} 
 	public UploadResult uploadHashedFile(java.nio.file.Path file) throws CoreException {
-		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
-				DEFAULT_TIMEOUT);
 		URI uri = null;
 		try {
 			MessageDigest md = MessageDigest.getInstance(HASH_TYPE);
@@ -162,6 +162,7 @@ public class Q7ServerApi {
 			uri = URI.create("api/cache/" + hash + "/" + file.getFileName().toString());
 			
 			HttpPut request = new HttpPut(url.resolve(uri));
+			request.setConfig(config);
 			request.setEntity(new FileEntity(file.toFile(), ContentType.APPLICATION_OCTET_STREAM));
 			request.addHeader("Expect", "100-continue");
 			
@@ -180,26 +181,19 @@ public class Q7ServerApi {
 	
 	public String uploadFile(String suiteID, String zipPath,
 			String artifactName, boolean unzip) throws CoreException {
-		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
-				DEFAULT_TIMEOUT);
-
 		Path path = new Path(artifactName);
 		String fileName = FileUtil.getID(path.lastSegment()) + UriUtil.getFilenameExtension(path.lastSegment());
 
 		try {
-			HttpPost post = makePost("api/upload");
-
+			HttpPost post = makePost(URI.create("api/upload"));
+			post.setConfig(config);
 			post.setEntity(new FileEntity(new File(zipPath), ContentType.
 					create("application/q7-filedata")));
 			post.addHeader("unzip", unzip ? "true" : "false");
 			post.addHeader("filename", fileName);
 			post.addHeader("suiteid", suiteID);
 
-			HttpResponse response = execute(post);
-			if (response.getStatusLine().getStatusCode() != 200) {
-				throw new CoreException(ClientAppPlugin.createErrorStatus(
-						response.getStatusLine().toString(), null));
-			}
+			HttpResponse response = expect(execute(post), 200);
 
 			HttpEntity resEntity = response.getEntity();
 
@@ -212,17 +206,15 @@ public class Q7ServerApi {
 
 		} catch (Exception e) {
 			throw new CoreException(ClientAppPlugin.createErrorStatus(
-					"AUT upload failed", e));
+					"Upload failed", e));
 		}
 	}
 
 	public void downloadFile(URI path, File toFile) throws CoreException {
 		Preconditions.checkNotNull(path);
-		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
-				DEFAULT_TIMEOUT);
-
 		try {
-			HttpGet post = makeGet("/artifacts/" + path);
+			HttpGet post = makeGet(URI.create("artifacts/").resolve(path));
+			post.setConfig(config);
 
 			HttpResponse response = execute(post);
 			if (response.getStatusLine().getStatusCode() != 200) {
@@ -233,9 +225,10 @@ public class Q7ServerApi {
 			HttpEntity resEntity = response.getEntity();
 
 			if (resEntity != null) {
-				InputStream content = resEntity.getContent();
-				FileUtil.copy(content, new BufferedOutputStream(
+				try (InputStream content = resEntity.getContent()) {
+					FileUtil.copy(content, new BufferedOutputStream(
 						new FileOutputStream(toFile)));
+				}
 			} else {
 				throw new CoreException(ClientAppPlugin.createErrorStatus(
 						"null response received", null));
@@ -243,7 +236,7 @@ public class Q7ServerApi {
 
 		} catch (Exception e) {
 			throw new CoreException(ClientAppPlugin.createErrorStatus(
-					"Failed to downoad file: " + path, e));
+					"Failed to download file: " + path, e));
 		}
 	}
 
@@ -252,14 +245,11 @@ public class Q7ServerApi {
 	 */
 	public URI uploadDataAsFile(String suiteID, byte[] data,
 			String artifactName, boolean unzip) throws CoreException {
-		client.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
-				DEFAULT_TIMEOUT);
-
 		String fileName = FileUtil.getID(new Path(artifactName).lastSegment());
 
 		try {
-			HttpPost post = makePost("api/upload");
-
+			HttpPost post = makePost(URI.create("api/upload"));
+			post.setConfig(config);
 			ByteArrayEntity entity = new ByteArrayEntity(data);
 			entity.setContentType("application/q7-filedata");
 			post.setEntity(entity);
@@ -267,7 +257,7 @@ public class Q7ServerApi {
 			post.addHeader("filename", fileName);
 			post.addHeader("suiteid", suiteID);
 
-			HttpEntity resEntity = execute(post).getEntity();
+			HttpEntity resEntity = expect(execute(post), 200).getEntity();
 
 			if (resEntity != null) {
 				String serverUri = EntityUtils.toString(resEntity);
@@ -279,8 +269,15 @@ public class Q7ServerApi {
 
 		} catch (Exception e) {
 			throw new CoreException(ClientAppPlugin.createErrorStatus(
-					"AUT upload failed", e));
+					"Upload failed", e));
 		}
+	}
+
+	private HttpResponse expect(HttpResponse response, int code) throws IOException {
+		if (response.getStatusLine().getStatusCode() != code) {
+			throw new IOException(response.getStatusLine().getReasonPhrase());
+		}
+		return response;
 	}
 
 	public ExecutionResult execute(Command command) throws CoreException, ConnectException {
