@@ -240,7 +240,6 @@ public class Q7HttpServer {
 		configuration.setResponseHeaderSize(64 * 1024);
 		configuration.addCustomizer(new ForwardedRequestCustomizer());
 		connector = new ServerConnector(server, new HttpConnectionFactory(configuration));
-		connector.setIdleTimeout(1000 * 60 * 60 * 24 * 7); // one week
 		connector.setPort(httpPort);
 
 		server.addConnector(connector);

@@ -13,6 +13,8 @@
 package org.eclipse.rcptt.cloud.server.app.internal.http.handlers;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,8 +24,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.BasicInternalEList;
 import org.eclipse.emf.ecore.util.InternalEList;
-import org.eclipse.rcptt.cloud.server.IServerContext;
-import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.ecl.core.Command;
 import org.eclipse.rcptt.ecl.core.CoreFactory;
@@ -36,6 +36,7 @@ import org.eclipse.rcptt.ecl.runtime.EclRuntime;
 import org.eclipse.rcptt.ecl.runtime.IProcess;
 import org.eclipse.rcptt.ecl.runtime.ISession;
 
+import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServlet;
@@ -57,58 +58,70 @@ public class EclExecService extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 
-		ServletInputStream in = req.getInputStream();
-		EObjectInputStream ein = new EObjectInputStream(in,
-				new HashMap<Object, Object>());
-
-		ServletOutputStream out = resp.getOutputStream();
-		EObjectOutputStream eout = new EObjectOutputStream(out,
-				new HashMap<Object, Object>());
-
-		Object eobject = ein.loadEObject();
-		if (!(eobject instanceof Command)) {
-			error(eout, "Received entity is not a command.");
-			return;
-		}
-
-		ISession session = EclRuntime.createSession();
-		try {
-			sessionProperties.forEach(session::putProperty);
-			IProcess process = session.execute((Command) eobject);
-			IStatus status = process.waitFor();
-			if (!status.isOK()) {
-				throw new CoreException(status);
+		AsyncContext async = req.startAsync();
+		async.setTimeout(Duration.of(7, ChronoUnit.DAYS).toMillis());
+		async.start(() -> {
+			try {
+				ServletInputStream in = req.getInputStream();
+				EObjectInputStream ein = new EObjectInputStream(in,
+						new HashMap<Object, Object>());
+				
+				ServletOutputStream out = resp.getOutputStream();
+				EObjectOutputStream eout = new EObjectOutputStream(out,
+						new HashMap<Object, Object>());
+				
+				Object eobject = ein.loadEObject();
+				if (!(eobject instanceof Command)) {
+					error(eout, "Received entity is not a command.");
+					return;
+				}
+				
+				ISession session = EclRuntime.createSession();
+				try {
+					sessionProperties.forEach(session::putProperty);
+					IProcess process = session.execute((Command) eobject);
+					IStatus status = process.waitFor();
+					
+					if (!status.isOK()) {
+						throw new CoreException(status);
+					}
+					
+					write(eout, Status.OK_STATUS);
+					
+					InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
+							InternalEObject.class);
+					
+					while (true) {
+						Object o = process.getOutput().take(1000);
+						if (o == null) {
+							break;
+						}
+						
+						if (o instanceof IStatus) {
+							results.add((InternalEObject) statusConverter
+									.toEObject((IStatus) o));
+							break;
+						}
+						
+						if (o instanceof InternalEObject) {
+							results.add((InternalEObject) o);
+						}
+					}
+					
+					eout.saveEObjects(results, Check.DIRECT_RESOURCE);
+					
+				} catch (CoreException e) {
+					error(eout, e.getStatus());
+				} catch (InterruptedException e) {
+					error(eout, "Unable to complete the command.");
+				}
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			} finally {
+				async.complete();
 			}
-
-			write(eout, Status.OK_STATUS);
-
-			InternalEList<InternalEObject> results = new BasicInternalEList<InternalEObject>(
-					InternalEObject.class);
-
-			while (true) {
-				Object o = process.getOutput().take(1000);
-				if (o == null) {
-					break;
-				}
-
-				if (o instanceof IStatus) {
-					results.add((InternalEObject) statusConverter
-							.toEObject((IStatus) o));
-					break;
-				}
-
-				if (o instanceof InternalEObject) {
-					results.add((InternalEObject) o);
-				}
-			}
-
-			eout.saveEObjects(results, Check.DIRECT_RESOURCE);
-
-		} catch (CoreException e) {
-			error(eout, e.getStatus());
-		} catch (InterruptedException e) {
-			error(eout, "Unable to complete the command.");
-		}
+		});
+		
 
 	}
 
