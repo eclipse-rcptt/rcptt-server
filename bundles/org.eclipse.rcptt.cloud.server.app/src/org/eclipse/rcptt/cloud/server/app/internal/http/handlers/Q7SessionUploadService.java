@@ -58,11 +58,7 @@ public class Q7SessionUploadService extends HttpServlet {
 				return;
 			} else {
 				try (ServletInputStream stream = req.getInputStream()) {
-					URI location = executions.makeRelativePath(artifacts.recieveAUT(stream, fileName, unZip)).get();
-					// TODO: in 2.8.0 add prefix "artifacts" here, remove from client
-					// Client should not be aware of server layout and should be provided with complete URLs
-					// In other words, partial URLs should not be used in network communication
-					// @see https://github.com/eclipse-rcptt/rcptt-server/issues/39
+					URI location = URI.create("artifacts/").resolve(executions.makeRelativePath(artifacts.recieveAUT(stream, fileName, unZip)).get());
 					// @see org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpServer.initializeArtifactsFileStore()
 					outp.print(location);
 				}

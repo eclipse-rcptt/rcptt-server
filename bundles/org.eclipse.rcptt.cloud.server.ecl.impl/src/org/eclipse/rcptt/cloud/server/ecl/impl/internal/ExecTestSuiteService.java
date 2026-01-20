@@ -22,21 +22,19 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.rcptt.ecl.core.Command;
-import org.eclipse.rcptt.ecl.runtime.BoxedValues;
-import org.eclipse.rcptt.ecl.runtime.ICommandService;
-import org.eclipse.rcptt.ecl.runtime.IProcess;
-
 import org.eclipse.rcptt.cloud.model.AgentInfo;
 import org.eclipse.rcptt.cloud.model.AutInfo;
 import org.eclipse.rcptt.cloud.server.AgentRegistry;
-import org.eclipse.rcptt.cloud.server.ExecutionEntry;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.ExecutionProfiler;
 import org.eclipse.rcptt.cloud.server.ecl.impl.internal.execution.IExecutionProfiler;
 import org.eclipse.rcptt.cloud.server.serverCommands.ExecTestSuite;
 import org.eclipse.rcptt.cloud.util.StatusCodes;
+import org.eclipse.rcptt.ecl.core.Command;
+import org.eclipse.rcptt.ecl.runtime.BoxedValues;
+import org.eclipse.rcptt.ecl.runtime.ICommandService;
+import org.eclipse.rcptt.ecl.runtime.IProcess;
 
 public class ExecTestSuiteService implements ICommandService {
 
@@ -64,11 +62,8 @@ public class ExecTestSuiteService implements ICommandService {
 					cmd.getOptions(), cmd.getMetadata(), executions);
 			File reportFile = profiler.getReportFile();
 
-			// TODO: add artifacts prefix, remove from client 
-			// @see org.eclipse.rcptt.cloud.client.Q7ServerApi.downloadFile(URI, File)
-			// @see https://github.com/eclipse-rcptt/rcptt-server/issues/39
-			URI location = executions.makeRelativePath(
-					reportFile).get();
+			URI location = URI.create("artifacts/").resolve(executions.makeRelativePath(
+					reportFile).get());
 
 			context.getOutput().write(BoxedValues.box(location.toASCIIString()));
 		} catch (IOException e) {

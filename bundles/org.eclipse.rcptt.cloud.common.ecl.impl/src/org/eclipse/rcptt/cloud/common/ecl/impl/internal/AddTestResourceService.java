@@ -67,7 +67,7 @@ public class AddTestResourceService implements ICommandService {
 				}
 			} else if (cmd.getArtifactsPath() != null) {
 				File artifactName = new File(executions
-					.getRoot().toURI().resolve(URI.create(cmd.getArtifactsPath())));
+					.getRoot().toURI().resolve(URI.create(removePrefix(cmd.getArtifactsPath()))));
 				try (ZipInputStream zin = new ZipInputStream(
 						new BufferedInputStream(new FileInputStream(
 								artifactName)))) {
@@ -113,5 +113,13 @@ public class AddTestResourceService implements ICommandService {
 			throw new UncheckedIOException(e);
 		}
 		return Status.OK_STATUS;
+	}
+
+	private String removePrefix(String artifactsPath) throws CoreException {
+		final String prefix = "artifacts/";
+		if (!artifactsPath.startsWith(prefix)) {
+			throw new CoreException(Status.error("File not found: " + artifactsPath));
+		}
+		return artifactsPath.substring(prefix.length());
 	}
 }

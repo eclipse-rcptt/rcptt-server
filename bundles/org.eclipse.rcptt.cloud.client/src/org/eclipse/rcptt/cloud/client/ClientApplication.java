@@ -263,6 +263,7 @@ public class ClientApplication extends CommandLineApplication {
 				throw ClientAppPlugin
 						.createException("Can not map server protocol to port number.");
 			}
+			serverUri.resolve("/");
 		} catch (Exception e) {
 			throw ClientAppPlugin.createException("Invalid server URL.", e);
 		}
@@ -1094,7 +1095,7 @@ public class ClientApplication extends CommandLineApplication {
 			if (uri == null) {
 				String serverPath = api.uploadFile(suiteID, zipPath, FileUtil.getID(split[0]), true);
 				if (serverPath != null) {
-					uri = getServerPathURI("artifacts/" +serverPath);
+					uri = getServerPathURI(serverPath);
 					uploadMap.put(zipPath, uri);
 				}
 			}

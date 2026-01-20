@@ -82,6 +82,9 @@ public class Q7ServerApi {
 
 	public Q7ServerApi(URI url) {
 		this.url = url;
+		if (!url.getRawPath().endsWith("/")) {
+			throw new IllegalArgumentException("Base server URL path is expected to end with '/', but was: " + url);
+		}
 		this.client = new SystemDefaultHttpClient();
 		ClientConnectionManager connManager = client.getConnectionManager();
 		if (connManager instanceof PoolingClientConnectionManager) {
@@ -213,7 +216,7 @@ public class Q7ServerApi {
 	public void downloadFile(URI path, File toFile) throws CoreException {
 		Preconditions.checkNotNull(path);
 		try {
-			HttpGet post = makeGet(URI.create("artifacts/").resolve(path));
+			HttpGet post = makeGet(path);
 			post.setConfig(config);
 
 			HttpResponse response = execute(post);
