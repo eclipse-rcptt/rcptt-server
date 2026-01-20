@@ -30,6 +30,7 @@ pipeline {
   stages {
     stage('Maven') {
       steps {
+        sh 'mvn clean install --file maven -Dlicensecheck.skip=true'
         sh 'mvn clean verify -Dlicensecheck.skip=true'
       }
       post {
