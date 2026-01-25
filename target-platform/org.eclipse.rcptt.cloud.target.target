@@ -27,7 +27,7 @@
 		<repository location="http://download.eclipse.org/releases/2025-06"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<repository location="https://download.eclipse.org/rcptt/nightly/2.7.3/latest/repository//"/>
+		<repository location="https://download.eclipse.org/rcptt/nightly/2.7.4/latest/repository/"/>
 		<unit id="org.eclipse.rcptt.modules.launching.feature.group" version="0.0.0"/>
 		<unit id="org.eclipse.rcptt.launching.feature.group" version="0.0.0"/>
 		<unit id="org.eclipse.rcptt.watson.feature.group" version="0.0.0"/>
