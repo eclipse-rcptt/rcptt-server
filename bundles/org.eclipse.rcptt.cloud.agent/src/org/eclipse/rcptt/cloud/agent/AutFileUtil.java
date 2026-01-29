@@ -159,7 +159,7 @@ public class AutFileUtil {
 	}
 	protected static String getAutFileName(AutInfo aut) {
 		
-		return String.format("%s.%s", aut.getId(), getExtension(aut));
+		return aut.getId() + getExtension(aut);
 	}
 
 	protected static String getAutHashFileName(AutInfo aut) {
