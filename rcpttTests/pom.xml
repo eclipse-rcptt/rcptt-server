@@ -143,13 +143,11 @@ Contributors:
               <arg>$${target.ws}</arg>
             </args>
             -->
-						<!-- optional VM args can be set too -->
-						<!--
+						<!-- optional AUT's VM args can be set too -->
 		   <vmArgs>
-			 <vmArg>-Xmx768m</vmArg>
-			 <vmArg>-XX:MaxPermSize=256m</vmArg>
+			 <!--vmArg>-Xmx768m</vmArg-->
+			 <vmArg>-Dorg.eclipse.swt.browser.DefaultType=ie</vmArg>
 		   </vmArgs>
-           -->
 					</aut>
 
 					<q7client>
