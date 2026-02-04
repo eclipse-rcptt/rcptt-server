@@ -12,11 +12,15 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent;
 
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
+import static org.eclipse.core.runtime.Status.error;
 import static org.eclipse.debug.core.DebugPlugin.ATTR_CAPTURE_OUTPUT;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_JRE_CONTAINER_PATH;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS;
 import static org.eclipse.pde.internal.launching.IPDEConstants.APPEND_ARGS_EXPLICITLY;
+import static org.eclipse.rcptt.internal.launching.ecl.ExecAdvancedInfoUtil.askForAdvancedInfo;
 import static org.eclipse.rcptt.launching.IQ7Launch.ATTR_HEADLESS_LAUNCH;
 import static org.eclipse.rcptt.launching.ext.Q7LaunchingUtil.createQ7LaunchConfiguration;
 
@@ -518,11 +522,17 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			// Executables size must equals to 1 because launcher execute with
 			// one scenario.
 			IExecutable exec = execSession.getExecutables()[0];
-			long startTime = System.currentTimeMillis();
+			long startTime = currentTimeMillis();
 
-			while (execSession.isRunning() && !execTimedOut(startTime)) {
+			while (execSession.isRunning()) {
+				final long elapsedSeconds = (currentTimeMillis() - startTime) / 1000;
 				if (monitor.isCanceled()) {
-					execSession.stop(Status.error("Execution timed out"));
+					execSession.stop(askForAdvancedInfo(launch, error(format("Execution is cancelled after %d seconds", elapsedSeconds))));
+					break;
+				}
+				if (execTimedOut(startTime)) {
+					execSession.stop(askForAdvancedInfo(launch, error(format("Execution has timed out after %d seconds", elapsedSeconds))));
+					break;
 				}
 				sleep(WAIT_TIME);
 			}
@@ -574,7 +584,6 @@ public class TestExecutor implements ITestExecutor.Closeable {
 				AgentPlugin.log(status);
 
 				shutdown();
-				throw new TimeoutException(message);
 			}
 
 			if (!testTimeout && execTimedOut(startTime)) {
@@ -825,7 +834,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			}
 			Optional<IVMInstall> result = suitableVm(environment);
 			IVMInstall install = result.orElseThrow(() -> new CoreException(Status.error("Can't find an installed JVM strictly compatible with execution environment " + ee)));
-			VmInstallMetaData metadata = VmInstallMetaData.adapt(install).orElseThrow(() -> new CoreException(Status.error("Can't detect architecture of " + install.getInstallLocation())));
+			VmInstallMetaData metadata = VmInstallMetaData.adapt(install).findFirst().orElseThrow(() -> new CoreException(Status.error("Can't detect architecture of " + install.getInstallLocation())));
 			return Optional.of(metadata);
 		}
 
@@ -847,7 +856,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 		}
 		System.out.println("Trying to use VM from application's ini file: "
 				+ vmFromIni);
-		return Optional.of(VmInstallMetaData.register(vmFromIni));
+		return VmInstallMetaData.register(vmFromIni).findFirst();
 	}
 
 }
