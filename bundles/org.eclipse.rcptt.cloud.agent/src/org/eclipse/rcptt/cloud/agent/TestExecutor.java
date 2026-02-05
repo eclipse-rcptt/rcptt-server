@@ -760,7 +760,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 	public void setTestOptions(TestOptions options) {
 		AgentOptionsHandler agentOptions = new AgentOptionsHandler();
 		agentOptions.applyOptions(options.getValues());
-		timeout = 2 * Q7Launcher.getLaunchTimeout();
+		timeout = Q7Launcher.getLaunchTimeout() + 30;
 		restartAUTOnFailures = agentOptions.isRestartAUTOnFailures();
 	}
 
