@@ -99,7 +99,8 @@ public class AutRegistry {
 	}
 
 	public synchronized ITargetPlatformHelper deployAut(final AutInfo aut,
-			final IProgressMonitor monitor) throws CoreException {
+			final IProgressMonitor origm) throws CoreException {
+		IProgressMonitor monitor = IProgressMonitor.nullSafe(origm);
 		logMonitor.log("deploy aut: " + aut.getId() + " uri: " + aut.getUri(),
 				null);
 		final ITargetPlatformHelper[] target = new ITargetPlatformHelper[] { null };

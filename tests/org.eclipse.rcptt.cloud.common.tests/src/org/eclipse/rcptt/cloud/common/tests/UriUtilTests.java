@@ -39,10 +39,8 @@ public class UriUtilTests {
 	public void testBaseUri() {
 		String uri = "http://maven.xored.com/nexus/content/repositories/vz-snapshots/"
 				+ "org/vozone/sdt/org.vozone.sdt.rcp/4.0.0-SNAPSHOT/org.vozone.sdt.rcp-4.0.0-SNAPSHOT.zip";
-		String zipExpected = "http://maven.xored.com/nexus/content/repositories/vz-snapshots/"
-				+ "org/vozone/sdt/org.vozone.sdt.rcp/4.0.0-SNAPSHOT/org.vozone.sdt.rcp-4.0.0-SNAPSHOT-win32.win32.x86.zip";
-		String md5Expected = "http://maven.xored.com/nexus/content/repositories/vz-snapshots/"
-				+ "org/vozone/sdt/org.vozone.sdt.rcp/4.0.0-SNAPSHOT/org.vozone.sdt.rcp-4.0.0-SNAPSHOT-win32.win32.x86.zip.md5";
+		String zipExpected = uri;
+		String md5Expected = uri + ".md5";
 
 		Assert.assertEquals(zipExpected, UriUtil.autZip(uri, CLASSIFIER));
 		Assert.assertEquals(md5Expected, UriUtil.autMd5(uri, CLASSIFIER));

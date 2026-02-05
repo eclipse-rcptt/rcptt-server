@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +38,10 @@ import java.util.zip.ZipOutputStream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.rcptt.cloud.common.UriUtil;
+import org.eclipse.rcptt.cloud.model.AutInfo;
+import org.eclipse.rcptt.cloud.model.ModelFactory;
+import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 import org.eclipse.rcptt.util.FileUtil;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -46,11 +49,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
-
-import org.eclipse.rcptt.cloud.common.UriUtil;
-import org.eclipse.rcptt.cloud.model.AutInfo;
-import org.eclipse.rcptt.cloud.model.ModelFactory;
-import org.eclipse.rcptt.cloud.util.IOUtil.ISrcFactory;
 
 public class BaseAutProviderTest {
 
@@ -63,10 +61,10 @@ public class BaseAutProviderTest {
 		Path aut2 = archiveResource("resources/aut_2", "aut_2-win32.win32.x86_64.zip");
 		try (BaseAutProvider subject = new Subject()) {
 			AutInfo autInfo = createAutInfo();
-			autInfo.setUri(stripClassifier(aut1.toUri().toString()));
+			autInfo.setUri(aut1.toUri().toString());
 			File result = subject.download(autInfo, "win32.win32.x86_64", new NullProgressMonitor());
 			Assert.assertTrue(result.exists());
-			autInfo.setUri(stripClassifier(aut2.toUri().toString()));
+			autInfo.setUri(aut2.toUri().toString());
 			autInfo.setId("aut2");
 			subject.download(autInfo, "win32.win32.x86_64", new NullProgressMonitor());
 			Assert.assertFalse(result.exists());
@@ -85,7 +83,7 @@ public class BaseAutProviderTest {
 			try (OutputStream os = Files.newOutputStream(file.toPath(), StandardOpenOption.APPEND)) {
 				os.write(new byte[1024*1024]);
 			}
-			autInfo.setUri(stripClassifier(file.toURI().toASCIIString()));
+			autInfo.setUri(file.toURI().toASCIIString());
 			File result = subject.download(autInfo, "linux.gtk.x86_64", new NullProgressMonitor());
 			
 			assertTrue(result.toPath().endsWith("test.txt"));
@@ -124,10 +122,6 @@ public class BaseAutProviderTest {
 				output.write(bytes);
 			}
 		}
-	}
-	
-	private static String stripClassifier(String input) {
-		return input.replaceAll("-win32.win32.x86_64.zip", ".zip").replaceAll("-linux.gtk.x86_64.tar.gz", ".tar.gz");
 	}
 	
 	private AutInfo createAutInfo() {

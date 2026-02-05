@@ -12,6 +12,7 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent;
 
+import static java.util.Collections.singletonList;
 import static org.eclipse.debug.core.DebugPlugin.ATTR_CAPTURE_OUTPUT;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_JRE_CONTAINER_PATH;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS;
@@ -27,11 +28,13 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -82,6 +85,7 @@ import org.eclipse.rcptt.launching.AutLaunchState;
 import org.eclipse.rcptt.launching.AutManager;
 import org.eclipse.rcptt.launching.IExecutable;
 import org.eclipse.rcptt.launching.Q7Launcher;
+import org.eclipse.rcptt.launching.ext.JvmTargetCompatibility;
 import org.eclipse.rcptt.launching.ext.Q7LaunchDelegateUtils;
 import org.eclipse.rcptt.launching.ext.Q7LaunchingUtil;
 import org.eclipse.rcptt.launching.ext.VmInstallMetaData;
@@ -251,9 +255,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 
 			config.setAttribute(ATTR_HEADLESS_LAUNCH, true);
 			config.setAttribute(ATTR_CAPTURE_OUTPUT, true);
-			findVm().ifPresent(metadata -> 
-				config.setAttribute(ATTR_JRE_CONTAINER_PATH, metadata.formatVmContainerPath())
-			);
+			config.setAttribute(ATTR_JRE_CONTAINER_PATH, findVm().formatVmContainerPath());
 			String vmargs = Q7LaunchDelegateUtils.getJoinedVMArgs(helper,
 					aut.getVmArgs());
 			config.setAttribute(ATTR_VM_ARGUMENTS, vmargs);
@@ -269,8 +271,6 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			Aut aut = AutManager.INSTANCE.getByLaunch(savedConfig);
 
 			Q7TargetPlatformManager.setHelper(config, helper);
-			CachedInfo info = LaunchInfoCache.getInfo(savedConfig);
-			info.target = helper;
 			long start = System.currentTimeMillis();
 			launch = aut.launch(new NullProgressMonitor());
 			long end = System.currentTimeMillis();
@@ -816,29 +816,37 @@ public class TestExecutor implements ITestExecutor.Closeable {
 		}
 	}
 
-	private Optional<VmInstallMetaData> findVm() throws CoreException {
+	private VmInstallMetaData findVm() throws CoreException {
 		String ee = aut.getExecutionEnvironment();
+		var compatibility = new JvmTargetCompatibility(helper); 
 		if (ee != null) {
 			IExecutionEnvironment environment = JavaRuntime.getExecutionEnvironmentsManager().getEnvironment(ee);
 			if (environment == null) {
 				throw new CoreException(Status.error("Can't find execution environment " + ee));
 			}
-			Optional<IVMInstall> result = suitableVm(environment);
-			IVMInstall install = result.orElseThrow(() -> new CoreException(Status.error("Can't find an installed JVM strictly compatible with execution environment " + ee)));
-			VmInstallMetaData metadata = VmInstallMetaData.adapt(install).findFirst().orElseThrow(() -> new CoreException(Status.error("Can't detect architecture of " + install.getInstallLocation())));
-			return Optional.of(metadata);
+			return compatibility.selectCompatibile(suitableVm(environment).toList());
 		}
 
-		return addJvmFromIniFile();
+		Optional<VmInstallMetaData> result = addJvmFromIniFile();
+		if (result.isPresent()) {
+			return compatibility.selectCompatibile(singletonList(result.get()));
+		}
+		
+		result = compatibility.findVM().findFirst();
+		if (result.isPresent()) {
+			return result.get();
+		}
+		throw new CoreException(Status.error("Can't find compatible JVM:\n" + compatibility.explainJvmRequirements()));
 	}
 
-	private Optional<IVMInstall> suitableVm(IExecutionEnvironment e) {
+	private Stream<VmInstallMetaData> suitableVm(IExecutionEnvironment e) {
 		IVMInstall result = e.getDefaultVM();
 		if (result != null) {
-			return Optional.of(result);
+			return VmInstallMetaData.adapt(result);
 		}
-		return Arrays.stream(e.getCompatibleVMs()).filter(e::isStrictlyCompatible).findFirst();
+		return Arrays.stream(e.getCompatibleVMs()).filter(e::isStrictlyCompatible).flatMap(VmInstallMetaData::adapt);
 	}
+	
 	
 	private Optional<VmInstallMetaData> addJvmFromIniFile() throws CoreException {
 		Path vmFromIni = helper.getJavaHome().orElse(null);

@@ -26,11 +26,6 @@ import java.util.regex.Pattern;
  * 
  */
 public class UriUtil {
-	private static String classify(String base, String classifier) {
-		String[] nameAndExt = nameAndExt(base);
-		return String.format("%s-%s%s", nameAndExt[0], classifier,
-				nameAndExt[1]);
-	}
 	/**
 	 * Splits file name to base name and extension (with a dot) No extension
 	 * gives empty string
@@ -52,14 +47,14 @@ public class UriUtil {
 
 	public static String autZip(String url, String classifier) {
 		if (!containsSubstitution(url)) {
-			return classify(url, classifier);
+			return url;
 		}
 		return substituteClassifierAndExt(url, classifier, "zip");
 	}
 
 	public static String autMd5(String url, String classifier) {
 		if (!containsSubstitution(url)) {
-			return md5(classify(url, classifier));
+			return md5(url);
 		}
 		String rv = substituteClassifierAndExt(url, classifier, "zip.md5");
 		if (rv.contains("zip.md5"))
