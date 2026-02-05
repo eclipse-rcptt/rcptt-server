@@ -12,12 +12,16 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.agent;
 
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.singletonList;
+import static org.eclipse.core.runtime.Status.error;
 import static org.eclipse.debug.core.DebugPlugin.ATTR_CAPTURE_OUTPUT;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_JRE_CONTAINER_PATH;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS;
 import static org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS;
 import static org.eclipse.pde.internal.launching.IPDEConstants.APPEND_ARGS_EXPLICITLY;
+import static org.eclipse.rcptt.internal.launching.ecl.ExecAdvancedInfoUtil.askForAdvancedInfo;
 import static org.eclipse.rcptt.launching.IQ7Launch.ATTR_HEADLESS_LAUNCH;
 import static org.eclipse.rcptt.launching.ext.Q7LaunchingUtil.createQ7LaunchConfiguration;
 
@@ -28,7 +32,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +79,6 @@ import org.eclipse.rcptt.internal.launching.ExecutionSession;
 import org.eclipse.rcptt.internal.launching.ExecutionStatus;
 import org.eclipse.rcptt.internal.launching.Q7TestLaunch;
 import org.eclipse.rcptt.internal.launching.aut.BaseAutLaunch;
-import org.eclipse.rcptt.internal.launching.aut.LaunchInfoCache;
-import org.eclipse.rcptt.internal.launching.aut.LaunchInfoCache.CachedInfo;
 import org.eclipse.rcptt.internal.launching.ext.Q7TargetPlatformManager;
 import org.eclipse.rcptt.launching.Aut;
 import org.eclipse.rcptt.launching.AutLaunch;
@@ -518,11 +519,17 @@ public class TestExecutor implements ITestExecutor.Closeable {
 			// Executables size must equals to 1 because launcher execute with
 			// one scenario.
 			IExecutable exec = execSession.getExecutables()[0];
-			long startTime = System.currentTimeMillis();
+			long startTime = currentTimeMillis();
 
-			while (execSession.isRunning() && !execTimedOut(startTime)) {
+			while (execSession.isRunning()) {
+				final long elapsedSeconds = (currentTimeMillis() - startTime) / 1000;
 				if (monitor.isCanceled()) {
-					execSession.stop(Status.error("Execution timed out"));
+					execSession.stop(askForAdvancedInfo(launch, error(format("Execution is cancelled after %d seconds", elapsedSeconds))));
+					break;
+				}
+				if (execTimedOut(startTime)) {
+					execSession.stop(askForAdvancedInfo(launch, error(format("Execution has timed out after %d seconds", elapsedSeconds))));
+					break;
 				}
 				sleep(WAIT_TIME);
 			}
@@ -574,7 +581,6 @@ public class TestExecutor implements ITestExecutor.Closeable {
 				AgentPlugin.log(status);
 
 				shutdown();
-				throw new TimeoutException(message);
 			}
 
 			if (!testTimeout && execTimedOut(startTime)) {
@@ -751,7 +757,7 @@ public class TestExecutor implements ITestExecutor.Closeable {
 	public void setTestOptions(TestOptions options) {
 		AgentOptionsHandler agentOptions = new AgentOptionsHandler();
 		agentOptions.applyOptions(options.getValues());
-		timeout = 2 * Q7Launcher.getLaunchTimeout();
+		timeout = Q7Launcher.getLaunchTimeout() + 30;
 		restartAUTOnFailures = agentOptions.isRestartAUTOnFailures();
 	}
 
