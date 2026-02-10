@@ -1,5 +1,8 @@
 package org.eclipse.rcptt.cloud.agent;
 
+import static java.lang.System.currentTimeMillis;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.closeTo;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -115,7 +118,7 @@ public class TestExecutorTest {
 		assertEquals(IStatus.ERROR, info.getResult().getSeverity());
 	}
 	
-	@Test(timeout=36000)
+	@Test
 	public void respectLaunchTimeout() throws CoreException, TimeoutException {
 			TestExecutor subject = new TestExecutor(autInfo());
 			closer.register(subject::shutdown);
@@ -123,9 +126,22 @@ public class TestExecutorTest {
 			subject.deployAut(MONITOR);
 			subject.startAut(MONITOR);
 			script.setContent("wait 100000");
+			
+			Q7Launcher.setLaunchTimeout(1);
+			long start = currentTimeMillis();
 			Report report = subject.runTest(0, testStore, MONITOR);
+			long stop = currentTimeMillis();
 			Q7Info info = ReportHelper.getInfoOnly(report.getRoot());
 			assertEquals(IStatus.ERROR, info.getResult().getSeverity());
+			assertThat((stop - start)/1000., closeTo(2, 2));
+			
+			Q7Launcher.setLaunchTimeout(5);
+			start = currentTimeMillis();
+			report = subject.runTest(0, testStore, MONITOR);
+			stop = currentTimeMillis();
+			info = ReportHelper.getInfoOnly(report.getRoot());
+			assertEquals(IStatus.ERROR, info.getResult().getSeverity());
+			assertThat((stop - start)/1000., closeTo(6, 2));
 	}
 
 	
