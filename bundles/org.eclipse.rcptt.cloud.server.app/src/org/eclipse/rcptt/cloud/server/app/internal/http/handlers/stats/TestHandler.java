@@ -22,23 +22,13 @@ import java.io.StringWriter;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
-
+import java.util.Optional;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-import org.eclipse.rcptt.reporting.Q7Info;
-import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
-import org.eclipse.rcptt.reporting.html.FullSingleTestHtmlRenderer;
-import org.eclipse.rcptt.reporting.util.ReportUtils;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Screenshot;
-import org.eclipse.rcptt.sherlock.core.streams.SherlockReportIterator;
-
-import com.google.common.base.Function;
-import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.ServerPlugin;
 import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
@@ -52,6 +42,16 @@ import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+import org.eclipse.rcptt.ecl.core.EclString;
+import org.eclipse.rcptt.reporting.Q7Info;
+import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
+import org.eclipse.rcptt.reporting.html.FullSingleTestHtmlRenderer;
+import org.eclipse.rcptt.reporting.util.ReportUtils;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
+import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Screenshot;
+import org.eclipse.rcptt.sherlock.core.streams.SherlockReportIterator;
+
+import com.google.common.base.Function;
 
 public class TestHandler extends Handler.Abstract {
 	public static final String URI = "/info/test";
@@ -127,6 +127,9 @@ public class TestHandler extends Handler.Abstract {
 							w.println("Suite Name: " + stats.getSuiteName() + "<br>");
 							w.println("Global Suite index: " + stats.getSuiteName() + "<br>");
 							w.println("Session: " + new Date(exec.getStartTime()) + "<br>");
+							Optional.ofNullable(resultReport.getRoot().getProperties().get(IQ7ReportConstants.AGENTID)).ifPresent(agent -> {
+								w.println("Agent: " + ((EclString)agent).getValue() + "<br>");
+							});
 							FullSingleTestHtmlRenderer renderer = new FullSingleTestHtmlRenderer(
 									w, DecimalFormat.getInstance(),
 									new Function<Screenshot, String>() {
