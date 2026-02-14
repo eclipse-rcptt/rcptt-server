@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Q7 Server agent" uid="org.eclipse.rcptt.cloud.agent.product" application="org.eclipse.rcptt.cloud.agent.app.headless" version="2.7.2.qualifier" type="features" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="Q7 Server agent" uid="org.eclipse.rcptt.cloud.agent.product" application="org.eclipse.rcptt.cloud.agent.app.headless" version="2.7.3.qualifier" type="features" includeLaunchers="true" autoIncludeRequirements="true">
 
    <configIni use="default">
    </configIni>
