@@ -30,7 +30,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.rcptt.reporting.html;bundle-version="[2.3.0,3.0.0)",
  org.eclipse.rcptt.reporting.util;bundle-version="[2.3.0,3.0.0)",
  org.eclipse.jetty.ee10.servlet,
- jakarta.servlet-api;bundle-version="6.0.0"
+ jakarta.servlet-api;bundle-version="6.0.0",
+ org.eclipse.rcptt.ecl.core;bundle-version="[2.7.0,3.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Eclipse-BundleShape: dir
