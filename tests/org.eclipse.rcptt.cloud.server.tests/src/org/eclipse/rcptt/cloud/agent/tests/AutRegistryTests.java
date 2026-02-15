@@ -19,11 +19,9 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -124,7 +122,7 @@ public class AutRegistryTests {
 		}
 
 		@Override
-		public String getIniVMArgs() {
+		public List<String> getIniVMArgs() {
 			// TODO Auto-generated method stub
 			return null;
 		}
@@ -210,6 +208,12 @@ public class AutRegistryTests {
 		public int size() {
 			// TODO Auto-generated method stub
 			return 0;
+		}
+
+		@Override
+		public Map<String, String> systemProperties() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 
 	}
