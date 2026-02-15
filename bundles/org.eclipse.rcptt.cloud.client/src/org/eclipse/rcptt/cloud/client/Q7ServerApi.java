@@ -219,7 +219,18 @@ public class Q7ServerApi {
 			HttpGet post = makeGet(path);
 			post.setConfig(config);
 
+			// RCPTT Server 2.7 compatibility
 			HttpResponse response = execute(post);
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+				post.releaseConnection();
+				post = makeGet(URI.create("artifacts/").resolve(path));
+				post.setConfig(config);
+				HttpResponse response2 = execute(post);
+				if (response2.getStatusLine().getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+					response = response2;
+				}
+			}
+			
 			if (response.getStatusLine().getStatusCode() != 200) {
 				throw new CoreException(ClientAppPlugin.createErrorStatus(
 						response.getStatusLine().toString(), null));
