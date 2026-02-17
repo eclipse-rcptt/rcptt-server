@@ -22,6 +22,7 @@ jobs:
         id: cascade
         uses: basilevs/cascade-merge@v1
         with:
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           dependency_graph: |
             release/2.6: release/2.7
             release/2.7: main
