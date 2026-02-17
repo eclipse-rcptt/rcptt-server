@@ -5,7 +5,7 @@ on:
     workflows: ["Verify"] # A workflow that verifies your maintenance branches
     types: [completed] # The only compatible status
     #branches-ignore: ["merge/**"] # these are created by the action and have to be manually merged
-    branches: [release/2.6, release/2.7, main] # To reduce worfklow report noise, enumerate all origin branches from dependency_graph below. Optional, action will do nothing if branch is not represented in dependency_graph. Conflicts with branches-ignore. 
+    branches: [release/2.6, release/2.7, main, upstream] # To reduce worfklow report noise, enumerate all origin branches from dependency_graph below. Optional, action will do nothing if branch is not represented in dependency_graph. Conflicts with branches-ignore. 
 
 jobs:
   cascade:
