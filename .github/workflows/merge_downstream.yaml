@@ -27,3 +27,4 @@ jobs:
             release/2.6: release/2.7
             release/2.7: main
             main: timeout_45
+            upstream: downstream
