@@ -12,24 +12,18 @@
  ********************************************************************************/
 package org.eclipse.rcptt.cloud.server.app.internal.http.handlers.stats;
 
+import static java.util.Objects.requireNonNull;
 import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils.getExecutionCopy;
 import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils.getStatsCopy;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.stream.Stream;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-import org.eclipse.rcptt.reporting.Q7Info;
-import org.eclipse.rcptt.reporting.core.IQ7ReportConstants;
-import org.eclipse.rcptt.reporting.core.SimpleSeverity;
-import org.eclipse.rcptt.reporting.util.ReportUtils;
-import org.eclipse.rcptt.sherlock.core.model.sherlock.report.Report;
-import org.eclipse.rcptt.sherlock.core.streams.SherlockReportIterator;
-
-import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
+import org.eclipse.rcptt.cloud.server.IReports;
 import org.eclipse.rcptt.cloud.server.app.ReportHelper;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.Q7AbstractHandler;
@@ -38,9 +32,20 @@ import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandle;
 import org.eclipse.rcptt.cloud.server.ism.internal.ISMHandleStore;
 import org.eclipse.rcptt.cloud.server.ism.stats.Execution;
 import org.eclipse.rcptt.cloud.server.ism.stats.SuiteStats;
+import org.eclipse.rcptt.reporting.core.SimpleSeverity;
+import org.eclipse.rcptt.reporting.util.ReportEntry;
+import org.eclipse.rcptt.reporting.util.ReportUtils;
+
+import com.google.common.html.HtmlEscapers;
 
 public class ExecutionHandler extends Q7AbstractHandler {
 	public static final String URI = "/info/execution";
+	private final IReports reports;
+
+	public ExecutionHandler(IReports reports) {
+		super();
+		this.reports = requireNonNull(reports);
+	}
 
 	@Override
 	public boolean handle(Request request, Response response, Callback callback)
@@ -105,54 +110,43 @@ public class ExecutionHandler extends Q7AbstractHandler {
 					if (exec.getReportFile() == null) {
 						buffer.append("<tr><td>No report</td></tr>");
 					} else {
-						File reportFile = new File(execHandle.getFileRoot(),
-								exec.getReportFile());
-						SherlockReportIterator iterator = new SherlockReportIterator(
-								reportFile);
-						try {
 
+						try (Stream<ReportEntry> entries = reports.readReports(execHandle.getFileRoot().toPath().resolve(exec.getReportFile()))) {
+
+							var iterator = entries.iterator();
 							StringBuilder tempBuffer = new StringBuilder();
 							StringBuilder passedBuffer = new StringBuilder();
 
 							while (iterator.hasNext()) {
 								tempBuffer = new StringBuilder();
-								Report report = iterator.next();
+								ReportEntry report = iterator.next();
 								if (report == null) {
 									break;
 								}
-								Object root = report.getRoot().getProperties()
-										.get(IQ7ReportConstants.ROOT);
-
-								Q7Info info = (Q7Info) root;
 								tempBuffer.append("<tr>");
 								String testURI = TestHandler.URI + "?" + suiteID
-										+ "&" + id + "&" + info.getId();
+										+ "&" + id + "&" + report.id;
 
 								tempBuffer.append("<td>" + "<a href=\"" + testURI
-										+ "\">" + report.getRoot().getName()
+										+ "\">" + report.name
 										+ "</a></td>");
-								SimpleSeverity severity = SimpleSeverity.create(info);
-								String out =  ImageUtil.getSeverityImageTag(severity);
+								String out =  ImageUtil.getSeverityImageTag(report.getSimpleSeverity());
 
 								tempBuffer.append("<td>" + out + "</td>");
 								tempBuffer.append("<td>"
-										+ ReportUtils.getTime(report.getRoot())
+										+ ReportUtils.formatTime(report.time)
 										+ "</td>");
-								String msg = ReportUtils.getFailMessage(report
-										.getRoot());
+								String msg =  ReportUtils.replaceLineBreaks(HtmlEscapers.htmlEscaper().escape(report.message));
 								tempBuffer.append("<td>"
 										+ (msg == null ? " " : msg) + "</td>");
 								tempBuffer.append("</tr>");
-								if (severity == SimpleSeverity.ERROR) {
+								if (report.getSimpleSeverity() == SimpleSeverity.ERROR) {
 									buffer.append(tempBuffer);
 								} else {
 									passedBuffer.append(tempBuffer.toString());
 								}
 							}
 							buffer.append(passedBuffer.toString());
-
-						} finally {
-							iterator.close();
 						}
 					}
 					buffer.append("</table>");
