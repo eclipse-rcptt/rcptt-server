@@ -68,24 +68,24 @@ public class ExecutionRegistryTests {
 		assertEquals(2, subject.getExecutions(b).getHandles().size());
 		
 		List<ISMHandle<SuiteStats>> allSuites = List.of(a, b);
-		subject.removeOldExecutions(allSuites, 100, 100);
+		subject.removeOldExecutions(allSuites, 100, 100, (ignored) -> {});
 		assertEquals(1, subject.getExecutions(a).getHandles().size());
 		assertEquals(2, subject.getExecutions(b).getHandles().size());
 		
-		subject.removeOldExecutions(allSuites, 1, 100);
+		subject.removeOldExecutions(allSuites, 1, 100, (ignored) -> {});
 		assertEquals(1, subject.getExecutions(a).getHandles().size());
 		assertEquals(2, subject.getExecutions(b).getHandles().size());
 		
-		subject.removeOldExecutions(allSuites, 1, 2);
+		subject.removeOldExecutions(allSuites, 1, 2, (ignored) -> {});
 		
 		assertEquals(0, subject.getExecutions(a).getHandles().size());
 		assertEquals(2, subject.getExecutions(b).getHandles().size());
 		
-		subject.removeOldExecutions(allSuites, 1, 2);
+		subject.removeOldExecutions(allSuites, 1, 2, (ignored) -> {});
 		assertEquals(0, subject.getExecutions(a).getHandles().size());
 		assertEquals(2, subject.getExecutions(b).getHandles().size());
 		
-		subject.removeOldExecutions(allSuites, 1, 1);
+		subject.removeOldExecutions(allSuites, 1, 1, (ignored) -> {});
 		assertEquals(0, subject.getExecutions(a).getHandles().size());
 		assertEquals(1, subject.getExecutions(b).getHandles().size());
 	}

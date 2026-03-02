@@ -17,6 +17,7 @@ import static java.util.Objects.requireNonNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
@@ -55,6 +56,7 @@ import org.eclipse.jetty.util.Attributes;
 import org.eclipse.rcptt.cloud.server.ExecutionIndex;
 import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.IServerContext;
+import org.eclipse.rcptt.cloud.server.IndexedExecutionReports;
 import org.eclipse.rcptt.cloud.server.app.internal.HashedFileRepository;
 import org.eclipse.rcptt.cloud.server.app.internal.ServerAppPlugin;
 import org.eclipse.rcptt.cloud.server.app.internal.WeakValueRepository;
@@ -88,6 +90,8 @@ public class Q7HttpServer {
 	private final WeakValueRepository<String, InputStream> cache;
 	private final ExecutionRegistryRepositoryCacheAdapter executionsCache = new ExecutionRegistryRepositoryCacheAdapter();
 	private final ExecutionRegistry executions = new ExecutionRegistry(executionsCache);
+	private final IndexedExecutionReports reports = new IndexedExecutionReports();
+
 	ExecutionIndex execIndex = new ExecutionIndex(null, executions);
 	
 	private final IServerContext serverContext = new IServerContext() {
@@ -137,7 +141,13 @@ public class Q7HttpServer {
 			LOG.log(status);
 		}
 		executions.addNewSuiteHook(() -> {
-			executions.removeOldExecutions(suiteStore.getHandles(), Integer.MAX_VALUE, keepSessions);
+			executions.removeOldExecutions(suiteStore.getHandles(), Integer.MAX_VALUE, keepSessions, toDelete -> {
+				try {
+					reports.close(toDelete);
+				} catch (IOException e) {
+					throw new UncheckedIOException("Can't close " + toDelete, e);
+				}
+			});
 		});
 
 		GetHTTPServerInfoService.setPort(httpPort);
@@ -257,10 +267,10 @@ public class Q7HttpServer {
 				wrapInContext(IndexHandler.URI, new IndexHandler()),
 				wrapInContext(SessionLogsHandler.URI, new SessionLogsHandler()),
 				wrapInContext(AgentInfoHandler.URI, new AgentInfoHandler()),
-				wrapInContext(TestHandler.URI, new TestHandler()),
+				wrapInContext(TestHandler.URI, new TestHandler(reports)),
 				wrapInContext(ExecutionByAgentsHandler.URI,
 						new ExecutionByAgentsHandler()),
-				wrapInContext(ExecutionHandler.URI, new ExecutionHandler()),
+				wrapInContext(ExecutionHandler.URI, new ExecutionHandler(reports)),
 				wrapInContext(SuiteHandler.URI, new SuiteHandler()),
 				wrapInContext(TestSuitesHandler.URI, new TestSuitesHandler()),
 				wrapInContext(TerminateSessionHandle.URI,
@@ -352,8 +362,15 @@ public class Q7HttpServer {
 
 	public void stop() {
 		try {
-			server.stop();
-			cache.close();
+			try {
+				try {
+					server.stop();
+				} finally {
+					cache.close();
+				}
+			} finally {
+				reports.close();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
@@ -161,13 +162,14 @@ public class ExecutionRegistry {
 		);
 	}
 
-	public void removeOldExecutions(Collection<ISMHandle<SuiteStats>> suites, int maxArtifacts, int maxExecutions) {
+	public void removeOldExecutions(Collection<ISMHandle<SuiteStats>> suites, int maxArtifacts, int maxExecutions, Consumer<Path> beforeDeletion) {
 		List<ExecutionStart> allExecutions = suites.stream().<ExecutionStart>flatMap(s -> getExecutions(s).getHandles().stream().map(e -> ExecutionStart.create(e, s)) ).sorted().collect(Collectors.toCollection(ArrayList::new));
 		int deleteCount = allExecutions.size() - maxExecutions; 
 		if (deleteCount > 0) {
 			List<ExecutionStart> toDelete = allExecutions.subList(0, deleteCount);
 			for (ExecutionStart i: toDelete) {
 				if (i.done()) {
+					beforeDeletion.accept(i.execution.getFileRoot().toPath());
 					i.execution().remove();
 				}
 			}
