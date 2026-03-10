@@ -68,10 +68,12 @@ public final class Q7ArtifactLoader {
 		public final HashCode hash;
 		public final HandleType kind;
 		public final String path;
+		public final boolean skipped;
 
 		
-		private ArtifactHandle(String id, String name, List<String> verifications, List<String> contexts, IQ7NamedElement element) throws ModelException {
+		private ArtifactHandle(String id, String name, List<String> verifications, List<String> contexts, IQ7NamedElement element, boolean skipped) throws ModelException {
 			super();
+			this.skipped = skipped;
 			this.id = requireNonNull(id);
 			this.name = requireNonNull(name);
 			this.verifications = List.copyOf(verifications);
@@ -237,12 +239,12 @@ public final class Q7ArtifactLoader {
 				String name = namedElement.getName();
 				if (element instanceof ITestCase
 						&& isSkipExecuton((ITestCase) element)) {
-					return Stream.empty();
+					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base, true));
 				}
 				if (element instanceof ITestCase testcase) {
 					IContext[] contexts = RcpttCore.getInstance().getContexts(testcase, WorkspaceFinder.getInstance(), false);
 					Stream<CartesianFlattener.NamedSequence> variants = flattener.resolve(Arrays.stream(contexts).filter(c -> ! RcpttCore.DEFAULT_WORKBENCH_CONTEXT_ID.equals(encode(c::getID).get())).map(encode(IContext::getID)).toList(), name);
-					return variants.map(encode((CartesianFlattener.NamedSequence s) -> new ArtifactHandle(formatExecutionId(id, s.name()),  formatExecutionName(name, s.name()), getVerifications(testcase), s.sequence(), base)));
+					return variants.map(encode((CartesianFlattener.NamedSequence s) -> new ArtifactHandle(formatExecutionId(id, s.name()),  formatExecutionName(name, s.name()), getVerifications(testcase), s.sequence(), base, false)));
 				} else if (element instanceof IContext) {
 					if (namedElement instanceof GroupContext) {
 						return Stream.empty();
@@ -250,9 +252,9 @@ public final class Q7ArtifactLoader {
 					if (namedElement instanceof SuperContext) {
 						return Stream.empty();
 					}
-					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base));
+					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base, false));
 				} else if (element instanceof IVerification) {
-					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base));
+					return Stream.of(new ArtifactHandle(id, namedElement.getName(), List.of(), List.of(), base, false));
 				}
 			} catch (CheckedExceptionWrapper e) {
 				e.rethrow(CoreException.class);
