@@ -127,6 +127,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -466,7 +467,8 @@ public class ClientApplication extends CommandLineApplication {
 
 			if (junitReport != null) {
 				logInfo("Generate JUnit Report.");
-				createJunitReport(summary);
+				Iterable<Report> skippedReports = skipedTests.stream().map(t -> ReportUtil.generateSkippedReport(t.id, t.name, "Skipped by tags")).toList();
+				createJunitReport(Iterables.concat(summary, skippedReports));
 			}
 
 			logInfo("Generate per Agent launch configurations.");
@@ -588,7 +590,7 @@ public class ClientApplication extends CommandLineApplication {
 		return f;
 	}
 
-	private void createJunitReport(Q7ReportIterator report) {
+	private void createJunitReport(Iterable<Report> report) {
 		final File result = new File(junitReport);
 		result.getParentFile().mkdirs();
 		JUnitFileReportGenerator junitGenerator = new JUnitFileReportGenerator();
@@ -637,11 +639,16 @@ public class ClientApplication extends CommandLineApplication {
 
 	private URI reportUri;
 
+	private List<ArtifactHandle> skipedTests = new ArrayList<>();
 	private void loadArtifactRefs() throws CoreException, InterruptedException, InvalidCommandLineArgException {
 		Set<String> idsToRemove = new HashSet<>();
 		List<ArtifactHandle> problemElements = new ArrayList<>();
 		loader.findArtifacts(suites).forEachOrdered(entry-> {
 			String id = entry.id;
+			if (entry.skipped) {
+				skipedTests.add(entry);
+				return;
+			}
 			if (resourcesById.containsKey(id)) {
 				idsToRemove.add(id);
 				problemElements.add(entry);
