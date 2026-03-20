@@ -19,11 +19,15 @@ import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
@@ -97,14 +101,18 @@ public class TestHandler extends Handler.Abstract {
 						Response.writeError(request, response, callback, HttpStatus.NOT_FOUND_404);
 						return true;
 					}
+					final Path path = execHandle.getFileRoot().toPath().resolve(exec.getReportFile());
+					if (handleLastModified(request, response, callback, path)) {
+						return true;
+					}
 					Optional<Report> resultReportOptional = reports
-							.getReportById(execHandle.getFileRoot().toPath().resolve(exec.getReportFile()), reportID);
+							.getReportById(path, reportID);
 					if (!resultReportOptional.isPresent()) {
 						Response.writeError(request, response, callback, HttpStatus.NOT_FOUND_404);
 						return true;
 					}
-
 					Report resultReport = resultReportOptional.get();
+					response.getHeaders().add(HttpHeader.CACHE_CONTROL, "max-age=604800, stale-while-revalidate=86400");
 					final List<Screenshot> screenShots = ReportUtils.findScreenshots(resultReport.getRoot());
 					if (screenshotID != null) {
 						try {
@@ -150,6 +158,21 @@ public class TestHandler extends Handler.Abstract {
 		}
 		callback.succeeded();
 		return true;
+	}
+
+	public static boolean handleLastModified(Request request, Response response, Callback callback, final Path path)
+			throws IOException {
+		if (!Files.exists(path)) {
+			Response.writeError(request, response, callback, HttpStatus.NOT_FOUND_404);
+			return true;
+		}
+		final String lastModified = Files.getLastModifiedTime(path).toString();
+		if (Objects.equals(request.getHeaders().get(HttpHeader.IF_MODIFIED_SINCE), lastModified)) {
+			Response.writeError(request, response, callback, HttpStatus.NOT_MODIFIED_304);
+			return true;
+		}
+		response.getHeaders().put(HttpHeader.LAST_MODIFIED, lastModified);
+		return false;
 	}
 
 	private static boolean sendScreenShot(Response response, final List<Screenshot> screenShots, int id)

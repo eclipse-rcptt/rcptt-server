@@ -25,7 +25,6 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-import org.eclipse.rcptt.cloud.server.ExecutionRegistry;
 import org.eclipse.rcptt.cloud.server.app.ContextEscape;
 import org.eclipse.rcptt.cloud.server.app.internal.http.Q7HttpUtils;
 import org.eclipse.rcptt.cloud.server.app.internal.http.handlers.AgentInfoHandler;
@@ -80,7 +79,7 @@ public class SuiteHandler extends Handler.Abstract {
 				List<ISMHandle<Execution>> executions = execsStore.getHandles().stream().sorted(Comparator.comparing(ISMHandle::getFileName)).toList();
 				for (ISMHandle<Execution> execution : executions.reversed()) {
 					Execution exec = execution.apply(getExecutionCopy);
-					String detailsURI = ExecutionHandler.URI + "?" + suiteID
+					String detailsURI = ExecutionHandler.URI + "/?" + suiteID
 							+ "&" + execution.getFileName();
 					buffer.append("<tr>");
 					buffer.append("<td><a href=\"" + detailsURI + "\">"
