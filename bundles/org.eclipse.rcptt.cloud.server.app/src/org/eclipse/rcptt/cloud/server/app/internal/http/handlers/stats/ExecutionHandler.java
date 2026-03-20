@@ -17,6 +17,7 @@ import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils
 import static org.eclipse.rcptt.cloud.server.app.internal.http.handlers.ISMUtils.getStatsCopy;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.stream.Stream;
 
@@ -107,11 +108,15 @@ public class ExecutionHandler extends Q7AbstractHandler {
 					buffer.append("<th>Message</th>");
 					buffer.append("</tr>");
 
-					if (exec.getReportFile() == null) {
+					final String reportFile = exec.getReportFile();
+					if (reportFile == null) {
 						buffer.append("<tr><td>No report</td></tr>");
 					} else {
-
-						try (Stream<ReportEntry> entries = reports.readReports(execHandle.getFileRoot().toPath().resolve(exec.getReportFile()))) {
+						final Path reportPath = execHandle.getFileRoot().toPath().resolve(reportFile);
+						if (TestHandler.handleLastModified(request, response, callback, reportPath)) {
+							return true;
+						}
+						try (Stream<ReportEntry> entries = reports.readReports(reportPath)) {
 
 							var iterator = entries.iterator();
 							StringBuilder tempBuffer = new StringBuilder();
@@ -124,7 +129,7 @@ public class ExecutionHandler extends Q7AbstractHandler {
 									break;
 								}
 								tempBuffer.append("<tr>");
-								String testURI = TestHandler.URI + "?" + suiteID
+								String testURI = TestHandler.URI + "/?" + suiteID
 										+ "&" + id + "&" + report.id;
 
 								tempBuffer.append("<td>" + "<a href=\"" + testURI
