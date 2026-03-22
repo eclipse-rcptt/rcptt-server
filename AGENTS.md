@@ -10,17 +10,21 @@ In addition to the basic build in README, use these for validation:
 - **Build with Tests:** `mvn clean install -e -Dlicensecheck.skip=true`
 - **Run Tests Only:** `mvn verify -e -Dlicensecheck.skip=true`
 
-## Code Style & Conventions
+## Code Style
 - **OSGi Bundles:** Adhere to Eclipse plugin structures (check `MANIFEST.MF` for dependencies).
 
-## Naming Conventions
-- **Bundles:** Use the prefix `org.eclipse.rcptt.cloud.` followed by the module name (e.g., `org.eclipse.rcptt.cloud.server`).
-- **Packages:** Mirror the bundle name. Use `.internal` sub-packages for non-API classes (e.g., `org.eclipse.rcptt.cloud.server.internal`).
+## Project Structure & Conventions
+This project follows the [Tycho Structured Build](https://tycho.eclipseprojects.io/doc/main/StructuredBuild.html) layout for module organization:
+- **Root Modules:** Projects are grouped into `bundles/`, `features/`, `products/`, `tests/`, and `maven/`.
+- **Source Folders:** Current project convention uses Eclipse-native layouts:
+  - `src/`: For handwritten Java source code and resources (as defined in `build.properties`).
+  - `gen-src/`: For EMF/Ecore generated code.
+- **Bundles:** Use the prefix `org.eclipse.rcptt.cloud.` (e.g., `org.eclipse.rcptt.cloud.server`).
+- **Packages:** Mirror the bundle name. Use `.internal` sub-packages for non-API classes.
 - **Special Bundles:**
-  - `*.ecl.model`: For Ecore/EMF model definitions.
-  - `*.ecl.impl`: For ECL command service implementations.
-- **Source Folders:** Place handwritten code in `src/` and EMF-generated code in `gen-src/`.
-- **POM Artifact IDs:** Must match the bundle symbolic name (the directory name).
+  - `*.ecl.model`: EMF model definitions.
+  - `*.ecl.impl`: ECL command implementations.
+- **POMs:** Rely on Tycho's "pomless" capabilities where possible; individual module `pom.xml` files should be minimal or omitted if Tycho can derive the configuration.
 
 ## Architecture & Patterns
 - **Model:** Ecore models are located in `*.ecl.model` bundles.
