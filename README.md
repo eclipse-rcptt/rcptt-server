@@ -5,16 +5,12 @@ RCPTT Server implements client-server-agent pattern for rapid distributed execut
 - [Terms of Use](https://www.eclipse.org/legal/termsofuse.php)
 - [Contribution Guide](CONTRIBUTING.md)
 
+## Prerequisites
+- **Java 21** or higher
+- **Maven 3.9** or higher
+
 ## Building
-To build the project and its products, run the following command in the repository root:
-
-```bash
-mvn clean install -e -Dmaven.test.skip -Dlicensecheck.skip=true
-```
-
-Find main artifacts in:
-- `products/org.eclipse.rcptt.cloud.client-product/target/products`
-- `products/products/target/products`
+See [CONTRIBUTING.md](CONTRIBUTING.md#building) for build instructions.
 
 ## Client
 Client is a CLI or Maven plugin that runs as a build tool. It can be started on a developer workstation or as part of CI. It takes in an RCPTT project, sends it to server, processes returned results.
