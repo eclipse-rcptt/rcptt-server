@@ -58,8 +58,7 @@ Contributors:
 	<pluginRepositories>
 		<pluginRepository>
 			<id>dash-licenses</id>
-			<url>
-				https://repo.eclipse.org/content/repositories/dash-licenses-releases/</url>
+			<url>https://repo.eclipse.org/content/repositories/dash-licenses-releases/</url>
 		</pluginRepository>
 	</pluginRepositories>
 

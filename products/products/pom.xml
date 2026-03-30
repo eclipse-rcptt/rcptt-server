@@ -27,6 +27,18 @@ Contributors:
 	<groupId>org.eclipse.rcptt.cloud</groupId>
 	<artifactId>agent-server-products</artifactId>
 	<packaging>eclipse-repository</packaging>
+	<distributionManagement>
+		<repository>
+			<id>downloads.eclipse.org/server/releases</id>
+			<name>RCPTT Server Product Repository - Releases</name>
+			<url>scpexe://genie.rcptt@projects-storage.eclipse.org/home/data/httpd/download.eclipse.org/rcptt/maven2/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>downloads.eclipse.org/server/snapshots</id>
+			<name>RCPTT Server Product Repository - Snapshots</name>
+			<url>scpexe://genie.rcptt@projects-storage.eclipse.org/home/data/httpd/download.eclipse.org/rcptt/maven2/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<build>
 		<plugins>
