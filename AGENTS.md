@@ -3,10 +3,10 @@
 This file provides specialized context and operational guidelines for AI agents working on the Eclipse RCPTT Server project.
 
 ## General Information
-Refer to [README.md](README.md) for the project overview, high-level architecture (Client/Server/Agent), and basic building instructions.
+Refer to [README.md](README.md) for the project overview and high-level architecture (Client/Server/Agent). See [CONTRIBUTING.md](CONTRIBUTING.md#building) for building instructions.
 
 ## Critical Commands
-In addition to the basic build in README, use these for validation:
+In addition to the basic build in CONTRIBUTING.md, use these for validation:
 - **Build with Tests:** `mvn clean install -e -Dlicensecheck.skip=true`
 - **Run Tests Only:** `mvn verify -e -Dlicensecheck.skip=true`
 
@@ -14,7 +14,7 @@ In addition to the basic build in README, use these for validation:
 - **OSGi Bundles:** Adhere to Eclipse plugin structures (check `MANIFEST.MF` for dependencies).
 
 ## Project Structure & Conventions
-This project follows the [Tycho Structured Build](https://tycho.eclipseprojects.io/doc/main/StructuredBuild.html) layout for module organization:
+Project follows the [Tycho Structured Build](https://tycho.eclipseprojects.io/doc/main/StructuredBuild.html) layout for module organization:
 - **Root Modules:** Projects are grouped into `bundles/`, `features/`, `products/`, `tests/`, and `maven/`.
 - **Source Folders:** Current project convention uses Eclipse-native layouts:
   - `src/`: For handwritten Java source code and resources (as defined in `build.properties`).
