@@ -14,13 +14,13 @@ jobs:
       contents: write # Important. Allows branch creation.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }} # To trigger downstream workflows after push
 
       - name: Merge upstream to downstreams in temporary branches
         id: cascade
-        uses: basilevs/cascade-merge@v1
+        uses: basilevs/cascade-merge@01c225e82ee8dd4f39986017b6491c8936434d8c # v1
         with:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           dependency_graph: |
