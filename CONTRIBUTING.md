@@ -8,14 +8,20 @@ Eclipse RCPTT Server implements client-server-agent pattern for rapid distribute
 - [Get source code](https://github.com/eclipse-rcptt/rcptt-server)
 - Sign Eclipse Contributor Agreement (below) and contribute a [Pull Request](https://github.com/eclipse-rcptt/rcptt-server/pulls)
 
-# Build
-Run in repository root:
+# Prerequisites
+- **Java 21** or higher
+- **Maven 3.9** or higher
+
+# Building
+To build the project and its products, run the following command in the repository root:
+
+```bash
+mvn clean install -e -Dmaven.test.skip -Dlicensecheck.skip=true
 ```
-mvn clean verify
-```
+
 Find main artifacts in:
-- products/org.eclipse.rcptt.cloud.client-product/target/products and
-- products/products/target/products
+- `products/org.eclipse.rcptt.cloud.client-product/target/products`
+- `products/products/target/products`
 
 # Eclipse Contributor Agreement
 
