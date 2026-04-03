@@ -69,7 +69,7 @@ public abstract class AbstractQ7Mojo extends AbstractMojo {
 
     /**
      * @parameter
-     *   expression="${skipTests}"
+     *   expression="${maven.test.skip}"
      *   default-value="false"
      */
     protected boolean skipTests = false;

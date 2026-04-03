@@ -70,7 +70,7 @@ import com.google.common.hash.HashCode;
 public class Q7ServerApi {
 
 	public static final int ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
-	public static final int DEFAULT_TIMEOUT = 60 * 1000;
+	public static final int DEFAULT_TIMEOUT = 120 * 1000;
 	private static final String HASH_TYPE = "SHA-256";
 
 	private final URI url;

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.lang.ref.Reference;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -224,7 +225,9 @@ public class WeakValueRepositoryTests {
 
 		@Override
 		public Stream<String> oldestKeys() {
-			return delegate.keySet().stream();
+			synchronized (delegate) {
+				return List.copyOf(delegate.keySet()).stream();
+			}
 		}
 
 		@Override
