@@ -136,17 +136,17 @@ public class TestExecutorTest {
 		switch(Platform.getOS()) {
 			case Platform.OS_MACOSX -> {
 				autInfo.setId("eclipse-platform-4.38-macosx-cocoa-aarch64.dmg");
-				autInfo.setUri("https://ftp.yz.yamagata-u.ac.jp/pub/eclipse/eclipse/downloads/drops4/R-4.38-202512010920/eclipse-platform-4.38-macosx-cocoa-aarch64.dmg");
+				autInfo.setUri("https://archive.eclipse.org/eclipse/downloads/drops4/R-4.38-202512010920/eclipse-platform-4.38-macosx-cocoa-aarch64.dmg");
 				autInfo.setHash(HashCode.fromString("80ed014319de547ead8f552ace8a469a0fa18a595bd316fa1cdedfcccf31315b58b5ec91232d59d6224398d930d092d5813efeac7b55a3271a3e6297bb6effad").asBytes());
 			}
 			case Platform.OS_LINUX -> {
 				autInfo.setId("eclipse-platform-4.38-linux-gtk-x86_64.tar.gz");
-				autInfo.setUri("https://ftp.yz.yamagata-u.ac.jp/pub/eclipse/eclipse/downloads/drops4/R-4.38-202512010920/eclipse-platform-4.38-linux-gtk-x86_64.tar.gz");
+				autInfo.setUri("https://archive.eclipse.org/eclipse/downloads/drops4/R-4.38-202512010920/eclipse-platform-4.38-linux-gtk-x86_64.tar.gz");
 				autInfo.setHash(HashCode.fromString("e498da6b1203409a9902760d29d6d91f37fa0fa2622cb3b75af517c21ab8dec191439868a4da6a00e6c4829aba9c4f65ef61a6f629dd75e258f609e0de6ead7c").asBytes());
 			}
 			case Platform.OS_WIN32 -> {
 				autInfo.setId("eclipse-platform-4.38-win32-x86_64.zip");
-				autInfo.setUri("https://ftp.yz.yamagata-u.ac.jp/pub/eclipse/eclipse/downloads/drops4/R-4.38-202512010920/eclipse-platform-4.38-win32-x86_64.zip");
+				autInfo.setUri("https://archive.eclipse.org/eclipse/downloads/drops4/R-4.38-202512010920/eclipse-platform-4.38-win32-x86_64.zip");
 				autInfo.setHash(HashCode.fromString("e580253c59cf4c65e253295e6d849bc2eef6e38104d4d151bd4eb0c2b632ef6278865b1f5419b6574d5c53eeed9c16553cdee0c3d5fa8414c812f09e9417fe3c").asBytes());
 			}
 			default -> throw new IllegalStateException("Unknown OS: " + Platform.getOS());
